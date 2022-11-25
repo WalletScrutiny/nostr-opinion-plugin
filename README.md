@@ -2,7 +2,10 @@
 
 to start dev server: `npm run dev`
 
-Login page will be inject into:
+to use on another site:
+`<script type="module" src="/dist/nostr-opinion.js"></script>`
+
+Login page will be injected into:
 `<div data-nostropinion-login></div>`
 
 Rating page will be injected into:
