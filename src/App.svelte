@@ -15,6 +15,7 @@
 	};
 
 	const submit = async () => {
+		if (!newOpinion.content || !$activeProfile) return;
 		const eventObject: Event = {
 			kind: 30234,
 			content: newOpinion.content,
@@ -81,7 +82,10 @@
 		<option value="0">neutral</option>
 		<option value="1">positive</option>
 	</select>
-	<button type="submit">Submit</button>
+	<button type="submit" disabled={!$activeProfile}>Submit</button>
+	{#if !$activeProfile}
+		<span>not logged in</span>
+	{/if}
 </form>
 
 <style>
