@@ -4,6 +4,8 @@ This plugin uses native web components
 
 to start dev server: `npm run dev`
 
+to build: `npm run build`
+
 to use on another site:
 `<script type="module" src="/dist/nostr-opinion.js"></script>`
 
