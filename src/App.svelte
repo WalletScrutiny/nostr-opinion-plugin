@@ -8,7 +8,7 @@
 	import { activeProfile } from './stores';
 
 	export let name: string;
-	let events = [];
+	let events: Event[] = [];
 	let newOpinion = {
 		content: '',
 		sentiment: '0'
@@ -26,12 +26,12 @@
 			pubkey: $activeProfile.pubkey,
 			created_at: Math.floor(Date.now() / 1000)
 		};
-		await nostr.publish(eventObject, (status, url) => {
-			if (status === 0) {
-				console.log(`publish request sent to ${url}`);
-			}
-			if (status === 1) {
-				console.log(`event published by ${url}`);
+		await nostr.publish(eventObject, () => {
+			const index = events.findIndex((e) => e.pubkey === eventObject.pubkey);
+			if (index !== -1) {
+				events[index] = eventObject;
+			} else {
+				events = [eventObject, ...events];
 			}
 		});
 	};
@@ -42,7 +42,7 @@
 			cb: (event, relay) => {
 				events = [...events, event];
 				eventCount += 1;
-				if (eventCount > 10) {
+				if (eventCount > 5) {
 					sub.unsub();
 				}
 			},
@@ -51,6 +51,9 @@
 				'#d': [name]
 			}
 		});
+		setTimeout(() => {
+			sub.unsub();
+		}, 5000);
 	});
 </script>
 
