@@ -11,6 +11,7 @@ export default defineConfig({
 		svelte({
 			emitCss: false,
 			compilerOptions: {
+				customElement: true,
 				css: 'injected'
 			}
 		}),

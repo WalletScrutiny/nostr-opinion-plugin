@@ -1,12 +1,14 @@
 # nostr opinion plugin
 
+This plugin uses native web components
+
 to start dev server: `npm run dev`
 
 to use on another site:
 `<script type="module" src="/dist/nostr-opinion.js"></script>`
 
-Login page will be injected into:
-`<div data-nostropinion-login></div>`
+login component:
+`<nostr-opinion-login></nostr-opinion-login>`
 
-Rating page will be injected into:
-`<div data-nostropinion="android/com.mycelium.wallet"></div>`
+opinion component:
+`<nostr-opinion name="android/com.mycelium.wallet"></nostr-opinion>`

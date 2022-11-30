@@ -1,3 +1,5 @@
+<svelte:options tag="nostr-opinion" />
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import nostr from './nostr';

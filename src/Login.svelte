@@ -1,3 +1,5 @@
+<svelte:options tag="nostr-opinion-login" />
+
 <script>
 	import { generatePrivateKey, getPublicKey } from 'nostr-tools';
 	import { activeProfile } from './stores';
