@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
+		"build:summariser": "esbuild ./src/summariser.ts --bundle --platform=node --target=node12 --outfile=./dist/nostr-opinion-summariser.js --format=cjs",
 		"preview": "vite preview",
 		"check": "svelte-check --tsconfig ./tsconfig.json"
 	},
@@ -15,6 +16,7 @@
 		"@rollup/plugin-inject": "^5.0.2",
 		"@sveltejs/vite-plugin-svelte": "^1.1.0",
 		"@tsconfig/svelte": "^3.0.0",
+		"esbuild": "^0.16.3",
 		"events": "^3.3.0",
 		"nostr-tools": "^0.24.1",
 		"process": "^0.11.10",
