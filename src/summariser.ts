@@ -32,6 +32,7 @@ export default class Summariser {
 					authors: this.trustedAuthors
 				}
 			});
+			// TODO: replace with EOSE
 			setTimeout(() => {
 				sub.unsub();
 				resolve();
@@ -54,12 +55,6 @@ export default class Summariser {
 			return acc;
 		}, {});
 
-		const mostCommon = Object.keys(counts).reduce((a, b) => {
-			return counts[a] > counts[b] ? a : b;
-		});
-		return {
-			sentiment: mostCommon,
-			count: ops.length
-		};
+		return counts;
 	}
 }
