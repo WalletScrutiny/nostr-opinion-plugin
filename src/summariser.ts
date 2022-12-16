@@ -44,8 +44,9 @@ export default class Summariser {
 
 		if (!ops)
 			return {
-				sentiment: 'neutral',
-				count: 0
+				positive: 0,
+				neutral: 0,
+				negative: 0
 			};
 
 		const counts = ops.reduce((acc, curr) => {

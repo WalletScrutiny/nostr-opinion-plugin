@@ -37,8 +37,9 @@ await summariser.onReady();
 summariser.get('/android/io.horizontalsystems.bankwallet/');
 /*
   {
-    sentiment: 'positive',
-    count: 200
+    positive: 203,
+    neutral: 123,
+    negative: 28
   }
 */
 ```
