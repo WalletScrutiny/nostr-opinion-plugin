@@ -33,6 +33,19 @@
 			} else {
 				events = [eventObject, ...events];
 			}
+			sortEvents();
+		});
+	};
+
+	const sortEvents = () => {
+		events = events.sort((a, b) => {
+			const aTrusted = expertOpinions.trustedAuthors.includes(a.pubkey);
+			const bTrusted = expertOpinions.trustedAuthors.includes(b.pubkey);
+			if (aTrusted && !bTrusted) return -1;
+			if (!aTrusted && bTrusted) return 1;
+			if (a.created_at > b.created_at) return -1;
+			if (a.created_at < b.created_at) return 1;
+			return 0;
 		});
 	};
 
@@ -46,6 +59,7 @@
 				if (eventCount > 5) {
 					sub.unsub();
 				}
+				sortEvents();
 			},
 			filter: {
 				kinds: [30234],
