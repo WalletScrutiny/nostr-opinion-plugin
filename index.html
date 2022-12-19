@@ -10,6 +10,11 @@
 		<nostr-opinion-login></nostr-opinion-login>
 		<nostr-opinion name="android/com.mycelium.wallet"></nostr-opinion>
 		<nostr-opinion name="android/com.coinomi.wallet"></nostr-opinion>
-		<script type="module" src="/src/main.ts"></script>
+		<script type="module">
+			import { expertOpinions } from '/src/main.ts';
+			expertOpinions.trustedAuthors = [
+				'f0ec9f752b4d857b7fd782d1a3189b3994d8893341a6ded7fdd71a72922a0029'
+			];
+		</script>
 	</body>
 </html>

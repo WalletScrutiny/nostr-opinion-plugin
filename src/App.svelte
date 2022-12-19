@@ -3,11 +3,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import nostr from './nostr';
-	import { generatePrivateKey, getPublicKey } from 'nostr-tools';
 	import type { Event } from 'nostr-tools';
 	import { activeProfile } from './stores';
 
 	export let name: string;
+	let expertOpinions;
 	let events: Event[] = [];
 	let newOpinion = {
 		content: '',
@@ -36,7 +36,8 @@
 		});
 	};
 
-	onMount(() => {
+	onMount(async () => {
+		expertOpinions = (await import('./main')).expertOpinions;
 		let eventCount = 0;
 		const sub = nostr.sub({
 			cb: (event, relay) => {
@@ -60,7 +61,12 @@
 <h1>Opinions for {name}</h1>
 {#each events as event}
 	<div class="opinion-container">
-		<p>From: {event.pubkey.slice(0, 7)}</p>
+		<p>
+			From: {event.pubkey.slice(0, 7)}
+			{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
+				<span class="trusted">Trusted Author</span>
+			{/if}
+		</p>
 		<p>
 			Content: {event.content}
 		</p>
@@ -92,4 +98,7 @@
 </form>
 
 <style>
+	.trusted {
+		color: #01b201;
+	}
 </style>
