@@ -82,13 +82,16 @@
 			{/if}
 		</p>
 		<p>
-			Content: {event.content}
+			{new Date(event.created_at * 1000).toLocaleDateString()}
+		</p>
+		<p class="content">
+			{event.content}
 		</p>
 		<p>
 			Sentiment: {(() => {
 				const sentiment = event.tags.find((tag) => tag[0] === 'sentiment')?.[1];
-				return `${sentiment} - ${
-					sentiment === '-1' ? 'negative' : sentiment === '0' ? 'neutral' : 'positive'
+				return `${
+					sentiment === '-1' ? 'Negative 🙁' : sentiment === '0' ? 'Neutral 😐' : 'Positive 🙂'
 				}`;
 			})()}
 		</p>
@@ -114,5 +117,8 @@
 <style>
 	.trusted {
 		color: #01b201;
+	}
+	.content {
+		font-size: 1.3rem;
 	}
 </style>
