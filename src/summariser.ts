@@ -21,22 +21,25 @@ export default class Summariser {
 
 	onReady = () =>
 		new Promise<void>((resolve) => {
-			const sub = this.pool.sub({
-				cb: (event, relay) => {
-					const d = event.tags.find((tag) => tag[0] === 'd')[1];
+			const sub = this.pool.sub(
+				{
+					cb: (event, relay) => {
+						const d = event.tags.find((tag) => tag[0] === 'd')[1];
 
-					this.opinions[d] = [...(this.opinions?.[d] || []), event];
+						this.opinions[d] = [...(this.opinions?.[d] || []), event];
+					},
+					filter: {
+						kinds: [30234],
+						authors: this.trustedAuthors
+					}
 				},
-				filter: {
-					kinds: [30234],
-					authors: this.trustedAuthors
+				null,
+				() => {
+					// EOSE
+					sub.unsub();
+					resolve();
 				}
-			});
-			// TODO: replace with EOSE
-			setTimeout(() => {
-				sub.unsub();
-				resolve();
-			}, 15000);
+			);
 		});
 
 	get(key: string) {
