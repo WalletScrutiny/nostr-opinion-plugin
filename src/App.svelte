@@ -9,6 +9,7 @@
 	export let name: string;
 	let expertOpinions;
 	let events: Event[] = [];
+	let profiles: Record<string, Event> = {};
 	let newOpinion = {
 		content: '',
 		sentiment: '0'
@@ -51,24 +52,41 @@
 
 	onMount(async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
-		let eventCount = 0;
-		const sub = nostr.sub({
-			cb: (event, relay) => {
-				events = [...events, event];
-				eventCount += 1;
-				if (eventCount > 5) {
-					sub.unsub();
+		const sub = nostr.sub(
+			{
+				cb: (event) => {
+					events = [...events, event];
+					let sub2 = nostr.sub(
+						{
+							cb: (event2) => {
+								const content = JSON.parse(event2.content);
+								profiles[event.pubkey] = content.name;
+							},
+							filter: {
+								kinds: [0],
+								authors: [event.pubkey],
+								limit: 1
+							}
+						},
+						null,
+						() => {
+							sub2.unsub();
+						}
+					);
+				},
+				filter: {
+					kinds: [30234],
+					'#d': [name],
+					limit: 5
 				}
-				sortEvents();
 			},
-			filter: {
-				kinds: [30234],
-				'#d': [name]
+			null,
+			// EOSE
+			() => {
+				sortEvents();
+				sub.unsub();
 			}
-		});
-		setTimeout(() => {
-			sub.unsub();
-		}, 5000);
+		);
 	});
 </script>
 
@@ -76,16 +94,12 @@
 {#each events as event}
 	<div class="opinion-container">
 		<p>
-			From: {event.pubkey.slice(0, 7)}
+			From:
+			<strong>{profiles[event.pubkey] || ''}</strong>
+			({event.pubkey.slice(0, 7)})
 			{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
 				<span class="trusted">Trusted Author</span>
 			{/if}
-		</p>
-		<p>
-			{new Date(event.created_at * 1000).toLocaleDateString()}
-		</p>
-		<p class="content">
-			{event.content}
 		</p>
 		<p>
 			Sentiment: {(() => {
@@ -94,6 +108,12 @@
 					sentiment === '-1' ? 'Negative 🙁' : sentiment === '0' ? 'Neutral 😐' : 'Positive 🙂'
 				}`;
 			})()}
+		</p>
+		<p class="content">
+			{event.content}
+		</p>
+		<p class="date">
+			{new Date(event.created_at * 1000).toLocaleDateString()}
 		</p>
 	</div>
 	<hr />
@@ -120,5 +140,8 @@
 	}
 	.content {
 		font-size: 1.3rem;
+	}
+	.date {
+		font-size: 0.8rem;
 	}
 </style>
