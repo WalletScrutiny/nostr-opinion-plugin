@@ -4,6 +4,10 @@
 	import { onMount } from 'svelte';
 	import type { Event } from 'nostr-tools';
 	import { activeProfile } from './stores';
+	import Positive from './components/icons/Positive.svelte';
+	import Neutral from './components/icons/Neutral.svelte';
+	import Negative from './components/icons/Negative.svelte';
+	import ApprovedBadge from './components/icons/ApprovedBadge.svelte';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
@@ -94,33 +98,51 @@
 	});
 </script>
 
-<h1>Opinions for {name}</h1>
+<h1>Community opinions ({events.length ? events.length : ''})</h1>
+<p class="description">
+	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
+	helping review wallets for security issues and enabling more people to secure and custody their
+	bitcoin.
+</p>
 {#if loading}
 	<p>Loading...</p>
 {:else}
+	<nav class="top-nav">
+		<div class="count-container">
+			<span class="nav-count"><Positive /> 6 positive</span>
+			<span class="nav-count"><Neutral /> 3 neutral</span>
+			<span class="nav-count"><Negative /> 10 negative</span>
+		</div>
+		<div class="sort-container">
+			<span>Approved</span>
+			<span>All opinions</span>
+		</div>
+	</nav>
 	{#each events as event}
 		<div class="opinion-container">
-			<p>
-				From:
-				<strong>{profiles[event.pubkey] || ''}</strong>
-				({event.pubkey.slice(0, 7)})
-				{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
-					<span class="trusted">Trusted Author</span>
-				{/if}
-			</p>
-			<p>
-				Sentiment: {(() => {
-					const sentiment = event.tags.find((tag) => tag[0] === 'sentiment')?.[1];
-					return `${
-						sentiment === '-1' ? 'Negative 🙁' : sentiment === '0' ? 'Neutral 😐' : 'Positive 🙂'
-					}`;
-				})()}
-			</p>
+			<div class="opinion-top">
+				<p class="pubkey">
+					{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1'}
+						<Negative />
+					{:else if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '0'}
+						<Neutral />
+					{:else}
+						<Positive />
+					{/if}
+					{#if profiles[event.pubkey]}
+						<strong>{profiles[event.pubkey]}</strong>
+					{/if}
+					{event.pubkey.slice(0, 7)}
+					{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
+						<ApprovedBadge />
+					{/if}
+				</p>
+				<p class="date">
+					{new Date(event.created_at * 1000).toLocaleDateString()}
+				</p>
+			</div>
 			<p class="content">
 				{event.content}
-			</p>
-			<p class="date">
-				{new Date(event.created_at * 1000).toLocaleDateString()}
 			</p>
 		</div>
 		<hr />
@@ -143,13 +165,60 @@
 {/if}
 
 <style>
-	.trusted {
-		color: #01b201;
+	:host {
+		--border-color: #dedede;
+		--content-text-color: #606060;
+		--pubkey-text-color: #000000;
+		--date-text-color: #808080;
+		--description-text-color: #808080;
+		font-family: 'Lato';
+	}
+	h1 {
+		margin: 5px 0;
+	}
+	hr {
+		height: 1px;
+		background-color: var(--border-color);
+		border: none;
 	}
 	.content {
-		font-size: 1.3rem;
+		color: var(--content-text-color);
+		margin: 2px 0 10px 0;
+	}
+	.pubkey {
+		color: var(--pubkey-text-color);
+		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 2px 0;
 	}
 	.date {
-		font-size: 0.8rem;
+		font-style: italic;
+		color: var(--date-text-color);
+	}
+	.top-nav {
+		display: flex;
+		justify-content: space-between;
+		border-top: var(--border-color) 1px solid;
+		border-bottom: var(--border-color) 1px solid;
+		padding: 20px 0;
+	}
+	.nav-count {
+		display: flex;
+		align-items: center;
+	}
+	.count-container {
+		display: flex;
+		flex-direction: row;
+		color: var(--content-text-color);
+	}
+	.opinion-top {
+		display: flex;
+		justify-content: space-between;
+	}
+	.description {
+		color: var(--description-text-color);
+		margin: 10px 0;
 	}
 </style>
