@@ -11,7 +11,8 @@
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
-	let events: Event[] = [];
+	let allEvents: Event[] = [];
+	let filteredEvents: Event[] = [];
 	let profiles: Record<string, Event> = {};
 	let newOpinion = {
 		content: '',
@@ -23,6 +24,7 @@
 		'0': 0,
 		'1': 0
 	};
+	let filter: 'approved' | 'all' = 'approved';
 
 	const submit = async () => {
 		if (!newOpinion.content || !$activeProfile) return;
@@ -37,18 +39,32 @@
 			created_at: Math.floor(Date.now() / 1000)
 		};
 		await expertOpinions.nostr.publish(eventObject, () => {
-			const index = events.findIndex((e) => e.pubkey === eventObject.pubkey);
+			const index = allEvents.findIndex((e) => e.pubkey === eventObject.pubkey);
 			if (index !== -1) {
-				events[index] = eventObject;
+				allEvents[index] = eventObject;
 			} else {
-				events = [eventObject, ...events];
+				allEvents = [eventObject, ...allEvents];
 			}
 			sortEvents();
 		});
 	};
 
 	const sortEvents = () => {
-		events = events.sort((a, b) => {
+		sentimentCount = {
+			'-1': 0,
+			'0': 0,
+			'1': 0
+		};
+		filteredEvents = allEvents.filter((e) => {
+			if (filter === 'approved') {
+				const trusted = expertOpinions.trustedAuthors.includes(e.pubkey);
+				if (!trusted) return false;
+			}
+			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
+			if (sentiment) sentimentCount[sentiment] += 1;
+			return true;
+		});
+		filteredEvents = filteredEvents.sort((a, b) => {
 			const aTrusted = expertOpinions.trustedAuthors.includes(a.pubkey);
 			const bTrusted = expertOpinions.trustedAuthors.includes(b.pubkey);
 			if (aTrusted && !bTrusted) return -1;
@@ -56,15 +72,6 @@
 			if (a.created_at > b.created_at) return -1;
 			if (a.created_at < b.created_at) return 1;
 			return 0;
-		});
-		sentimentCount = {
-			'-1': 0,
-			'0': 0,
-			'1': 0
-		};
-		events.forEach((e) => {
-			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
-			if (sentiment) sentimentCount[sentiment]++;
 		});
 	};
 
@@ -76,8 +83,7 @@
 		const sub = expertOpinions.nostr.sub(
 			{
 				cb: (event) => {
-					events = [...events, event];
-					console.log(events);
+					allEvents = [...allEvents, event];
 					let sub2 = expertOpinions.nostr.sub(
 						{
 							cb: (event2) => {
@@ -112,7 +118,7 @@
 	});
 </script>
 
-<h1>Community opinions ({events?.length || '0'})</h1>
+<h1>Community opinions ({allEvents?.length || '0'})</h1>
 <p class="description">
 	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
 	helping review wallets for security issues and enabling more people to secure and custody their
@@ -127,12 +133,22 @@
 			<span class="nav-count"><Neutral /> {sentimentCount['0']} neutral</span>
 			<span class="nav-count"><Negative /> {sentimentCount['-1']} negative</span>
 		</div>
-		<div class="sort-container">
-			<span>Approved</span>
-			<span>All opinions</span>
+		<div class="filter-container">
+			<button
+				class="blank-btn filter-btn"
+				class:filter-active={filter === 'approved'}
+				aria-label="filter by approved"
+				on:click={() => (filter = 'approved') && sortEvents()}>Approved</button
+			>
+			<button
+				class="blank-btn filter-btn"
+				class:filter-active={filter === 'all'}
+				aria-label="filter by all"
+				on:click={() => (filter = 'all') && sortEvents()}>All opinions</button
+			>
 		</div>
 	</nav>
-	{#each events as event}
+	{#each filteredEvents as event}
 		<div class="opinion-container">
 			<div class="opinion-top">
 				<p class="pubkey">
@@ -185,6 +201,8 @@
 		--pubkey-text-color: #000000;
 		--date-text-color: #808080;
 		--description-text-color: #808080;
+		--filter-active-color: #000000;
+		--filter-inactive-color: #808080;
 		font-family: 'Lato';
 	}
 	h1 {
@@ -234,5 +252,20 @@
 	.description {
 		color: var(--description-text-color);
 		margin: 10px 0;
+	}
+	.blank-btn {
+		background-color: transparent;
+		border: none;
+		cursor: pointer;
+	}
+	.filter-container {
+		display: flex;
+		flex-direction: row;
+	}
+	.filter-container > .filter-active {
+		color: var(--filter-active-color);
+	}
+	.filter-btn {
+		color: var(--filter-inactive-color);
 	}
 </style>
