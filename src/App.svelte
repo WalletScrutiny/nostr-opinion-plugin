@@ -18,6 +18,11 @@
 		sentiment: '0'
 	};
 	let loading = true;
+	let sentimentCount = {
+		'-1': 0,
+		'0': 0,
+		'1': 0
+	};
 
 	const submit = async () => {
 		if (!newOpinion.content || !$activeProfile) return;
@@ -52,6 +57,15 @@
 			if (a.created_at < b.created_at) return 1;
 			return 0;
 		});
+		sentimentCount = {
+			'-1': 0,
+			'0': 0,
+			'1': 0
+		};
+		events.forEach((e) => {
+			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
+			if (sentiment) sentimentCount[sentiment]++;
+		});
 	};
 
 	onMount(async () => {
@@ -84,8 +98,8 @@
 				},
 				filter: {
 					kinds: [30234],
-					'#d': [name],
-					limit: 5
+					'#d': [name]
+					// limit: 5
 				}
 			},
 			null,
@@ -98,7 +112,7 @@
 	});
 </script>
 
-<h1>Community opinions ({events.length ? events.length : ''})</h1>
+<h1>Community opinions ({events?.length || '0'})</h1>
 <p class="description">
 	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
 	helping review wallets for security issues and enabling more people to secure and custody their
@@ -109,9 +123,9 @@
 {:else}
 	<nav class="top-nav">
 		<div class="count-container">
-			<span class="nav-count"><Positive /> 6 positive</span>
-			<span class="nav-count"><Neutral /> 3 neutral</span>
-			<span class="nav-count"><Negative /> 10 negative</span>
+			<span class="nav-count"><Positive /> {sentimentCount['1']} positive</span>
+			<span class="nav-count"><Neutral /> {sentimentCount['0']} neutral</span>
+			<span class="nav-count"><Negative /> {sentimentCount['-1']} negative</span>
 		</div>
 		<div class="sort-container">
 			<span>Approved</span>
