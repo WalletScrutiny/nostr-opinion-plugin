@@ -8,6 +8,8 @@
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
 	import ApprovedBadge from './components/icons/ApprovedBadge.svelte';
+	import Register from './components/Register.svelte';
+	import Login from './components/Login.svelte';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
@@ -25,10 +27,12 @@
 		'1': 0
 	};
 	let filter: 'approved' | 'all' = 'approved';
+	let showNewOpinion = false;
+	let showLoginOrRegister: 'login' | 'register' | false = false;
 
 	const submit = async () => {
 		if (!newOpinion.content || !$activeProfile) return;
-		const eventObject: Event = {
+		let eventObject: Event = {
 			kind: 30234,
 			content: newOpinion.content,
 			tags: [
@@ -38,6 +42,9 @@
 			pubkey: $activeProfile.pubkey,
 			created_at: Math.floor(Date.now() / 1000)
 		};
+		if (!$activeProfile.privkey && (await window.nostr.getPublicKey()) === $activeProfile.pubkey) {
+			eventObject = await window.nostr.signEvent(eventObject);
+		}
 		await expertOpinions.nostr.publish(eventObject, () => {
 			const index = allEvents.findIndex((e) => e.pubkey === eventObject.pubkey);
 			if (index !== -1) {
@@ -104,8 +111,8 @@
 				},
 				filter: {
 					kinds: [30234],
-					'#d': [name]
-					// limit: 5
+					'#d': [name],
+					limit: 20
 				}
 			},
 			null,
@@ -116,6 +123,11 @@
 			}
 		);
 	});
+
+	const logout = () => {
+		activeProfile.set(null);
+		localStorage.removeItem('activeProfile');
+	};
 </script>
 
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
@@ -177,21 +189,54 @@
 		</div>
 		<hr />
 	{/each}
-	<h3>Create new opinion</h3>
-	<form on:submit|preventDefault={submit}>
-		<label for="content">Content</label>
-		<input id="content" type="text" bind:value={newOpinion.content} />
-		<label for="sentiment">Sentiment</label>
-		<select name="sentiment" id="sentiment" bind:value={newOpinion.sentiment}>
-			<option value="-1">negative</option>
-			<option value="0">neutral</option>
-			<option value="1">positive</option>
-		</select>
-		<button type="submit" disabled={!$activeProfile}>Submit</button>
-		{#if !$activeProfile}
-			<span>not logged in</span>
-		{/if}
-	</form>
+	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
+		>Add your opinion</button
+	>
+	{#if showNewOpinion}
+		<div class="add-opinion-init">
+			<h3>Add your opinion</h3>
+			<div class="description">
+				<p>
+					Thank you for contributing your security review of {name}. Please make sure to follow
+					these guidelines:
+				</p>
+				<ul>
+					<li>Stay objective in your review Focus on security-related aspects</li>
+					<li>that's what we're about here Consider contributing a full review</li>
+					<li>see our methodology</li>
+				</ul>
+			</div>
+			{#if $activeProfile}
+				<p>Logged in as {$activeProfile.pubkey}</p>
+				<button class="primary-btn" on:click={logout}>Logout</button>
+				<h3>Create new opinion</h3>
+				<form on:submit|preventDefault={submit}>
+					<label for="content">Content</label>
+					<input id="content" type="text" bind:value={newOpinion.content} />
+					<label for="sentiment">Sentiment</label>
+					<select name="sentiment" id="sentiment" bind:value={newOpinion.sentiment}>
+						<option value="-1">negative</option>
+						<option value="0">neutral</option>
+						<option value="1">positive</option>
+					</select>
+					<button class="primary-btn" type="submit" disabled={!$activeProfile}>Submit</button>
+					{#if !$activeProfile}
+						<span>not logged in</span>
+					{/if}
+				</form>
+			{:else}
+				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
+				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
+					>Register</button
+				>
+				{#if showLoginOrRegister === 'login'}
+					<Login />
+				{:else if showLoginOrRegister === 'register'}
+					<Register />
+				{/if}
+			{/if}
+		</div>
+	{/if}
 {/if}
 
 <style>
@@ -203,6 +248,8 @@
 		--description-text-color: #808080;
 		--filter-active-color: #000000;
 		--filter-inactive-color: #808080;
+		--button-text-color: #ffffff;
+		--button-background-color: #000000;
 		font-family: 'Lato';
 	}
 	h1 {
@@ -267,5 +314,13 @@
 	}
 	.filter-btn {
 		color: var(--filter-inactive-color);
+	}
+	.primary-btn {
+		color: var(--button-text-color);
+		background-color: var(--button-background-color);
+		padding: 7px 20px;
+		border-radius: 3px;
+		cursor: pointer;
+		border: none;
 	}
 </style>

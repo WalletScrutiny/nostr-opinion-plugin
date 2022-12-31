@@ -1,5 +1,4 @@
 import App from './App.svelte';
-import Login from './Login.svelte';
 import { activeProfile } from './stores';
 import { relayPool } from 'nostr-tools';
 import type { RelayPool } from 'nostr-tools';
