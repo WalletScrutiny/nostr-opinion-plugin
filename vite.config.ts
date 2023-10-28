@@ -46,14 +46,20 @@ export default defineConfig({
 		}
 	},
 	build: {
-		target: 'esnext',
+		target: 'es2018',
 		lib: {
 			entry: './src/main.ts',
 			name: 'nostrOpinion',
 			formats: ['es']
 		},
 		rollupOptions: {
-			plugins: [rollupNodePolyFill(), inject({ Buffer: ['Buffer', 'Buffer'] })]
+			plugins: [
+				rollupNodePolyFill(),
+				inject({ Buffer: ['Buffer', 'Buffer'] })
+			],
+			output: {
+				format: 'esm'
+			}
 		}
 	},
 	define: {}

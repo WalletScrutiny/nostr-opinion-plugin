@@ -25,7 +25,7 @@ class ExpertOpinions {
 		});
 	}
 
-	public setRelay(relay: string = 'wss://relay.nostr.info') {
+	public setRelay(relay: string = 'wss://nos.lol') {
 		this.nostr.addRelay(relay, { read: true, write: true });
 	}
 
