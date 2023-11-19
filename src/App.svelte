@@ -10,6 +10,8 @@
 	import ApprovedBadge from './components/icons/ApprovedBadge.svelte';
 	import Register from './components/Register.svelte';
 	import Login from './components/Login.svelte';
+	import Editor from './components/Editor.svelte';
+	import { marked } from 'marked';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
@@ -184,7 +186,7 @@
 				</p>
 			</div>
 			<p class="content">
-				{event.content}
+				{@html marked(event.content)}
 			</p>
 		</div>
 		<hr />
@@ -212,7 +214,7 @@
 				<h3>Create new opinion</h3>
 				<form on:submit|preventDefault={submit}>
 					<label for="content">Content</label>
-					<input id="content" type="text" bind:value={newOpinion.content} />
+					<Editor bind:newOpinion />
 					<label for="sentiment">Sentiment</label>
 					<select name="sentiment" id="sentiment" bind:value={newOpinion.sentiment}>
 						<option value="-1">negative</option>
