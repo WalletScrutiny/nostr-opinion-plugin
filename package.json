@@ -11,25 +11,28 @@
 		"check": "svelte-check --tsconfig ./tsconfig.json"
 	},
 	"devDependencies": {
-		"@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-		"@esbuild-plugins/node-modules-polyfill": "^0.1.4",
-		"@rollup/plugin-inject": "^5.0.2",
-		"@sveltejs/vite-plugin-svelte": "^1.1.0",
-		"@tsconfig/svelte": "^3.0.0",
+		"@sveltejs/vite-plugin-svelte": "^2.0.0",
+		"@tsconfig/svelte": "^4.0.0",
+		"autoprefixer": "^10.4.16",
 		"esbuild": "^0.16.3",
-		"events": "^3.3.0",
-		"nostr-tools": "github:Giszmo/nostr-tools#c879c873f953e0b2332e2a622febe4e500db6a55",
-		"process": "^0.11.10",
-		"rollup-plugin-node-polyfills": "^0.2.1",
-		"svelte": "^3.52.0",
-		"svelte-check": "^2.9.2",
-		"svelte-preprocess": "^4.10.7",
-		"tslib": "^2.4.0",
-		"typescript": "^4.6.4",
-		"vite": "^3.2.3"
+		"nostr-tools": "^1.17.0",
+		"postcss": "^8.4.32",
+		"svelte": "^4.2.3",
+		"svelte-check": "^3.6.0",
+		"tailwindcss": "^3.3.5",
+		"tslib": "^2.6.2",
+		"typescript": "^5.2.2",
+		"vite": "^4.0.0",
+		"vite-plugin-css-injected-by-js": "^3.3.0",
+		"vite-plugin-node-polyfills": "^0.16.0"
 	},
 	"dependencies": {
+		"@nostr-dev-kit/ndk": "^2.2.0",
+		"@nostr-dev-kit/ndk-cache-dexie": "^2.2.0",
+		"@nostr-dev-kit/ndk-svelte": "^2.2.0",
+		"@skeletonlabs/skeleton": "^2.5.1",
 		"@toast-ui/editor": "^3.2.2",
-		"marked": "^10.0.0"
+		"bech32": "^2.0.0",
+		"marked": "^11.0.0"
 	}
 }

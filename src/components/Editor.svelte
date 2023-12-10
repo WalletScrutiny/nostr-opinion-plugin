@@ -1,26 +1,25 @@
-<svelte:options tag="markdown-editor" />
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Editor from '@toast-ui/editor';
-	import css from '@toast-ui/editor/dist/toastui-editor.css';
+	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
 
 	let container;
 	let editor;
-	export let newOpinion;
+	export let opinionContent;
 
 	const getData = () => {
-		newOpinion.content = editor.getMarkdown();
+        console.log(editor.getMarkdown());
+		opinionContent = editor.getMarkdown();
 	};
 
 	onMount(() => {
-		console.log(newOpinion);
+		console.log(opinionContent);
 		editor = new Editor({
 			el: container,
-			height: '400px',
+			height: '200px',
 			initialEditType: 'markdown',
 			previewStyle: 'vertical',
-			initialValue: newOpinion.content,
+			initialValue: opinionContent,
 			events: {
 				change: function (data) {
 					getData();
@@ -37,3 +36,4 @@
 
 <style>
 </style>
+

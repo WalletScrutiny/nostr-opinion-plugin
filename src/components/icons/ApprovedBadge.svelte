@@ -1,5 +1,3 @@
-<svelte:options tag="nostr-opinion-approved" />
-
 <svg width="106" height="18" viewBox="0 0 106 18" fill="none" xmlns="http://www.w3.org/2000/svg">
 	<rect y="0.5" width="106" height="17" rx="3" fill="#F7931A" />
 	<path

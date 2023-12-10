@@ -1,9 +1,8 @@
-import type { Event, RelayPool } from 'nostr-tools';
-import { relayPool } from 'nostr-tools';
+import NDK, { NDKEvent, type NDKFilter } from '@nostr-dev-kit/ndk';
 
 export default class Summariser {
-	opinions: Record<string, Event[]>;
-	pool: RelayPool;
+	opinions: Record<string, NDKEvent[]>;
+	ndk;
 	trustedAuthors: string[];
 
 	constructor({
@@ -14,32 +13,20 @@ export default class Summariser {
 		trustedAuthors?: string[];
 	}) {
 		this.opinions = {};
-		this.pool = relayPool();
-		this.pool.addRelay(relay, { read: true, write: false });
+		this.ndk = new NDK({ explicitRelayUrls: [relay] });
 		this.trustedAuthors = trustedAuthors;
 	}
 
 	onReady = () =>
-		new Promise<void>((resolve) => {
-			const sub = this.pool.sub(
-				{
-					cb: (event, relay) => {
-						const d = event.tags.find((tag) => tag[0] === 'd')[1];
+		new Promise<void>(async (resolve) => {
+			await this.ndk.connect();
+			const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
 
-						this.opinions[d] = [...(this.opinions?.[d] || []), event];
-					},
-					filter: {
-						kinds: [30234],
-						authors: this.trustedAuthors
-					}
-				},
-				null,
-				() => {
-					// EOSE
-					sub.unsub();
-					resolve();
-				}
-			);
+			const fetchEvents = await this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
+			fetchEvents.forEach((event) => {
+				const d = event.tags.find((tag) => tag[0] === 'd')[1];
+				this.opinions[d] = [...(this.opinions?.[d] || []), event];
+			});
 		});
 
 	get(key: string) {
