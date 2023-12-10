@@ -1,27 +1,35 @@
-<svelte:options tag="nostr-opinion" />
+<svelte:options customElement="nostr-opinion" />
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Event } from 'nostr-tools';
-	import { activeProfile } from './stores';
+	import {  localStore, ndkUser } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
-	import ApprovedBadge from './components/icons/ApprovedBadge.svelte';
 	import Register from './components/Register.svelte';
 	import Login from './components/Login.svelte';
 	import Editor from './components/Editor.svelte';
-	import { marked } from 'marked';
+	import OpinionCard from "./components/OpinionCard.svelte";
+	import ndk from './stores/provider';
+	import {NDKlogin, fetchUserProfile, logout} from './utils/helper'
+	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
+	import { kindOpinion, profileImageUrl } from './utils/constants';
+	import Loader from './components/Loader.svelte';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
-	let allEvents: Event[] = [];
-	let filteredEvents: Event[] = [];
-	let profiles: Record<string, Event> = {};
+	let allEvents: any[] = [];
+	let filteredEvents: any[] = [];
+	let profiles: Record<string, {NDKUserProfile}|{pubkey:string,image:string}> = {};
+	let selectPositive:Boolean = false;
+	let selectNeutral:Boolean = true;
+	let selectNegative:Boolean = false;
+	let editLvl = 0;
 	let newOpinion = {
 		content: '',
 		sentiment: '0'
 	};
+	let opinionContent="";
 	let loading = true;
 	let sentimentCount = {
 		'-1': 0,
@@ -33,29 +41,34 @@
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 
 	const submit = async () => {
-		if (!newOpinion.content || !$activeProfile) return;
-		let eventObject: Event = {
-			kind: 30234,
-			content: newOpinion.content,
-			tags: [
-				['d', name],
-				['sentiment', newOpinion.sentiment]
-			],
-			pubkey: $activeProfile.pubkey,
-			created_at: Math.floor(Date.now() / 1000)
-		};
-		if (!$activeProfile.privkey && (await window.nostr.getPublicKey()) === $activeProfile.pubkey) {
-			eventObject = await window.nostr.signEvent(eventObject);
-		}
-		await expertOpinions.nostr.publish(eventObject, () => {
-			const index = allEvents.findIndex((e) => e.pubkey === eventObject.pubkey);
+		newOpinion.content = opinionContent;
+		!$ndk.signer && await NDKlogin();
+		if (!newOpinion.content || !$ndk.signer) return;
+		const ndkEvent = new NDKEvent($ndk);
+		ndkEvent.kind = kindOpinion;
+		ndkEvent.content = newOpinion.content;
+		ndkEvent.tags = [
+			["d",name],
+			["sentiment",newOpinion.sentiment]
+		];
+		ndkEvent.publish().then(()=>{
+			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
-				allEvents[index] = eventObject;
+				allEvents[index] = {...ndkEvent};
 			} else {
-				allEvents = [eventObject, ...allEvents];
+				allEvents = [{...ndkEvent}, ...allEvents];
 			}
 			sortEvents();
 		});
+		newOpinion={
+			content: '',
+			sentiment: '0'
+		};
+		selectPositive = false;
+		selectNeutral = true;
+		selectNegative = false;
+		showNewOpinion=false;
+		filter = "all";
 	};
 
 	const sortEvents = () => {
@@ -84,51 +97,48 @@
 		});
 	};
 
+	async function findUserProfileData(pubkey:string){
+		let content = await fetchUserProfile(pubkey);
+		if(!content){
+			content = {image: profileImageUrl+$ndkUser.pubkey,pubkey:$ndkUser.pubkey};
+		}
+		if(!content.image)
+			content.image = profileImageUrl+pubkey ;
+		if(!content.pubkey){
+			content.pubkey = pubkey;
+		}
+		return {content};
+	}
+
 	onMount(async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
-		await expertOpinions.onReady;
-		loading = false;
-
-		const sub = expertOpinions.nostr.sub(
-			{
-				cb: (event) => {
-					allEvents = [...allEvents, event];
-					let sub2 = expertOpinions.nostr.sub(
-						{
-							cb: (event2) => {
-								const content = JSON.parse(event2.content);
-								profiles[event.pubkey] = content.name;
-							},
-							filter: {
-								kinds: [0],
-								authors: [event.pubkey],
-								limit: 1
-							}
-						},
-						null,
-						() => {
-							sub2.unsub();
-						}
-					);
-				},
-				filter: {
-					kinds: [30234],
-					'#d': [name],
-					limit: 20
-				}
-			},
-			null,
-			// EOSE
-			() => {
-				sortEvents();
-				sub.unsub();
+		try {
+			await $ndk.connect();
+			console.log("NDK connected successfully");
+			const isloggedIn = $localStore.lastUserLogged;
+			if(isloggedIn && window) {
+				let user = $ndk.getUser({
+					npub:$localStore.lastUserLogged,
+				});
+				ndkUser.set(user);
+				profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 			}
-		);
+			let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name],limit:10};
+			const filteredEvents = await $ndk.fetchEvents(ndkFilter);
+			
+			filteredEvents.forEach(async (events)=>{
+				allEvents = [...allEvents, {...events}];
+				profiles[events.pubkey] = await findUserProfileData(events.pubkey);
+			});
+			loading = false;
+		} catch (error) {
+			console.log(error);
+		}
 	});
 
-	const logout = () => {
-		activeProfile.set(null);
-		localStorage.removeItem('activeProfile');
+	const Logout = () => {
+		logout();
+		opinionContent="";
 	};
 </script>
 
@@ -139,7 +149,7 @@
 	bitcoin.
 </p>
 {#if loading}
-	<p>Loading...</p>
+	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;"><Loader/></p>
 {:else}
 	<nav class="top-nav">
 		<div class="count-container">
@@ -162,34 +172,10 @@
 			>
 		</div>
 	</nav>
-	{#each filteredEvents as event}
+	{#each filteredEvents as event (event.id)}
 		<div class="opinion-container">
-			<div class="opinion-top">
-				<p class="pubkey">
-					{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1'}
-						<Negative />
-					{:else if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '0'}
-						<Neutral />
-					{:else}
-						<Positive />
-					{/if}
-					{#if profiles[event.pubkey]}
-						<strong>{profiles[event.pubkey]}</strong>
-					{/if}
-					{event.pubkey.slice(0, 7)}
-					{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
-						<ApprovedBadge />
-					{/if}
-				</p>
-				<p class="date">
-					{new Date(event.created_at * 1000).toLocaleDateString()}
-				</p>
-			</div>
-			<p class="content">
-				{@html marked(event.content)}
-			</p>
+			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name}/>
 		</div>
-		<hr />
 	{/each}
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
@@ -208,31 +194,36 @@
 					<li>see our methodology</li>
 				</ul>
 			</div>
-			{#if $activeProfile}
-				<p>Logged in as {$activeProfile.pubkey}</p>
-				<button class="primary-btn" on:click={logout}>Logout</button>
-				<h3>Create new opinion</h3>
-				<form on:submit|preventDefault={submit}>
-					<label for="content">Content</label>
-					<Editor bind:newOpinion />
-					<label for="sentiment">Sentiment</label>
-					<select name="sentiment" id="sentiment" bind:value={newOpinion.sentiment}>
-						<option value="-1">negative</option>
-						<option value="0">neutral</option>
-						<option value="1">positive</option>
-					</select>
-					<button class="primary-btn" type="submit" disabled={!$activeProfile}>Submit</button>
-					{#if !$activeProfile}
-						<span>not logged in</span>
-					{/if}
-				</form>
+			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
+				<p>Logged in as {$ndkUser?.npub || "0"}</p>
+				<button class="primary-btn" on:click={Logout}>Logout</button>
+				<h3>Share your opinion</h3>
+				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">We use Nostr to store opinions. You can post and access your posts via a unique private key.</p>
+				<form on:submit|preventDefault={submit} id="review-input-details-container">
+					<div style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;">
+						<img src={profiles[$ndkUser?.pubkey].content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
+						<span style="color: black; font-size: 24px;">
+							{(!profiles[$ndkUser?.pubkey]?.content?.name || profiles[$ndkUser?.pubkey]?.content?.name=='') ? $ndkUser.npub.slice(0,4)+"..."+$ndkUser.npub.slice(-4) : profiles[$ndkUser?.pubkey]?.content?.name}
+						</span>
+					</div>
+					<Editor bind:opinionContent />
+					<div id="sentiment-box">	
+						<label for="sentiment" style="font-weight: 600;font-family: Arial, sans-serif;">Choose your overall sentiment</label>
+						<div style="display:flex; gap: 0.4rem;">	
+							<button class="btn-standard" class:selected-state={selectPositive} on:click|preventDefault={()=>{newOpinion.sentiment="1";selectPositive=true;selectNegative=false;selectNeutral=false;}}><Positive/> <span>Positive</span></button>
+							<button class="btn-standard" class:selected-state={selectNeutral} on:click|preventDefault={()=>{newOpinion.sentiment="0";selectPositive=false;selectNegative=false;selectNeutral=true}}><Neutral/> <span>Neutral</span></button>
+							<button class="btn-standard" class:selected-state={selectNegative} on:click|preventDefault={()=>{newOpinion.sentiment="-1";selectPositive=false;selectNegative=true;selectNeutral=false}}><Negative/> <span>Negative</span></button>
+						</div>
+					</div>
+					<button class="primary-btn" style="width: 5rem;" type="submit" disabled={!$ndkUser}>Post</button>
+				</form> 
 			{:else}
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
 					>Register</button
 				>
 				{#if showLoginOrRegister === 'login'}
-					<Login />
+					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
 				{:else if showLoginOrRegister === 'register'}
 					<Register />
 				{/if}
@@ -242,6 +233,7 @@
 {/if}
 
 <style>
+
 	:host {
 		--border-color: #dedede;
 		--content-text-color: #606060;
@@ -251,8 +243,10 @@
 		--filter-active-color: #000000;
 		--filter-inactive-color: #808080;
 		--button-text-color: #ffffff;
-		--button-background-color: #000000;
-		font-family: 'Lato';
+		--button-background-color: #4DA84D;
+		--sentiment-button-background-color:#4DA84D;
+		font-family: Lato;
+		font-family: Arial, sans-serif;
 	}
 	h1 {
 		margin: 5px 0;
@@ -324,5 +318,52 @@
 		border-radius: 3px;
 		cursor: pointer;
 		border: none;
+		height: 2.5rem;
+	}
+
+	#review-input-details-container {
+		display:flex; 
+		flex-direction:column; 
+		gap:0.5rem;
+		font-family: 'lato';
+		margin: 2rem 0rem;
+	}
+	.btn-standard {
+		border-radius: 3px;
+		width: 7rem;
+		height: 3rem;
+		cursor: pointer;
+		border: none;	
+		padding-right: 1.5rem;
+		display:flex;
+		justify-content:center;
+		align-items:center;
+		color: var(--description-text-color);
+	}
+
+	.btn-standard:hover {
+		background-color: var(--sentiment-button-background-color);
+	}
+
+	.btn-standard:hover {
+		color: #ffffff;
+	}
+	
+	#sentiment-box {
+		display:flex;
+		flex-direction:column;
+		gap:0.3rem;
+	}
+	.selected-state {
+		background-color:var(--sentiment-button-background-color);
+		color: #ffffff;
+		
+	}
+
+	.card-button{
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
 </style>
+					
