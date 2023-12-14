@@ -39,6 +39,7 @@
 	let filter: 'approved' | 'all' = 'approved';
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
+	let count = 0;
 
 	const submit = async () => {
 		newOpinion.content = opinionContent;
@@ -174,7 +175,7 @@
 	</nav>
 	{#each filteredEvents as event (event.id)}
 		<div class="opinion-container">
-			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name}/>
+			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
 		</div>
 	{/each}
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}

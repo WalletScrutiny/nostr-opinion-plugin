@@ -36,6 +36,7 @@
     export let newOpinion;
     export let editLvl;
     export let name;
+    export let count;
  
     let replyEvents=[];
     let reactions = [];
@@ -51,6 +52,7 @@
     let disliked = false;
     let showFullText = false;
     let ATag = event.id;
+    let isDeleted = false;
     
     let fileArray=[];
 
@@ -144,9 +146,8 @@
 
     onMount(async () => {
         expertOpinions = (await import('../main')).expertOpinions;
-
+    
         editLvl+=1;
-        
         let ndkFilter : NDKFilter = {kinds:[kindNotes],"#a":[ATag]};
         let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
         fetchedEvents.forEach(async(event1)=>{
@@ -209,7 +210,7 @@
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
 </script>
-
+{#if !isDeleted}
 {#if !loading && expertOpinions}
 <div class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
     <div class="opinion-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -308,7 +309,7 @@
         </div>
     
         {#if $ndkUser?.pubkey === event.pubkey}
-            <DeleteEventData eventID={event.id}/>
+            <DeleteEventData eventID={event.id} bind:isDeleted bind:count/>
         {/if}
         {#if $ndkUser?.pubkey === event.pubkey && editLvl == 1}
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
@@ -334,10 +335,11 @@
     {#if replyContent}
     {#each replyEvents as event (event.id)} 
     <!-- Event loading!!! -->
-    <OpinionCard {event} {profiles} {submit} {opinionContent} {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name}/>
+    <OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyCount}/>
     {/each}
     {/if}
 </div>
 {:else}
 	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;"><Loader/></p>
+{/if}
 {/if}

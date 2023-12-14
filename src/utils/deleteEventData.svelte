@@ -6,6 +6,8 @@
 	import { db } from "@nostr-dev-kit/ndk-cache-dexie";
 
     export let eventID:string;
+    export let isDeleted;
+    export let count;
 
     async function deleteEventData(eventID:string) {
         try {
@@ -13,6 +15,8 @@
             const ndkEvent = await $ndk.fetchEvent({ids:[eventID]});
             await db.events.delete(eventID);
             await ndkEvent.delete();
+            isDeleted = true;
+            count = count - 1;
         } catch (error) {
             console.log("Error: ",error);
         }

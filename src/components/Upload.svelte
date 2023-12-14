@@ -5,7 +5,7 @@
     import ndk from "../stores/provider";
     import UploadButton from './icons/UploadButton.svelte';
 	import { NDKEvent } from '@nostr-dev-kit/ndk';
-	import { kindUpload, uploadUrl } from '../utils/constants';
+	import { kindUpload, nostrBuildBaseApiKey, uploadUrl } from '../utils/constants';
     let fileInput;
     let files;
     export let fileArray
@@ -21,13 +21,14 @@
             ndkEvent.kind = kindUpload;
             ndkEvent.tags = tags;
             const formData = new FormData();
-            formData.append('fileToUpload', files);
+            formData.append("apikey",nostrBuildBaseApiKey);
+            formData.append('publicgallery', files);
             const response = await fetch(uploadUrl, {
                 body: formData,
                 method
             });
-            console.log(response);
-            await ndkEvent.publish();
+            console.log(response.data);
+            // await ndkEvent.publish();
             fileArray=[...fileArray,files] 
         }
         console.log(fileArray);
