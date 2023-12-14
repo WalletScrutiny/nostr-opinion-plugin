@@ -5,6 +5,8 @@ export const kindNotes = 1;
 export const kindOpinion = 30234 as NDKKind;
 export const kindDelete = 5;
 export const kindReaction = 7;
+export const kindUpload = 27235;
+export const uploadUrl = 'https://void.cat';
 export const toastTimeOut = 3500;
 export const succesPublishToast: ToastSettings = {
 	message: 'Published successfully!',

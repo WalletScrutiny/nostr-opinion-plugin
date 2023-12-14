@@ -20,6 +20,11 @@
 	import { NDKlogin, fetchUserProfile } from '../utils/helper';
 	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	import Loader from './Loader.svelte';
+	
+    import DeleteButton from './icons/DeleteButton.svelte';
+	import FilePreview from './FilePreview.svelte';
+	import Upload from './Upload.svelte';
+	import DeleteEventData from '../utils/deleteEventData.svelte';
 
     export let event;
     export let profiles;
@@ -46,6 +51,8 @@
     let disliked = false;
     let showFullText = false;
     let ATag = event.id;
+    
+    let fileArray=[];
 
     const maxLength = 500;
 
@@ -106,7 +113,6 @@
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
         let content = '-';
-        console.log(content);
         if(idx != -1) {
             if(reactions[idx].content === '-'){
                 content = '';
@@ -114,7 +120,6 @@
                 content = '-';
             }
         } 
-        console.log(content); 
         const ndkEvent = new NDKEvent($ndk);
         ndkEvent.kind = kindReaction;
         ndkEvent.content=content;
@@ -200,6 +205,9 @@
         replyCount = replyEvents.length;
         opinionContent="";       
 	}
+    function deleteFile(fileToDelete) {
+        fileArray = fileArray.filter(file => file !== fileToDelete);
+    }
 </script>
 
 {#if !loading && expertOpinions}
@@ -270,7 +278,6 @@
             </button>
         </form>
     </div>
-
     {/if}
     <div style="display: flex; gap: 2rem;">
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
@@ -299,7 +306,11 @@
             </button>
             <button on:click={()=>{replyContent=!replyContent;}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"><span style="font-size: 14px; pointer:cursor;">{replyCount}</span></button>
         </div>
-        {#if $ndkUser && $ndkUser.pubkey === event.pubkey && editLvl === 1}
+    
+        {#if $ndkUser?.pubkey === event.pubkey}
+            <DeleteEventData eventID={event.id}/>
+        {/if}
+        {#if $ndkUser?.pubkey === event.pubkey && editLvl == 1}
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
             <button on:click={() => {edit=!edit;opinionContent=event.content;reply = false;replyContent=false;}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
                 <OptionButton/>
@@ -309,7 +320,16 @@
     </div>
     {#if reply}
 		<Editor bind:opinionContent />
+            
+        <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
+        {#each fileArray as file, index (file.name)}
+        <FilePreview key={index} file={file} onDelete={() => deleteFile(file)} />
+        {/each}
+        </div>
+        <div style="display:flex; align-contents:center;">
 		<button style="padding: 7px 20px; border-radius: 3px;cursor: pointer;border: none;height: 2.5rem; background-color:#4DA84D;color:white" disabled={!$ndkUser} on:click={()=>{submitReply();reply=false;replyContent=false;}}>Reply</button>
+        <Upload bind:fileArray/>
+        </div>
 	{/if}
     {#if replyContent}
     {#each replyEvents as event (event.id)} 
