@@ -6,10 +6,23 @@
 	let container;
 	let editor;
 	export let opinionContent;
+	let isInternalUpdate = false;
+
+	$: {
+        if (editor && !isInternalUpdate) {
+            const currentContent = editor.getMarkdown();
+            if (opinionContent !== currentContent) {
+                editor.setMarkdown(opinionContent);
+            }
+        }
+        isInternalUpdate = false; 
+    }
+
 
 	const getData = () => {
-        console.log(editor.getMarkdown());
+		isInternalUpdate = true;
 		opinionContent = editor.getMarkdown();
+		console.log(opinionContent);
 	};
 
 	onMount(() => {

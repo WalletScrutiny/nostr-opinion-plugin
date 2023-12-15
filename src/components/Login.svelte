@@ -17,7 +17,6 @@
 			console.log("Something went wrong while login!!");
 			return;
 		}
-		console.log($ndkUser.pubkey);
 		let content = await fetchUserProfile($ndkUser.pubkey);
 		if(!content){
 			content = {image: profileImageUrl+$ndkUser.pubkey,pubkey:$ndkUser.pubkey};
@@ -32,7 +31,6 @@
 		let fetchEvent = await $ndk.fetchEvent(ndkFilter,{
 			closeOnEose:true,
 		});
-		
 		profiles[$ndkUser.pubkey] = {content};
 		if(fetchEvent && fetchEvent.content)
 		opinionContent= fetchEvent.content;

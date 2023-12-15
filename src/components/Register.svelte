@@ -1,7 +1,6 @@
 <script>
   import { generatePrivateKey, getPublicKey } from 'nostr-tools';
   import { onMount } from 'svelte';
-  // import {signedEvent} from "../utils/signTx";
   import { activeProfile } from '../stores/stores';
 	import { profileImageUrl } from '../utils/constants';
 
@@ -48,25 +47,7 @@
 		tags:[],
 		created_at: Math.floor(Date.now() / 1000)
 	};
-	// publishEvent = await signedEvent(publishEvent,privkey);
-	// console.log(publishEvent);
-	// const pub = expertOpinions.nostr.publish(publishEvent,(event)=>{
-	// 	console.log(event);
-	// });
-	// const sub = expertOpinions.nostr.sub({
-	// 	cb: (event)=>{
-	// 		console.log(event);
-	// 		// console.log(JSON.parse(event.content));
-	// 	},
-	// 	filter:{
-	// 		kinds:[0],
-	// 		authors:[getPublicKey("87c56ff793bf57545f4f12df3f971422015c4a2c35f39e3576c8b1a865196884")],
-	// 		limit:2,
-	// 	}
-	// },null,()=>sub.unsub()
-	// )
-
-  };
+};
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(privkey).then(() => {
@@ -98,7 +79,7 @@
   </form>
 {:else}
 <p style="font-family: 'Lato', sans-serif; font-size: 1em; color: #666;">
-  We use <strong>Nostr</strong> to store opinions. You can post and access your posts via a unique private key.
+  We use <strong>Nostr</strong> to store opinions. You can post and access your posts via your unique private key.
   Copy your key and keep it in a safe place.
 </p>
 <div style="background-color: #f3f3f3; padding: 1em; border-radius: 4px; border: 1px solid #ccc;">

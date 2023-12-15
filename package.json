@@ -32,6 +32,7 @@
 		"@nostr-dev-kit/ndk-svelte": "^2.2.0",
 		"@skeletonlabs/skeleton": "^2.5.1",
 		"@toast-ui/editor": "^3.2.2",
+		"@void-cat/api": "^1.0.10",
 		"bech32": "^2.0.0",
 		"marked": "^11.0.0"
 	}
