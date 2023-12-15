@@ -5,7 +5,11 @@ export const kindNotes = 1;
 export const kindOpinion = 30234 as NDKKind;
 export const kindDelete = 5;
 export const kindReaction = 7;
+export const kindUpload = 27235;
+export const uploadUrl = 'https://void.cat';
 export const toastTimeOut = 3500;
+export const nostrBuildBaseApiKey =
+	'26d075787d261660682fb9d20dbffa538c708b1eda921d0efa2be95fbef4910a';
 export const succesPublishToast: ToastSettings = {
 	message: 'Published successfully!',
 	timeout: toastTimeOut,

@@ -22,6 +22,7 @@
 		"esbuild": "^0.16.3",
 		"eslint": "^8.55.0",
 		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-svelte": "^2.35.1",
 		"husky": "^8.0.3",
 		"lint-staged": "^15.2.0",
 		"nostr-tools": "^1.17.0",
@@ -42,11 +43,12 @@
 		"@nostr-dev-kit/ndk-svelte": "^2.2.0",
 		"@skeletonlabs/skeleton": "^2.5.1",
 		"@toast-ui/editor": "^3.2.2",
+		"@void-cat/api": "^1.0.10",
 		"bech32": "^2.0.0",
 		"marked": "^11.0.0"
 	},
 	"lint-staged": {
-		"*.{js,ts,svelte}": "eslint src --quiet --fix",
+		"*.{js,ts,svelte}": "eslint src --fix",
 		"*.{json,js,ts,svelte,html}": "prettier src --write --ignore-unknown"
 	}
 }
