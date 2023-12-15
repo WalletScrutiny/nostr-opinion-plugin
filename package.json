@@ -8,7 +8,8 @@
 		"build": "vite build",
 		"build:summariser": "esbuild ./src/summariser.ts --bundle --platform=node --target=node12 --outfile=./dist/nostr-opinion-summariser.js --format=cjs",
 		"preview": "vite preview",
-		"check": "svelte-check --tsconfig ./tsconfig.json"
+		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"prepare": "husky install"
 	},
 	"devDependencies": {
 		"@sveltejs/vite-plugin-svelte": "^2.0.0",
@@ -24,7 +25,8 @@
 		"typescript": "^5.2.2",
 		"vite": "^4.0.0",
 		"vite-plugin-css-injected-by-js": "^3.3.0",
-		"vite-plugin-node-polyfills": "^0.16.0"
+		"vite-plugin-node-polyfills": "^0.16.0",
+		"husky": "^8.0.0"
 	},
 	"dependencies": {
 		"@nostr-dev-kit/ndk": "^2.2.0",
