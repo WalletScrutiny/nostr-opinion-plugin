@@ -15,6 +15,8 @@
 	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
 	import Loader from './components/Loader.svelte';
+	import Upload from './components/Upload.svelte';
+	import FilePreview from './components/FilePreview.svelte';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
@@ -40,6 +42,7 @@
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
+	let fileArray=[];
 
 	const submit = async () => {
 		newOpinion.content = opinionContent;
@@ -141,6 +144,11 @@
 		logout();
 		opinionContent="";
 	};
+	function deleteFile(fileToDelete) {
+        const url = fileArray.filter(file => file === fileToDelete)[0].url;
+        opinionContent = opinionContent.replace(url,"");
+        fileArray = fileArray.filter(file => file !== fileToDelete);
+    }
 </script>
 
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
@@ -216,7 +224,15 @@
 							<button class="btn-standard" class:selected-state={selectNegative} on:click|preventDefault={()=>{newOpinion.sentiment="-1";selectPositive=false;selectNegative=true;selectNeutral=false}}><Negative/> <span>Negative</span></button>
 						</div>
 					</div>
+					<div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
+					{#each fileArray as file, index (file.url)}
+					<FilePreview key={index} file={file.files} onDelete={() => deleteFile(file)} />
+					{/each}
+					</div>
+					<div style="display:flex; align-contents:center;">
 					<button class="primary-btn" style="width: 5rem;" type="submit" disabled={!$ndkUser}>Post</button>
+					<Upload bind:fileArray bind:opinionContent/>
+					</div>
 				</form> 
 			{:else}
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>

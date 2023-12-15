@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { NDKEvent } from "@nostr-dev-kit/ndk";
     import ndk from "../stores/provider";
     import { NDKlogin } from "./helper";
 	import DeleteButton from "../components/icons/DeleteButton.svelte";
@@ -16,7 +15,7 @@
             await db.events.delete(eventID);
             await ndkEvent.delete();
             isDeleted = true;
-            count = count - 1;
+            count = count == 0 ? 0: count - 1;
         } catch (error) {
             console.log("Error: ",error);
         }

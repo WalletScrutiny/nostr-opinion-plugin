@@ -21,7 +21,6 @@
 	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	import Loader from './Loader.svelte';
 	
-    import DeleteButton from './icons/DeleteButton.svelte';
 	import FilePreview from './FilePreview.svelte';
 	import Upload from './Upload.svelte';
 	import DeleteEventData from '../utils/deleteEventData.svelte';
@@ -207,6 +206,8 @@
         opinionContent="";       
 	}
     function deleteFile(fileToDelete) {
+        const url = fileArray.filter(file => file === fileToDelete)[0].url;
+        opinionContent = opinionContent.replace(url,"");
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
 </script>
@@ -257,8 +258,7 @@
     {:else}
     <div style="margin: 2rem 0;">
         <form on:submit|preventDefault={submit}>
-            <Editor bind:opinionContent={opinionContent} style="margin-bottom: 1rem;" />
-
+            <Editor bind:opinionContent={opinionContent} />
             <div id="sentiment-box" style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;">
                 <label for="sentiment" style="font-weight: 600;">Choose your overall sentiment</label>
                 <div style="display:flex; gap: 0.4rem;">
@@ -321,15 +321,14 @@
     </div>
     {#if reply}
 		<Editor bind:opinionContent />
-            
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
-        {#each fileArray as file, index (file.name)}
-        <FilePreview key={index} file={file} onDelete={() => deleteFile(file)} />
+        {#each fileArray as file, index (file.url)}
+        <FilePreview key={index} file={file.files} onDelete={() => deleteFile(file)} />
         {/each}
         </div>
         <div style="display:flex; align-contents:center;">
 		<button style="padding: 7px 20px; border-radius: 3px;cursor: pointer;border: none;height: 2.5rem; background-color:#4DA84D;color:white" disabled={!$ndkUser} on:click={()=>{submitReply();reply=false;replyContent=false;}}>Reply</button>
-        <Upload bind:fileArray/>
+        <Upload bind:fileArray bind:opinionContent/>
         </div>
 	{/if}
     {#if replyContent}
