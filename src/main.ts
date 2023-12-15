@@ -1,5 +1,3 @@
-import App from './App.svelte';
-
 class ExpertOpinions {
 	public trustedAuthors: string[];
 }

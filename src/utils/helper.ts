@@ -71,7 +71,7 @@ export async function NDKlogin(): Promise<NDKUser | undefined> {
 		ndkStore.set($ndk);
 		const ndkCurrentUser = await signer.user();
 		console.log(ndkCurrentUser);
-		let user = $ndk.getUser({
+		const user = $ndk.getUser({
 			pubkey: ndkCurrentUser.pubkey,
 			npub: ndkCurrentUser.npub
 		});
@@ -98,8 +98,8 @@ export function truncatedBech(bech32: string, length?: number): string {
 export function parseNostrUrls(rawContent: string): string {
 	const nostrPattern = /nostr:(nprofile|nevent|naddr|npub1)(\w+)/g;
 	return rawContent.replace(nostrPattern, (match, type, id) => {
-		let nostrEntity = type + id;
-		let nostrEntityUrl = `${outNostrLinksUrl}/${nostrEntity}`;
+		const nostrEntity = type + id;
+		const nostrEntityUrl = `${outNostrLinksUrl}/${nostrEntity}`;
 		switch (type) {
 			case 'nprofile':
 				return `${nostrEntityUrl}`;

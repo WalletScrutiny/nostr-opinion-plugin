@@ -17,17 +17,25 @@ export default class Summariser {
 		this.trustedAuthors = trustedAuthors;
 	}
 
-	onReady = () =>
-		new Promise<void>(async (resolve) => {
-			await this.ndk.connect();
-			const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
+	onReady = () => {
+		return new Promise<void>((resolve, reject) => {
+			this.ndk
+				.connect()
+				.then(() => {
+					const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
 
-			const fetchEvents = await this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
-			fetchEvents.forEach((event) => {
-				const d = event.tags.find((tag) => tag[0] === 'd')[1];
-				this.opinions[d] = [...(this.opinions?.[d] || []), event];
-			});
+					return this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
+				})
+				.then((fetchEvents) => {
+					fetchEvents.forEach((event) => {
+						const d = event.tags.find((tag) => tag[0] === 'd')[1];
+						this.opinions[d] = [...(this.opinions?.[d] || []), event];
+					});
+					resolve();
+				})
+				.catch((err) => reject(err));
 		});
+	};
 
 	get(key: string) {
 		const ops = this.opinions[key];
