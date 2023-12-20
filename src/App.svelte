@@ -11,7 +11,7 @@
 	import Editor from './components/Editor.svelte';
 	import OpinionCard from "./components/OpinionCard.svelte";
 	import ndk from './stores/provider';
-	import {NDKlogin, fetchUserProfile, logout} from './utils/helper'
+	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
 	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
 	import Loader from './components/Loader.svelte';
@@ -46,7 +46,12 @@
 
 	const submit = async () => {
 		newOpinion.content = opinionContent;
-		!$ndk.signer && await NDKlogin();
+		const privkey = $localStore.pk;
+		if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
 		if (!newOpinion.content || !$ndk.signer) return;
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;

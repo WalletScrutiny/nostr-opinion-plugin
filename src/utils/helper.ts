@@ -1,4 +1,11 @@
-import { NDKUser, NDKEvent, type NDKUserProfile, NDKNip07Signer } from '@nostr-dev-kit/ndk';
+import {
+	NDKUser,
+	NDKEvent,
+	type NDKUserProfile,
+	NDKNip07Signer,
+	type NDKSigner,
+	NDKPrivateKeySigner
+} from '@nostr-dev-kit/ndk';
 import { localStore, ndkUser } from '../stores/stores';
 import { isNip05Valid as isNip05ValidStore } from '../stores/stores';
 import ndkStore from '../stores/provider';
@@ -58,7 +65,8 @@ export function logout() {
 	activeProfile.set(null);
 	localStore.update(() => {
 		return {
-			lastUserLogged: undefined
+			lastUserLogged: undefined,
+			pk: undefined
 		};
 	});
 }
@@ -76,7 +84,28 @@ export async function NDKlogin(): Promise<NDKUser | undefined> {
 			npub: ndkCurrentUser.npub
 		});
 		ndkUser.set(user);
-		localStore.set({ lastUserLogged: ndkCurrentUser.npub });
+		localStore.set({ lastUserLogged: ndkCurrentUser.npub, pk: undefined });
+		return user;
+	} catch (error) {
+		return undefined;
+	}
+}
+
+export async function privkeyLogin(pk: string): Promise<NDKUser | undefined> {
+	if (!pk) return undefined;
+	try {
+		const $ndk = getStore(ndkStore);
+		const signer = new NDKPrivateKeySigner(pk);
+		$ndk.signer = signer;
+		ndkStore.set($ndk);
+		const ndkCurrentUser = await signer.user();
+		console.log(ndkCurrentUser);
+		let user = $ndk.getUser({
+			pubkey: ndkCurrentUser.pubkey,
+			npub: ndkCurrentUser.npub
+		});
+		ndkUser.set(user);
+		localStore.set({ lastUserLogged: ndkCurrentUser.npub, pk });
 		return user;
 	} catch (error) {
 		return undefined;

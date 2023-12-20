@@ -1,52 +1,42 @@
-<script>
-  import { generatePrivateKey, getPublicKey } from 'nostr-tools';
+<script >
   import { onMount } from 'svelte';
-  import { activeProfile } from '../stores/stores';
 	import { profileImageUrl } from '../utils/constants';
+	import { NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
+  import ndk from "../stores/provider";
+	import { ndkUser } from '../stores/stores';
+	import { privkeyLogin } from '../utils/helper';
 
-  let privkey = '';
+  let privkey="";
   let pubkey = '';
   let showProfileSetup = false;
   let name = '';
   let about = '';
   let imageUrl = '';
+  let pk;
 
 
   onMount(() => {
-    privkey = generatePrivateKey();
+    pk = NDKPrivateKeySigner.generate();
+    privkey = pk.privateKey;
   });
 
   const saveProfile = async() => {
-    if (!privkey) return;
-	pubkey = getPublicKey(privkey);
-	
-	let expertOpinions = (await import('../main')).expertOpinions;
-	
+  if (!privkey) return;
+
 	if(imageUrl == '' || !imageUrl) {
 		imageUrl = profileImageUrl+pubkey ;
 	}
-	
-    $activeProfile = {
-      privkey,
-	  flag: true,
-      pubkey,
-	  name,
-	  about,
-	  picture:imageUrl
-    };
-	const publishEventObject = {
+  const publishEventObject = {
 		name,
 		about,
-		picture:imageUrl,
-		pubkey
+		image:imageUrl,
 	}
-	let publishEvent = {
-		kind: 0,
-		pubkey: getPublicKey(privkey),
-		content: JSON.stringify(publishEventObject),
-		tags:[],
-		created_at: Math.floor(Date.now() / 1000)
-	};
+  $ndk.signer = pk;
+  $ndkUser = await $ndk.signer.user();
+  $ndkUser.ndk = $ndk;
+  $ndkUser.profile = publishEventObject;
+  await $ndkUser.publish();
+  await privkeyLogin(privkey);
 };
 
   const copyToClipboard = () => {
@@ -92,7 +82,7 @@
     Copy my key
   </button>
 </div>
-<button on:click={()=>showProfileSetup=true} 
+<button on:click={()=>showProfileSetup=!showProfileSetup} 
         style="background-color: #6c757d; color: white; border: none; padding: 10px 15px; 
                font-family: 'Lato', sans-serif; border-radius: 4px; cursor: pointer; margin-top: 1em;">
   Continue

@@ -14,10 +14,10 @@
     import { marked } from 'marked';
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
     import OpinionCard from "./OpinionCard.svelte";
-	import { ndkUser } from '../stores/stores';
+	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
 	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
-	import { NDKlogin, fetchUserProfile } from '../utils/helper';
+	import { NDKlogin, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	import Loader from './Loader.svelte';
 	
@@ -77,7 +77,12 @@
     };
 
     async function likePost(event){
-        !$ndk.signer && await NDKlogin();
+        const privkey = $localStore.pk;
+		if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey)
         let content = '+';
@@ -110,7 +115,12 @@
         }       
     };
     async function dislikePost(event){
-        !$ndk.signer && await NDKlogin();
+        const privkey = $localStore.pk;
+		if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
         let content = '-';
@@ -192,7 +202,13 @@
     });
 
     const submitReply = async() =>{
-        !$ndk.signer && await NDKlogin();
+        const privkey = $localStore.pk;
+        if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
+		
         if(opinionContent === '' || !opinionContent)
         return;
         console.log(event);
