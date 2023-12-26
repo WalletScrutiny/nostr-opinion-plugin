@@ -155,7 +155,6 @@
 
     onMount(async () => {
         const renderer = new marked.Renderer();
-        console.log(renderer);
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
 

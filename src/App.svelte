@@ -17,7 +17,6 @@
 	import Loader from './components/Loader.svelte';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
-	import Viewer from './components/Viewer.svelte';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;
