@@ -12,11 +12,12 @@
 	import OpinionCard from "./components/OpinionCard.svelte";
 	import ndk from './stores/provider';
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
-	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
+	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
 	import Loader from './components/Loader.svelte';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
+	import Viewer from './components/Viewer.svelte';
 
 	export let name: string;
 	let expertOpinions: typeof import('./main').expertOpinions;

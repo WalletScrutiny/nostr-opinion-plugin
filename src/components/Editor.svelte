@@ -31,8 +31,10 @@
 			el: container,
 			height: '200px',
 			initialEditType: 'markdown',
-			previewStyle: 'vertical',
+			previewStyle: 'tab',
 			initialValue: opinionContent,
+			placeholder:'Enter your opinion',
+			theme:'dark',
 			events: {
 				change: function (data) {
 					getData();

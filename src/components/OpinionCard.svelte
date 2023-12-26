@@ -154,6 +154,24 @@
     };
 
     onMount(async () => {
+        const renderer = new marked.Renderer();
+        console.log(renderer);
+
+        const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
+
+        renderer.image = (href, title, text) => {
+            return `<img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" />`;
+        };
+
+        renderer.link = (href, title, text) => {
+            if (href.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) != null) {
+                return `<img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" />`;
+            }
+            return `<a href="${href}" title="${title}">${text}</a>`;
+        };
+
+        marked.setOptions({ renderer });
+
         expertOpinions = (await import('../main')).expertOpinions;
     
         editLvl+=1;
