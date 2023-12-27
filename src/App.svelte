@@ -19,6 +19,7 @@
 	import FilePreview from './components/FilePreview.svelte';
 
 	export let name: string;
+	
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: any[] = [];
 	let filteredEvents: any[] = [];
@@ -215,7 +216,7 @@
 				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">We use Nostr to store opinions. You can post and access your posts via a unique private key.</p>
 				<form on:submit|preventDefault={submit} id="review-input-details-container">
 					<div style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;">
-						<img src={profiles[$ndkUser?.pubkey].content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
+						<img src={profiles[$ndkUser?.pubkey]?.content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
 						<span style="color: black; font-size: 24px;">
 							{(!profiles[$ndkUser?.pubkey]?.content?.name || profiles[$ndkUser?.pubkey]?.content?.name=='') ? $ndkUser.npub.slice(0,4)+"..."+$ndkUser.npub.slice(-4) : profiles[$ndkUser?.pubkey]?.content?.name}
 						</span>
@@ -247,7 +248,7 @@
 				{#if showLoginOrRegister === 'login'}
 					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
 				{:else if showLoginOrRegister === 'register'}
-					<Register />
+					<Register bind:profiles bind:showNewOpinion/>
 				{/if}
 			{/if}
 		</div>
@@ -272,27 +273,6 @@
 	}
 	h1 {
 		margin: 5px 0;
-	}
-	hr {
-		height: 1px;
-		background-color: var(--border-color);
-		border: none;
-	}
-	.content {
-		color: var(--content-text-color);
-		margin: 2px 0 10px 0;
-	}
-	.pubkey {
-		color: var(--pubkey-text-color);
-		font-weight: 600;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin: 2px 0;
-	}
-	.date {
-		font-style: italic;
-		color: var(--date-text-color);
 	}
 	.top-nav {
 		display: flex;
@@ -380,12 +360,6 @@
 		background-color:var(--sentiment-button-background-color);
 		color: #ffffff;
 		
-	}
-
-	.card-button{
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
 	}
 </style>
 					

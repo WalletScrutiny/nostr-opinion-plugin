@@ -17,7 +17,7 @@
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
 	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
-	import { NDKlogin, fetchUserProfile, privkeyLogin } from '../utils/helper';
+	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	import Loader from './Loader.svelte';
 	
@@ -52,6 +52,7 @@
     let showFullText = false;
     let ATag = event.id;
     let isDeleted = false;
+    let relativeTime = '';
     
     let fileArray=[];
 
@@ -164,9 +165,9 @@
 
         renderer.link = (href, title, text) => {
             if (href.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) != null) {
-                return `<img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" />`;
+                return `<a href="${href}" target="_blank"><img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" /></a>`;
             }
-            return `<a href="${href}" title="${title}">${text}</a>`;
+            return `<a href="${href}" title="${title}" target="_blank">${text}</a>`;
         };
 
         marked.setOptions({ renderer });
@@ -174,6 +175,7 @@
         expertOpinions = (await import('../main')).expertOpinions;
     
         editLvl+=1;
+        relativeTime = calculateRelativeTime(event.created_at);
         let ndkFilter : NDKFilter = {kinds:[kindNotes],"#a":[ATag]};
         let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
         fetchedEvents.forEach(async(event1)=>{
@@ -276,7 +278,7 @@
             {/if}
         </div>
         <p class="date" style="color: #757575; font-size: 14px;">
-            {new Date(event.created_at * 1000).toLocaleDateString()}
+            {relativeTime}
         </p>
     </div>
     {#if !edit}

@@ -99,7 +99,6 @@ export async function privkeyLogin(pk: string): Promise<NDKUser | undefined> {
 		$ndk.signer = signer;
 		ndkStore.set($ndk);
 		const ndkCurrentUser = await signer.user();
-		console.log(ndkCurrentUser);
 		let user = $ndk.getUser({
 			pubkey: ndkCurrentUser.pubkey,
 			npub: ndkCurrentUser.npub
@@ -140,3 +139,14 @@ export function parseNostrUrls(rawContent: string): string {
 		}
 	});
 }
+
+export function calculateRelativeTime(timestamp) {
+    const now = new Date();
+    const eventDate = new Date(timestamp * 1000);
+    const diffInSeconds = Math.floor((now - eventDate) / 1000);
+
+    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  }

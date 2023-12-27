@@ -14,6 +14,8 @@
   let imageUrl = '';
   let pk;
 
+  export let profiles;
+  export let showNewOpinion;
 
   onMount(() => {
     pk = NDKPrivateKeySigner.generate();
@@ -21,22 +23,26 @@
   });
 
   const saveProfile = async() => {
-  if (!privkey) return;
+    if (!privkey) return;
 
-	if(imageUrl == '' || !imageUrl) {
-		imageUrl = profileImageUrl+pubkey ;
-	}
-  const publishEventObject = {
-		name,
-		about,
-		image:imageUrl,
-	}
-  $ndk.signer = pk;
-  $ndkUser = await $ndk.signer.user();
-  $ndkUser.ndk = $ndk;
-  $ndkUser.profile = publishEventObject;
-  await $ndkUser.publish();
-  await privkeyLogin(privkey);
+    if(imageUrl == '' || !imageUrl) {
+      imageUrl = profileImageUrl+pubkey ;
+    }
+    const publishEventObject = {
+      name,
+      about,
+      image:imageUrl,
+    }
+    $ndk.signer = pk;
+    $ndkUser = await $ndk.signer.user();
+    $ndkUser.ndk = $ndk;
+    let content = publishEventObject;
+    content = {...content,pubkey:$ndkUser.pubkey};
+    $ndkUser.profile = publishEventObject;
+    profiles[$ndkUser.pubkey] = {content};
+    showNewOpinion = false;
+    await $ndkUser.publish();
+    await privkeyLogin(privkey);
 };
 
   const copyToClipboard = () => {

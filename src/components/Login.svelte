@@ -12,7 +12,7 @@
 	export let profiles;
 	export let opinionContent:string;
 	export let name:string;
-	export let showNewOpinion:boolean;
+	export let showNewOpinion;
 
 	const login = async (nostrKeyMethod:string|undefined) => {
 		if(!nostrKeyMethod)
@@ -39,12 +39,11 @@
 			content.image = profileImageUrl+$ndkUser.pubkey
 		if(!content.pubkey)
 			content.pubkey = $ndkUser.pubkey;
-				
-		showNewOpinion=false;
 		const ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name],authors:[$ndkUser.pubkey]};
 		let fetchEvent = await $ndk.fetchEvent(ndkFilter,{
 			closeOnEose:true,
 		});
+		showNewOpinion = false;
 		profiles[$ndkUser.pubkey] = {content};
 		if(fetchEvent && fetchEvent.content)
 		opinionContent= fetchEvent.content;
