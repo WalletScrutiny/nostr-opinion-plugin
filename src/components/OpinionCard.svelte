@@ -24,6 +24,7 @@
 	import FilePreview from './FilePreview.svelte';
 	import Upload from './Upload.svelte';
 	import DeleteEventData from '../utils/deleteEventData.svelte';
+	import TextArea from './TextArea.svelte';
 
     export let event;
     export let profiles;
@@ -355,7 +356,8 @@
         {/if}
     </div>
     {#if reply}
-		<Editor bind:opinionContent />
+        <TextArea bind:opinionContent/>
+		<!-- <Editor bind:opinionContent /> -->
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
         {#each fileArray as file, index (file.url)}
         <FilePreview key={index} file={file.files} onDelete={() => deleteFile(file)} />
