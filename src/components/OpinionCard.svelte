@@ -16,9 +16,9 @@
     import OpinionCard from "./OpinionCard.svelte";
 	import { ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
-	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
+	import { NDKEvent,NDKKind,type NDKFilter } from '@nostr-dev-kit/ndk';
 	import { NDKlogin, fetchUserProfile } from '../utils/helper';
-	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
+	import { kindOpinion, profileImageUrl } from '../utils/constants';
 	import Loader from './Loader.svelte';
 	
 	import FilePreview from './FilePreview.svelte';
@@ -89,7 +89,7 @@
             }
         } 
         const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindReaction;
+        ndkEvent.kind = NDKKind.Reaction;
         ndkEvent.content = content;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
         await ndkEvent.publish()
@@ -122,7 +122,7 @@
             }
         } 
         const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindReaction;
+        ndkEvent.kind = NDKKind.Reaction;
         ndkEvent.content=content;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
         await ndkEvent.publish();
@@ -147,7 +147,7 @@
         expertOpinions = (await import('../main')).expertOpinions;
     
         editLvl+=1;
-        let ndkFilter : NDKFilter = {kinds:[kindNotes],"#a":[ATag]};
+        let ndkFilter : NDKFilter = {kinds:[NDKKind.Text],"#a":[ATag]};
         let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
         fetchedEvents.forEach(async(event1)=>{
             replyEvents.push({...event1});
@@ -162,7 +162,7 @@
 
         let latestTime = 0;
 
-        ndkFilter = {kinds:[kindReaction],"#a":[ATag]};
+        ndkFilter = {kinds:[NDKKind.Reaction],"#a":[ATag]};
         let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
         fetchedReactionEvents.forEach((event2)=>{
             let idx = reactions.findIndex((e)=> e.pubkey === event2.pubkey)
@@ -197,7 +197,7 @@
         return;
         console.log(event);
         const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindNotes;
+        ndkEvent.kind = NDKKind.Text;
         ndkEvent.content = opinionContent;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
         await ndkEvent.publish();

@@ -21,9 +21,11 @@
 			"parser": "svelte-eslint-parser",
 			"parserOptions": {
 				"parser": "@typescript-eslint/parser"
-			  }
+			}
 		}
 	],
 	"plugins": ["@typescript-eslint"],
-	"rules": {}
+	"rules": {
+		"@typescript-eslint/no-explicit-any": "error"
+	}
 }
