@@ -14,16 +14,17 @@
     import { marked } from 'marked';
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
     import OpinionCard from "./OpinionCard.svelte";
-	import { ndkUser } from '../stores/stores';
+	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
 	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
-	import { NDKlogin, fetchUserProfile } from '../utils/helper';
+	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	import Loader from './Loader.svelte';
 	
 	import FilePreview from './FilePreview.svelte';
 	import Upload from './Upload.svelte';
 	import DeleteEventData from '../utils/deleteEventData.svelte';
+	import TextArea from './TextArea.svelte';
 
     export let event;
     export let profiles;
@@ -52,6 +53,7 @@
     let showFullText = false;
     let ATag = event.id;
     let isDeleted = false;
+    let relativeTime = '';
     
     let fileArray=[];
 
@@ -77,7 +79,12 @@
     };
 
     async function likePost(event){
-        !$ndk.signer && await NDKlogin();
+        const privkey = $localStore.pk;
+		if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey)
         let content = '+';
@@ -110,7 +117,12 @@
         }       
     };
     async function dislikePost(event){
-        !$ndk.signer && await NDKlogin();
+        const privkey = $localStore.pk;
+		if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
         let content = '-';
@@ -144,9 +156,27 @@
     };
 
     onMount(async () => {
+        const renderer = new marked.Renderer();
+
+        const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
+
+        renderer.image = (href, title, text) => {
+            return `<img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" />`;
+        };
+
+        renderer.link = (href, title, text) => {
+            if (href.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) != null) {
+                return `<a href="${href}" target="_blank"><img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" /></a>`;
+            }
+            return `<a href="${href}" title="${title}" target="_blank">${text}</a>`;
+        };
+
+        marked.setOptions({ renderer });
+
         expertOpinions = (await import('../main')).expertOpinions;
     
         editLvl+=1;
+        relativeTime = calculateRelativeTime(event.created_at);
         let ndkFilter : NDKFilter = {kinds:[kindNotes],"#a":[ATag]};
         let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
         fetchedEvents.forEach(async(event1)=>{
@@ -192,7 +222,13 @@
     });
 
     const submitReply = async() =>{
-        !$ndk.signer && await NDKlogin();
+        const privkey = $localStore.pk;
+        if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
+		
         if(opinionContent === '' || !opinionContent)
         return;
         console.log(event);
@@ -228,7 +264,7 @@
             {#if profiles[event.pubkey]}
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <img src={profiles[event.pubkey].content?.image ? profiles[event.pubkey].content?.image :profileImageUrl+event.pubkey} alt="Profile Picture" style="border-radius: 50%; width: 40px; height: 40px; object-fit: cover;"/>
-                    <span>
+                    <span style="color:black;">
                         {profiles[event.pubkey].content?.name || convertNostrPubKeyToBech32(event.pubkey).slice(0,8)+"..."+convertNostrPubKeyToBech32(event.pubkey).slice(-4)}
                     </span>
                 </div>
@@ -243,11 +279,11 @@
             {/if}
         </div>
         <p class="date" style="color: #757575; font-size: 14px;">
-            {new Date(event.created_at * 1000).toLocaleDateString()}
+            {relativeTime}
         </p>
     </div>
     {#if !edit}
-    <p class="content" style="color: #333; margin-bottom: 16px;">
+    <p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
         {@html showFullText ? marked(event.content) : marked(truncateText(event.content, maxLength))}
         {#if event.content.length > maxLength}
             <span class="read-more" on:click={toggleFullText} style="color: var(--button-background-color); cursor: pointer;">
@@ -255,6 +291,7 @@
             </span>
         {/if}
     </p>
+    
     {:else}
     <div style="margin: 2rem 0;">
         <form on:submit|preventDefault={submit}>
@@ -289,7 +326,7 @@
                     <LikeButton/>
                 {/if}
             </button>
-            <span style="font-size: 14px;">{likeCount|| 0}</span>
+            <span style="font-size: 14px;color:black;">{likeCount|| 0}</span>
         </div>
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
             <button on:click={() => dislikePost(event)} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
@@ -299,7 +336,7 @@
                         <DislikeButton/>
                     {/if}
             </button>
-            <span style="font-size: 14px;">{dislikeCount || 0}</span>
+            <span style="font-size: 14px; color:black;">{dislikeCount || 0}</span>
         </div>
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
             <button on:click={() => {reply = !reply; edit=false;opinionContent="";replyContent=false;}} style="background-color: transparent; border: none; cursor: pointer;">
@@ -320,7 +357,9 @@
         {/if}
     </div>
     {#if reply}
-		<Editor bind:opinionContent />
+        <div style="padding:1rem;">
+        <TextArea bind:opinionContent/>
+		<!-- <Editor bind:opinionContent /> -->
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
         {#each fileArray as file, index (file.url)}
         <FilePreview key={index} file={file.files} onDelete={() => deleteFile(file)} />
@@ -329,6 +368,7 @@
         <div style="display:flex; align-contents:center;">
 		<button style="padding: 7px 20px; border-radius: 3px;cursor: pointer;border: none;height: 2.5rem; background-color:#4DA84D;color:white" disabled={!$ndkUser} on:click={()=>{submitReply();reply=false;replyContent=false;}}>Reply</button>
         <Upload bind:fileArray bind:opinionContent/>
+        </div>
         </div>
 	{/if}
     {#if replyContent}

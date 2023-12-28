@@ -11,14 +11,15 @@
 	import Editor from './components/Editor.svelte';
 	import OpinionCard from "./components/OpinionCard.svelte";
 	import ndk from './stores/provider';
-	import {NDKlogin, fetchUserProfile, logout} from './utils/helper'
-	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
+	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
+	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
 	import Loader from './components/Loader.svelte';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 
 	export let name: string;
+	
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: any[] = [];
 	let filteredEvents: any[] = [];
@@ -46,7 +47,12 @@
 
 	const submit = async () => {
 		newOpinion.content = opinionContent;
-		!$ndk.signer && await NDKlogin();
+		const privkey = $localStore.pk;
+		if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
+            !$ndk.signer && await NDKlogin();
+        }
 		if (!newOpinion.content || !$ndk.signer) return;
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
@@ -150,7 +156,7 @@
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
 </script>
-
+<div style="background-color: white; border-radius:1rem;padding:1rem 0.5rem;">
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
 <p class="description">
 	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
@@ -191,7 +197,7 @@
 	>
 	{#if showNewOpinion}
 		<div class="add-opinion-init">
-			<h3>Add your opinion</h3>
+			<h3 style="color:black;">Add your opinion</h3>
 			<div class="description">
 				<p>
 					Thank you for contributing your security review of {name}. Please make sure to follow
@@ -204,13 +210,13 @@
 				</ul>
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
-				<p>Logged in as {$ndkUser?.npub || "0"}</p>
+				<p style="color:black;">Logged in as {$ndkUser?.npub || "0"}</p>
 				<button class="primary-btn" on:click={Logout}>Logout</button>
-				<h3>Share your opinion</h3>
+				<h3 style="color:black;">Share your opinion</h3>
 				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">We use Nostr to store opinions. You can post and access your posts via a unique private key.</p>
 				<form on:submit|preventDefault={submit} id="review-input-details-container">
 					<div style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;">
-						<img src={profiles[$ndkUser?.pubkey].content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
+						<img src={profiles[$ndkUser?.pubkey]?.content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
 						<span style="color: black; font-size: 24px;">
 							{(!profiles[$ndkUser?.pubkey]?.content?.name || profiles[$ndkUser?.pubkey]?.content?.name=='') ? $ndkUser.npub.slice(0,4)+"..."+$ndkUser.npub.slice(-4) : profiles[$ndkUser?.pubkey]?.content?.name}
 						</span>
@@ -242,13 +248,13 @@
 				{#if showLoginOrRegister === 'login'}
 					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
 				{:else if showLoginOrRegister === 'register'}
-					<Register />
+					<Register bind:profiles bind:showNewOpinion/>
 				{/if}
 			{/if}
 		</div>
 	{/if}
 {/if}
-
+</div>
 <style>
 
 	:host {
@@ -264,36 +270,17 @@
 		--sentiment-button-background-color:#4DA84D;
 		font-family: Lato;
 		font-family: Arial, sans-serif;
+		background-color: black;
 	}
 	h1 {
 		margin: 5px 0;
-	}
-	hr {
-		height: 1px;
-		background-color: var(--border-color);
-		border: none;
-	}
-	.content {
-		color: var(--content-text-color);
-		margin: 2px 0 10px 0;
-	}
-	.pubkey {
-		color: var(--pubkey-text-color);
-		font-weight: 600;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin: 2px 0;
-	}
-	.date {
-		font-style: italic;
-		color: var(--date-text-color);
+		color: black;
 	}
 	.top-nav {
 		display: flex;
 		justify-content: space-between;
-		border-top: var(--border-color) 1px solid;
-		border-bottom: var(--border-color) 1px solid;
+		border-top: #dedede 1px solid;
+		border-bottom: #dedede 1px solid;
 		padding: 20px 0;
 	}
 	.nav-count {
@@ -303,14 +290,14 @@
 	.count-container {
 		display: flex;
 		flex-direction: row;
-		color: var(--content-text-color);
+		color: black;
 	}
 	.opinion-top {
 		display: flex;
 		justify-content: space-between;
 	}
 	.description {
-		color: var(--description-text-color);
+		color: #808080;
 		margin: 10px 0;
 	}
 	.blank-btn {
@@ -355,7 +342,7 @@
 		display:flex;
 		justify-content:center;
 		align-items:center;
-		color: var(--description-text-color);
+		color: #808080;
 	}
 
 	.btn-standard:hover {
@@ -375,12 +362,6 @@
 		background-color:var(--sentiment-button-background-color);
 		color: #ffffff;
 		
-	}
-
-	.card-button{
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
 	}
 </style>
 					

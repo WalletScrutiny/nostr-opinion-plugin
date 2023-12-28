@@ -1,8 +1,9 @@
 <script lang="ts">
     import ndk from "../stores/provider";
-    import { NDKlogin } from "./helper";
+    import { NDKlogin, privkeyLogin } from "./helper";
 	import DeleteButton from "../components/icons/DeleteButton.svelte";
 	import { db } from "@nostr-dev-kit/ndk-cache-dexie";
+    import {  localStore } from '../stores/stores';
 
     export let eventID:string;
     export let isDeleted;
@@ -10,7 +11,12 @@
 
     async function deleteEventData(eventID:string) {
         try {
+            const privkey = $localStore.pk;
+		    if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+        } else {
             !$ndk.signer && await NDKlogin();
+        }
             const ndkEvent = await $ndk.fetchEvent({ids:[eventID]});
             await db.events.delete(eventID);
             await ndkEvent.delete();

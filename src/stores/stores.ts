@@ -25,7 +25,9 @@ activeProfile.subscribe((value) => {
 
 interface UserLocalStore {
 	lastUserLogged: string | undefined;
+	pk: string | undefined;
 }
 export const localStore: Writable<UserLocalStore> = localStorageStore('localStore', {
-	lastUserLogged: undefined
+	lastUserLogged: undefined,
+	pk: undefined
 });

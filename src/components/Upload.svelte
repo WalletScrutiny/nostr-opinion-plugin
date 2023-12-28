@@ -4,7 +4,8 @@
     import ndk from "../stores/provider";
     import UploadButton from './icons/UploadButton.svelte';
     import { VoidApi } from "@void-cat/api";
-    import {uploadUrl} from "../utils/constants"
+    import { uploadUrl } from "../utils/constants"
+    import { localStore } from '../stores/stores';
     let fileInput;
     let files;
     export let fileArray
@@ -16,7 +17,12 @@
     const handleChange=async (event)=>{
         console.log(opinionContent);
         for (files of event.target.files){
-            !$ndk.signer && (await NDKlogin()); 
+            const privkey = $localStore.pk;
+		    if(privkey){
+            !$ndk.signer && await privkeyLogin(privkey);
+            } else {
+                !$ndk.signer && await NDKlogin();
+            }
             const uploader = voidCatApi.getUploader(files);
 
             const response = await uploader.upload({
@@ -40,4 +46,4 @@
 </script>
 
 <input type="file" style="display:none" accept="image/*" bind:this={fileInput} on:change = {handleChange}/>
-<button on:click={fileInput.click()} style="border: none;background-color:white;cursor:pointer"><UploadButton /></button>
+<button on:click|preventDefault={fileInput.click()} style="border: none;background-color:white;cursor:pointer"><UploadButton /></button>
