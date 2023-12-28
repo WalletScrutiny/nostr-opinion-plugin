@@ -264,7 +264,7 @@
             {#if profiles[event.pubkey]}
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <img src={profiles[event.pubkey].content?.image ? profiles[event.pubkey].content?.image :profileImageUrl+event.pubkey} alt="Profile Picture" style="border-radius: 50%; width: 40px; height: 40px; object-fit: cover;"/>
-                    <span>
+                    <span style="color:black;">
                         {profiles[event.pubkey].content?.name || convertNostrPubKeyToBech32(event.pubkey).slice(0,8)+"..."+convertNostrPubKeyToBech32(event.pubkey).slice(-4)}
                     </span>
                 </div>
@@ -283,7 +283,7 @@
         </p>
     </div>
     {#if !edit}
-    <p class="content" style="color: #333; margin-bottom: 16px;">
+    <p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
         {@html showFullText ? marked(event.content) : marked(truncateText(event.content, maxLength))}
         {#if event.content.length > maxLength}
             <span class="read-more" on:click={toggleFullText} style="color: var(--button-background-color); cursor: pointer;">
@@ -291,6 +291,7 @@
             </span>
         {/if}
     </p>
+    
     {:else}
     <div style="margin: 2rem 0;">
         <form on:submit|preventDefault={submit}>
@@ -325,7 +326,7 @@
                     <LikeButton/>
                 {/if}
             </button>
-            <span style="font-size: 14px;">{likeCount|| 0}</span>
+            <span style="font-size: 14px;color:black;">{likeCount|| 0}</span>
         </div>
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
             <button on:click={() => dislikePost(event)} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
@@ -335,7 +336,7 @@
                         <DislikeButton/>
                     {/if}
             </button>
-            <span style="font-size: 14px;">{dislikeCount || 0}</span>
+            <span style="font-size: 14px; color:black;">{dislikeCount || 0}</span>
         </div>
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
             <button on:click={() => {reply = !reply; edit=false;opinionContent="";replyContent=false;}} style="background-color: transparent; border: none; cursor: pointer;">
@@ -356,6 +357,7 @@
         {/if}
     </div>
     {#if reply}
+        <div style="padding:1rem;">
         <TextArea bind:opinionContent/>
 		<!-- <Editor bind:opinionContent /> -->
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
@@ -366,6 +368,7 @@
         <div style="display:flex; align-contents:center;">
 		<button style="padding: 7px 20px; border-radius: 3px;cursor: pointer;border: none;height: 2.5rem; background-color:#4DA84D;color:white" disabled={!$ndkUser} on:click={()=>{submitReply();reply=false;replyContent=false;}}>Reply</button>
         <Upload bind:fileArray bind:opinionContent/>
+        </div>
         </div>
 	{/if}
     {#if replyContent}

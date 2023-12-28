@@ -46,4 +46,4 @@
 </script>
 
 <input type="file" style="display:none" accept="image/*" bind:this={fileInput} on:change = {handleChange}/>
-<button on:click={fileInput.click()} style="border: none;background-color:white;cursor:pointer"><UploadButton /></button>
+<button on:click|preventDefault={fileInput.click()} style="border: none;background-color:white;cursor:pointer"><UploadButton /></button>

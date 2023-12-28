@@ -8,10 +8,23 @@
 	export let opinionContent;
 	let isInternalUpdate = false;
 
+	const convertImageUrlsToMarkdown = (content) => {
+    // This regex matches URLs that are not already part of Markdown image syntax
+    const imageUrlRegex = /(?<!\]\()https?:\/\/\S*\.(jpg|jpeg|png|gif|svg|webp)(?!\))/g;
+    return content.replace(imageUrlRegex, (url) => {
+        // Replace only if the URL is not already in Markdown image format
+        if (!url.startsWith('![](')) {
+            return `![](${url})`;
+        }
+        return url;
+    });
+};
+
 	$: {
         if (editor && !isInternalUpdate) {
             const currentContent = editor.getMarkdown();
             if (opinionContent !== currentContent) {
+				opinionContent = convertImageUrlsToMarkdown(opinionContent);
                 editor.setMarkdown(opinionContent);
             }
         }
@@ -51,4 +64,3 @@
 
 <style>
 </style>
-
