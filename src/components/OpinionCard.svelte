@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import {fade, fly, slide} from "svelte/transition";
     import Editor from './Editor.svelte';
     import Positive from './icons/Positive.svelte';
     import Neutral from './icons/Neutral.svelte';
@@ -19,7 +20,6 @@
 	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
 	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
-	import Loader from './Loader.svelte';
 	
 	import FilePreview from './FilePreview.svelte';
 	import Upload from './Upload.svelte';
@@ -154,8 +154,7 @@
             disliked = false;
         }
     };
-
-    onMount(async () => {
+    const initialization=async()=>{
         const renderer = new marked.Renderer();
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
@@ -219,6 +218,10 @@
                 }
         })
         loading = false;
+    }
+    initialization();
+
+    onMount(async () => {
     });
 
     const submitReply = async() =>{
@@ -249,7 +252,7 @@
 </script>
 {#if !isDeleted}
 {#if !loading && expertOpinions}
-<div class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
+<div transition:slide={{duration:1000}} class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
     <div class="opinion-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div class="pubkey" style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 500;">
             <div>
@@ -357,7 +360,7 @@
         {/if}
     </div>
     {#if reply}
-        <div style="padding:1rem;">
+        <div transition:fade style="padding:1rem;">
         <TextArea bind:opinionContent/>
 		<!-- <Editor bind:opinionContent /> -->
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
@@ -374,11 +377,11 @@
     {#if replyContent}
     {#each replyEvents as event (event.id)} 
     <!-- Event loading!!! -->
-    <OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyCount}/>
+    <svelte:self {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyCount}/>
     {/each}
     {/if}
 </div>
 {:else}
-	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;"><Loader/></p>
+	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">Loading...</p>
 {/if}
 {/if}

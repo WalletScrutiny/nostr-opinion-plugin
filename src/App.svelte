@@ -1,7 +1,7 @@
 <svelte:options customElement="nostr-opinion" />
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { afterUpdate, beforeUpdate, onDestroy, onMount } from 'svelte';
 	import {  localStore, ndkUser } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
@@ -14,9 +14,9 @@
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
 	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
-	import Loader from './components/Loader.svelte';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
+	import { fade, slide } from 'svelte/transition';
 
 	export let name: string;
 	
@@ -120,7 +120,8 @@
 		return {content};
 	}
 
-	onMount(async () => {
+	const initialization = async()=> {
+		console.log("on initialization");
 		expertOpinions = (await import('./main')).expertOpinions;
 		try {
 			await $ndk.connect();
@@ -144,6 +145,20 @@
 		} catch (error) {
 			console.log(error);
 		}
+	}
+	initialization();
+
+	onMount(async () => {
+		console.log("On Mount");
+	});
+	beforeUpdate(()=>{
+		console.log("Before update");
+	});
+	afterUpdate(()=>{
+		console.log("After update");
+	});
+	onDestroy(()=>{
+		console.log("onDestory");
 	});
 
 	const Logout = () => {
@@ -156,7 +171,7 @@
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
 </script>
-<div style="background-color: white; border-radius:1rem;padding:1rem 0.5rem;">
+<div class = "lets-see" style="border-radius:1rem;padding:1rem 0.5rem;">
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
 <p class="description">
 	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
@@ -164,9 +179,9 @@
 	bitcoin.
 </p>
 {#if loading}
-	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;"><Loader/></p>
+	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">loading...</p>
 {:else}
-	<nav class="top-nav">
+	<nav class="top-nav" transition:fade>
 		<div class="count-container">
 			<span class="nav-count"><Positive /> {sentimentCount['1']} positive</span>
 			<span class="nav-count"><Neutral /> {sentimentCount['0']} neutral</span>
@@ -187,16 +202,16 @@
 			>
 		</div>
 	</nav>
+	<div class="opinion-container" transition:slide>
 	{#each filteredEvents as event (event.id)}
-		<div class="opinion-container">
-			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
-		</div>
+		<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
 	{/each}
+	</div>
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
 	>
 	{#if showNewOpinion}
-		<div class="add-opinion-init">
+		<div class="add-opinion-init" transition:fade>
 			<h3 style="color:black;">Add your opinion</h3>
 			<div class="description">
 				<p>
@@ -241,6 +256,7 @@
 					</div>
 				</form> 
 			{:else}
+				<div transition:slide>
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
 					>Register</button
@@ -250,12 +266,15 @@
 				{:else if showLoginOrRegister === 'register'}
 					<Register bind:profiles bind:showNewOpinion/>
 				{/if}
+				</div>
 			{/if}
 		</div>
 	{/if}
 {/if}
 </div>
 <style>
+	
+
 
 	:host {
 		--border-color: #dedede;
