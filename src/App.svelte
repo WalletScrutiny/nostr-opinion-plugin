@@ -1,7 +1,6 @@
 <svelte:options customElement="nostr-opinion" />
 
 <script lang="ts">
-	import { afterUpdate, beforeUpdate, onDestroy, onMount } from 'svelte';
 	import {  localStore, ndkUser } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
@@ -44,6 +43,28 @@
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
 	let fileArray=[];
+
+	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
+	const sub = $ndk.subscribe(ndkFilter,{closeOnEose:false});
+	sub.on('event',async (event,relay)=>{
+		const value = allEvents.filter((e)=>{
+			return e.pubkey === event.pubkey;
+		});
+		if(value.length) {
+			allEvents = allEvents.map((e)=>{
+				if(e.pubkey === event.pubkey) {
+					return event;
+				} else {
+					return e;
+				}
+			});
+			console.log(allEvents);
+		} else {
+			allEvents = [...allEvents, {...event}];
+			profiles[event.pubkey] = await findUserProfileData(event.pubkey);
+		}
+		sortEvents();
+	});
 
 	const submit = async () => {
 		newOpinion.content = opinionContent;
@@ -121,7 +142,6 @@
 	}
 
 	const initialization = async()=> {
-		console.log("on initialization");
 		expertOpinions = (await import('./main')).expertOpinions;
 		try {
 			await $ndk.connect();
@@ -134,13 +154,6 @@
 				ndkUser.set(user);
 				profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 			}
-			let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name],limit:10};
-			const filteredEvents = await $ndk.fetchEvents(ndkFilter);
-			
-			filteredEvents.forEach(async (events)=>{
-				allEvents = [...allEvents, {...events}];
-				profiles[events.pubkey] = await findUserProfileData(events.pubkey);
-			});
 			loading = false;
 		} catch (error) {
 			console.log(error);
@@ -148,30 +161,19 @@
 	}
 	initialization();
 
-	onMount(async () => {
-		console.log("On Mount");
-	});
-	beforeUpdate(()=>{
-		console.log("Before update");
-	});
-	afterUpdate(()=>{
-		console.log("After update");
-	});
-	onDestroy(()=>{
-		console.log("onDestory");
-	});
-
 	const Logout = () => {
 		logout();
 		opinionContent="";
 	};
+
 	function deleteFile(fileToDelete) {
         const url = fileArray.filter(file => file === fileToDelete)[0].url;
         opinionContent = opinionContent.replace(url,"");
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
+
 </script>
-<div class = "lets-see" style="border-radius:1rem;padding:1rem 0.5rem;">
+
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
 <p class="description">
 	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
@@ -203,9 +205,9 @@
 		</div>
 	</nav>
 	<div class="opinion-container" transition:slide>
-	{#each filteredEvents as event (event.id)}
-		<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
-	{/each}
+		{#each filteredEvents as event (event.id)}
+			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
+		{/each}
 	</div>
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
@@ -271,11 +273,8 @@
 		</div>
 	{/if}
 {/if}
-</div>
+
 <style>
-	
-
-
 	:host {
 		--border-color: #dedede;
 		--content-text-color: #606060;

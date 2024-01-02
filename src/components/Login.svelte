@@ -44,7 +44,7 @@
 		let fetchEvent = await $ndk.fetchEvent(ndkFilter,{
 			closeOnEose:true,
 		});
-		showNewOpinion = false;
+		showNewOpinion = true;
 		profiles[$ndkUser.pubkey] = {content};
 		if(fetchEvent && fetchEvent.content)
 		opinionContent= fetchEvent.content;

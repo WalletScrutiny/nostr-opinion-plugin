@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import {fade, fly, slide} from "svelte/transition";
+    import {fade, slide} from "svelte/transition";
     import Editor from './Editor.svelte';
     import Positive from './icons/Positive.svelte';
     import Neutral from './icons/Neutral.svelte';
@@ -14,7 +13,6 @@
     import ApprovedBadge from './icons/ApprovedBadge.svelte';
     import { marked } from 'marked';
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
-    import OpinionCard from "./OpinionCard.svelte";
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
 	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
@@ -45,7 +43,6 @@
     let dislikeCount = 0;
     let edit = false;
     let reply = false;
-    let replyCount = 0;
     let replyContent = false;
     let loading = true;
     let liked = false;
@@ -78,7 +75,7 @@
         selectNegative = sentiment === '-1';
     };
 
-    async function likePost(event){
+    async function reactPost(content){
         const privkey = $localStore.pk;
 		if(privkey){
             !$ndk.signer && await privkeyLogin(privkey);
@@ -87,13 +84,8 @@
         }
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey)
-        let content = '+';
-        if(idx != -1) {
-            if(reactions[idx].content === '+'){
-                content = '';
-            } else {
-                content = '+';
-            }
+        if(idx != -1 && reactions[idx].content === content) {
+            content = '';
         } 
         const ndkEvent = new NDKEvent($ndk);
         ndkEvent.kind = kindReaction;
@@ -111,48 +103,13 @@
         if(content === '+'){
             liked = true;
             disliked = false;
-        } else {
-            liked = false;
-            disliked = false;
-        }       
-    };
-    async function dislikePost(event){
-        const privkey = $localStore.pk;
-		if(privkey){
-            !$ndk.signer && await privkeyLogin(privkey);
-        } else {
-            !$ndk.signer && await NDKlogin();
-        }
-        if(!$ndkUser) return;
-        let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
-        let content = '-';
-        if(idx != -1) {
-            if(reactions[idx].content === '-'){
-                content = '';
-            } else {
-                content = '-';
-            }
-        } 
-        const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindReaction;
-        ndkEvent.content=content;
-        ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
-        await ndkEvent.publish();
-        idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
-        if(idx != -1) {
-            reactions[idx] = {pubkey:$ndkUser.pubkey,content,timestamp:Date.now()};
-        } else {
-            reactions.push({pubkey:$ndkUser.pubkey,content,timestamp:Date.now()});
-        }
-        likeCount = reactions.filter((e)=>(e.content === '+')).length;
-        dislikeCount = reactions.filter((e)=>(e.content === '-')).length;
-        if(content === '-'){
+        } else if (content === '-'){
             liked = false;
             disliked = true;
         } else {
             liked = false;
             disliked = false;
-        }
+        }       
     };
     const initialization=async()=>{
         const renderer = new marked.Renderer();
@@ -176,11 +133,11 @@
     
         editLvl+=1;
         relativeTime = calculateRelativeTime(event.created_at);
+        loading = false;
         let ndkFilter : NDKFilter = {kinds:[kindNotes],"#a":[ATag]};
-        let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
+        let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:false});
         fetchedEvents.forEach(async(event1)=>{
-            replyEvents.push({...event1});
-            replyCount = replyEvents.length;
+            replyEvents = [...replyEvents,{...event1}];
             const content = await fetchUserProfile(event1.pubkey);
             if(!content.image)
                 content.image = profileImageUrl+event1.pubkey ;
@@ -192,7 +149,7 @@
         let latestTime = 0;
 
         ndkFilter = {kinds:[kindReaction],"#a":[ATag]};
-        let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
+        let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:false});
         fetchedReactionEvents.forEach((event2)=>{
             let idx = reactions.findIndex((e)=> e.pubkey === event2.pubkey)
                 if(idx != -1) {
@@ -217,13 +174,9 @@
                     }
                 }
         })
-        loading = false;
+        
     }
     initialization();
-
-    onMount(async () => {
-    });
-
     const submitReply = async() =>{
         const privkey = $localStore.pk;
         if(privkey){
@@ -240,8 +193,7 @@
         ndkEvent.content = opinionContent;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
         await ndkEvent.publish();
-        replyEvents.push({...ndkEvent});
-        replyCount = replyEvents.length;
+        replyEvents = [...replyEvents,{...ndkEvent}];
         opinionContent="";       
 	}
     function deleteFile(fileToDelete) {
@@ -322,7 +274,7 @@
     {/if}
     <div style="display: flex; gap: 2rem;">
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
-            <button on:click={() => likePost(event)} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
+            <button on:click={() => reactPost("+")} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
                 {#if liked === true}
                     <LikedButton/>
                 {:else}
@@ -332,7 +284,7 @@
             <span style="font-size: 14px;color:black;">{likeCount|| 0}</span>
         </div>
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
-            <button on:click={() => dislikePost(event)} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
+            <button on:click={() => reactPost("-")} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
                     {#if disliked === true}
                         <DislikedButton/>
                     {:else}
@@ -345,7 +297,7 @@
             <button on:click={() => {reply = !reply; edit=false;opinionContent="";replyContent=false;}} style="background-color: transparent; border: none; cursor: pointer;">
                 <ReplyButton/>
             </button>
-            <button on:click={()=>{replyContent=!replyContent;}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"><span style="font-size: 14px; pointer:cursor;">{replyCount}</span></button>
+            <button on:click={()=>{replyContent=!replyContent;}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"><span style="font-size: 14px; pointer:cursor;">{replyEvents.length}</span></button>
         </div>
     
         {#if $ndkUser?.pubkey === event.pubkey}
@@ -377,7 +329,7 @@
     {#if replyContent}
     {#each replyEvents as event (event.id)} 
     <!-- Event loading!!! -->
-    <svelte:self {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyCount}/>
+    <svelte:self {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyEvents.length}/>
     {/each}
     {/if}
 </div>
