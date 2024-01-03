@@ -45,27 +45,28 @@
 	let fileArray=[];
 
 	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
-	const sub = $ndk.subscribe(ndkFilter,{closeOnEose:false});
-	sub.on('event',async (event,relay)=>{
-		const value = allEvents.filter((e)=>{
+	// const sub = $ndk.subscribe(ndkFilter,{closeOnEose:false});
+	const sub = $ndk.storeSubscribe(ndkFilter,{closeOnEose:false});
+	$: {
+		$sub.forEach(async(event)=>{
+			const value = allEvents.filter((e)=>{
 			return e.pubkey === event.pubkey;
-		});
-		if(value.length) {
-			allEvents = allEvents.map((e)=>{
-				if(e.pubkey === event.pubkey) {
-					return event;
-				} else {
-					return e;
-				}
 			});
-			console.log(allEvents);
-		} else {
-			allEvents = [...allEvents, {...event}];
-			profiles[event.pubkey] = await findUserProfileData(event.pubkey);
-		}
-		sortEvents();
-	});
-
+			if(value.length) {
+				allEvents = allEvents.map((e)=>{
+					if(e.pubkey === event.pubkey) {
+						return event;
+					} else {
+						return e;
+					}
+				});
+			} else {
+				allEvents = [...allEvents, {...event}];
+				profiles[event.pubkey] = await findUserProfileData(event.pubkey);
+			}
+			sortEvents();
+		})
+	};
 	const submit = async () => {
 		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
