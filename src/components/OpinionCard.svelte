@@ -15,9 +15,9 @@
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
-	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
+	import { NDKEvent,NDKRelaySet,type NDKFilter } from '@nostr-dev-kit/ndk';
 	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
-	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
+	import { DEFAULT_RELAY_URLS, kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	
 	import FilePreview from './FilePreview.svelte';
 	import Upload from './Upload.svelte';
@@ -51,6 +51,11 @@
     let ATag = event.id;
     let isDeleted = false;
     let relativeTime = '';
+    let published_at = false;
+    let relay = {
+        read: DEFAULT_RELAY_URLS.read,
+        write: DEFAULT_RELAY_URLS.write
+    }
     
     let fileArray=[];
 
@@ -91,7 +96,7 @@
         ndkEvent.kind = kindReaction;
         ndkEvent.content = content;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
-        await ndkEvent.publish()
+        await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write,$ndk))
         idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey)
         if(idx != -1) {
             reactions[idx] = {pubkey:$ndkUser.pubkey,content,timestamp:Date.now()};
@@ -112,6 +117,7 @@
         }       
     };
     const initialization=async()=>{
+        
         const renderer = new marked.Renderer();
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
@@ -173,10 +179,26 @@
                         disliked = false;
                     }
                 }
-        })
-        
+        });
+
+        let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[event.pubkey]},{closeOnEose:true});
+        if(fetchRelays) {
+            fetchRelays.getMatchingTags("r").map((tags)=>{
+                if(!relay.read.includes(tags[1])){
+                    relay.read.push(tags[1]);
+                }      
+            });
+            fetchRelays.getMatchingTags("w").map((tags)=>{
+                if(!relay.write.includes(tags[1])){
+                    relay.write.push(tags[1]);
+                }      
+            });
+        }
+        published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1];
     }
     initialization();
+
+    
     const submitReply = async() =>{
         const privkey = $localStore.pk;
         if(privkey){
@@ -187,12 +209,11 @@
 		
         if(opinionContent === '' || !opinionContent)
         return;
-        console.log(event);
         const ndkEvent = new NDKEvent($ndk);
         ndkEvent.kind = kindNotes;
         ndkEvent.content = opinionContent;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
-        await ndkEvent.publish();
+        await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write,$ndk));
         replyEvents = [...replyEvents,{...ndkEvent}];
         opinionContent="";       
 	}
@@ -249,7 +270,7 @@
     
     {:else}
     <div style="margin: 2rem 0;">
-        <form on:submit|preventDefault={submit}>
+        <form on:submit|preventDefault={()=>submit(published_at)}>
             <Editor bind:opinionContent={opinionContent} />
             <div id="sentiment-box" style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;">
                 <label for="sentiment" style="font-weight: 600;">Choose your overall sentiment</label>
@@ -301,7 +322,7 @@
         </div>
     
         {#if $ndkUser?.pubkey === event.pubkey}
-            <DeleteEventData eventID={event.id} bind:isDeleted bind:count/>
+            <DeleteEventData eventID={event.id} bind:isDeleted bind:count />
         {/if}
         {#if $ndkUser?.pubkey === event.pubkey && editLvl == 1}
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">

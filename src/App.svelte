@@ -12,7 +12,7 @@
 	import ndk from './stores/provider';
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
 	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
-	import { kindOpinion, profileImageUrl } from './utils/constants';
+	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
@@ -67,7 +67,7 @@
 			sortEvents();
 		})
 	};
-	const submit = async () => {
+	const submit = async (published_at) => {
 		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
 		if(privkey){
@@ -79,10 +79,21 @@
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
 		ndkEvent.content = newOpinion.content;
-		ndkEvent.tags = [
-			["d",name],
-			["sentiment",newOpinion.sentiment]
-		];
+		if(!published_at)
+		{
+			ndkEvent.tags = [
+				["d",name],
+				["sentiment",newOpinion.sentiment],
+				["published_at",(Date.now()+5000).toString()]
+			];
+		} else {
+			ndkEvent.tags = [
+				["d",name],
+				["sentiment",newOpinion.sentiment],
+				["published_at",published_at]
+			];
+		}
+		
 		ndkEvent.publish().then(()=>{
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
@@ -148,14 +159,29 @@
 			await $ndk.connect();
 			console.log("NDK connected successfully");
 			const isloggedIn = $localStore.lastUserLogged;
+			
 			if(isloggedIn && window) {
+				loading = false;
+				let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[isloggedIn]},{closeOnEose:true});
+				if(fetchRelays) {
+					fetchRelays.getMatchingTags("r").map((tags)=>{
+						if(!DEFAULT_RELAY_URLS.read.includes(tags[1])){
+							DEFAULT_RELAY_URLS.read.push(tags[1]);
+						}      
+					});
+					fetchRelays.getMatchingTags("w").map((tags)=>{
+						if(!DEFAULT_RELAY_URLS.write.includes(tags[1])){
+							DEFAULT_RELAY_URLS.write.push(tags[1]);
+						}      
+					});
+				}
 				let user = $ndk.getUser({
-					npub:$localStore.lastUserLogged,
+					npub:isloggedIn,
 				});
 				ndkUser.set(user);
 				profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 			}
-			loading = false;
+			
 		} catch (error) {
 			console.log(error);
 		}
