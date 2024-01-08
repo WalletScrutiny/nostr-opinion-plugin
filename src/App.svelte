@@ -1,7 +1,6 @@
 <svelte:options customElement="nostr-opinion" />
 
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import {  localStore, ndkUser } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
@@ -13,10 +12,10 @@
 	import ndk from './stores/provider';
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
 	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
-	import { kindOpinion, profileImageUrl } from './utils/constants';
-	import Loader from './components/Loader.svelte';
+	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
+	import { fade, slide } from 'svelte/transition';
 
 	export let name: string;
 	
@@ -45,7 +44,30 @@
 	let count = 0;
 	let fileArray=[];
 
-	const submit = async () => {
+	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
+	// const sub = $ndk.subscribe(ndkFilter,{closeOnEose:false});
+	const sub = $ndk.storeSubscribe(ndkFilter,{closeOnEose:false});
+	$: {
+		$sub.forEach(async(event)=>{
+			const value = allEvents.filter((e)=>{
+			return e.pubkey === event.pubkey;
+			});
+			if(value.length) {
+				allEvents = allEvents.map((e)=>{
+					if(e.pubkey === event.pubkey) {
+						return event;
+					} else {
+						return e;
+					}
+				});
+			} else {
+				allEvents = [...allEvents, {...event}];
+				profiles[event.pubkey] = await findUserProfileData(event.pubkey);
+			}
+			sortEvents();
+		})
+	};
+	const submit = async (published_at) => {
 		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
 		if(privkey){
@@ -57,10 +79,21 @@
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
 		ndkEvent.content = newOpinion.content;
-		ndkEvent.tags = [
-			["d",name],
-			["sentiment",newOpinion.sentiment]
-		];
+		if(!published_at)
+		{
+			ndkEvent.tags = [
+				["d",name],
+				["sentiment",newOpinion.sentiment],
+				["published_at",(Date.now()+5000).toString()]
+			];
+		} else {
+			ndkEvent.tags = [
+				["d",name],
+				["sentiment",newOpinion.sentiment],
+				["published_at",published_at]
+			];
+		}
+		
 		ndkEvent.publish().then(()=>{
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
@@ -120,43 +153,53 @@
 		return {content};
 	}
 
-	onMount(async () => {
+	const initialization = async()=> {
 		expertOpinions = (await import('./main')).expertOpinions;
 		try {
 			await $ndk.connect();
 			console.log("NDK connected successfully");
 			const isloggedIn = $localStore.lastUserLogged;
+			loading = false;
 			if(isloggedIn && window) {
+				let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[isloggedIn]},{closeOnEose:true});
+				if(fetchRelays) {
+					fetchRelays.getMatchingTags("r").map((tags)=>{
+						if(!DEFAULT_RELAY_URLS.read.includes(tags[1])){
+							DEFAULT_RELAY_URLS.read.push(tags[1]);
+						}      
+					});
+					fetchRelays.getMatchingTags("w").map((tags)=>{
+						if(!DEFAULT_RELAY_URLS.write.includes(tags[1])){
+							DEFAULT_RELAY_URLS.write.push(tags[1]);
+						}      
+					});
+				}
 				let user = $ndk.getUser({
-					npub:$localStore.lastUserLogged,
+					npub:isloggedIn,
 				});
 				ndkUser.set(user);
 				profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 			}
-			let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name],limit:10};
-			const filteredEvents = await $ndk.fetchEvents(ndkFilter);
 			
-			filteredEvents.forEach(async (events)=>{
-				allEvents = [...allEvents, {...events}];
-				profiles[events.pubkey] = await findUserProfileData(events.pubkey);
-			});
-			loading = false;
 		} catch (error) {
 			console.log(error);
 		}
-	});
+	}
+	initialization();
 
 	const Logout = () => {
 		logout();
 		opinionContent="";
 	};
+
 	function deleteFile(fileToDelete) {
         const url = fileArray.filter(file => file === fileToDelete)[0].url;
         opinionContent = opinionContent.replace(url,"");
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
+
 </script>
-<div style="background-color: white; border-radius:1rem;padding:1rem 0.5rem;">
+
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
 <p class="description">
 	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
@@ -164,9 +207,9 @@
 	bitcoin.
 </p>
 {#if loading}
-	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;"><Loader/></p>
+	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">loading...</p>
 {:else}
-	<nav class="top-nav">
+	<nav class="top-nav" transition:fade>
 		<div class="count-container">
 			<span class="nav-count"><Positive /> {sentimentCount['1']} positive</span>
 			<span class="nav-count"><Neutral /> {sentimentCount['0']} neutral</span>
@@ -187,16 +230,16 @@
 			>
 		</div>
 	</nav>
-	{#each filteredEvents as event (event.id)}
-		<div class="opinion-container">
+	<div class="opinion-container" transition:slide>
+		{#each filteredEvents as event (event.id)}
 			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
-		</div>
-	{/each}
+		{/each}
+	</div>
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
 	>
 	{#if showNewOpinion}
-		<div class="add-opinion-init">
+		<div class="add-opinion-init" transition:fade>
 			<h3 style="color:black;">Add your opinion</h3>
 			<div class="description">
 				<p>
@@ -241,6 +284,7 @@
 					</div>
 				</form> 
 			{:else}
+				<div transition:slide>
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
 					>Register</button
@@ -250,13 +294,13 @@
 				{:else if showLoginOrRegister === 'register'}
 					<Register bind:profiles bind:showNewOpinion/>
 				{/if}
+				</div>
 			{/if}
 		</div>
 	{/if}
 {/if}
-</div>
-<style>
 
+<style>
 	:host {
 		--border-color: #dedede;
 		--content-text-color: #606060;

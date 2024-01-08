@@ -22,3 +22,7 @@ export const errorPublishToast: ToastSettings = {
 	hoverable: true,
 	background: 'variant-filled-error'
 };
+export const DEFAULT_RELAY_URLS = {
+	read: ['wss://nos.lol'],
+	write: ['wss://nos.lol']
+};

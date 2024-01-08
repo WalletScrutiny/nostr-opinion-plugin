@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 
     let textarea;
     export let opinionContent;
@@ -17,7 +18,7 @@
     }
 </script>
 
-<textarea bind:this={textarea}
+<textarea  transition:slide bind:this={textarea}
           on:input={updateContent}
           placeholder="Enter your opinion" 
           style="

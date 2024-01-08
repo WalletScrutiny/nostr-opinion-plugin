@@ -5,6 +5,7 @@
   import ndk from "../stores/provider";
 	import { ndkUser } from '../stores/stores';
 	import { privkeyLogin } from '../utils/helper';
+	import { slide } from 'svelte/transition';
 
   let privkey="";
   let pubkey = '';
@@ -56,7 +57,7 @@
 <h3 style="font-family: 'Lato', sans-serif; font-size: 1.5em; color: #767676; margin-top: 0;">Register</h3>
 {#if showProfileSetup}
   <!-- Profile Setup Form -->
-  <form on:submit|preventDefault={saveProfile} style="padding-right: 1.5rem;">
+  <form transition:slide on:submit|preventDefault={saveProfile} style="padding-right: 1.5rem;">
     <h2 style="font-family: 'Lato', sans-serif; color: #767676;">Set up your profile</h2>
     <p style="font-family: 'Lato', sans-serif; color: #767676;">
       This information will be shown with your comments. To upload images, use a service like Piccy.
@@ -77,6 +78,7 @@
     </button>
   </form>
 {:else}
+<div transition:slide >
 <p style="font-family: 'Lato', sans-serif; font-size: 1em; color: #767676;">
   We use <strong style="color: #888888;">Nostr</strong> to store opinions. You can post and access your posts via your unique private key.
   Copy your key and keep it in a safe place.
@@ -97,4 +99,5 @@
                font-family: 'Lato', sans-serif; border-radius: 5px; cursor: pointer; margin-top: 1em; font-size: 1.1em;">
   Continue
 </button>
+</div>
 {/if}

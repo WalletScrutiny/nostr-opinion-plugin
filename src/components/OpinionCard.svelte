@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import {fade, slide} from "svelte/transition";
     import Editor from './Editor.svelte';
     import Positive from './icons/Positive.svelte';
     import Neutral from './icons/Neutral.svelte';
@@ -13,13 +13,11 @@
     import ApprovedBadge from './icons/ApprovedBadge.svelte';
     import { marked } from 'marked';
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
-    import OpinionCard from "./OpinionCard.svelte";
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
-	import { NDKEvent,type NDKFilter } from '@nostr-dev-kit/ndk';
-	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
-	import { kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
-	import Loader from './Loader.svelte';
+	import { NDKEvent,NDKRelaySet,type NDKFilter } from '@nostr-dev-kit/ndk';
+	import { NDKlogin, calculateRelativeTime, fetchUserProfile, logout, privkeyLogin } from '../utils/helper';
+	import { DEFAULT_RELAY_URLS, kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	
 	import FilePreview from './FilePreview.svelte';
 	import Upload from './Upload.svelte';
@@ -45,7 +43,6 @@
     let dislikeCount = 0;
     let edit = false;
     let reply = false;
-    let replyCount = 0;
     let replyContent = false;
     let loading = true;
     let liked = false;
@@ -54,6 +51,12 @@
     let ATag = event.id;
     let isDeleted = false;
     let relativeTime = '';
+    let published_at = undefined;
+    let created_at = undefined;
+    let relay = {
+        read: DEFAULT_RELAY_URLS.read,
+        write: DEFAULT_RELAY_URLS.write
+    }
     
     let fileArray=[];
 
@@ -78,7 +81,7 @@
         selectNegative = sentiment === '-1';
     };
 
-    async function likePost(event){
+    async function reactPost(content){
         const privkey = $localStore.pk;
 		if(privkey){
             !$ndk.signer && await privkeyLogin(privkey);
@@ -87,19 +90,14 @@
         }
         if(!$ndkUser) return;
         let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey)
-        let content = '+';
-        if(idx != -1) {
-            if(reactions[idx].content === '+'){
-                content = '';
-            } else {
-                content = '+';
-            }
+        if(idx != -1 && reactions[idx].content === content) {
+            content = '';
         } 
         const ndkEvent = new NDKEvent($ndk);
         ndkEvent.kind = kindReaction;
         ndkEvent.content = content;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
-        await ndkEvent.publish()
+        await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write,$ndk))
         idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey)
         if(idx != -1) {
             reactions[idx] = {pubkey:$ndkUser.pubkey,content,timestamp:Date.now()};
@@ -111,51 +109,16 @@
         if(content === '+'){
             liked = true;
             disliked = false;
-        } else {
-            liked = false;
-            disliked = false;
-        }       
-    };
-    async function dislikePost(event){
-        const privkey = $localStore.pk;
-		if(privkey){
-            !$ndk.signer && await privkeyLogin(privkey);
-        } else {
-            !$ndk.signer && await NDKlogin();
-        }
-        if(!$ndkUser) return;
-        let idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
-        let content = '-';
-        if(idx != -1) {
-            if(reactions[idx].content === '-'){
-                content = '';
-            } else {
-                content = '-';
-            }
-        } 
-        const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindReaction;
-        ndkEvent.content=content;
-        ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
-        await ndkEvent.publish();
-        idx = reactions.findIndex((e)=> e.pubkey === $ndkUser.pubkey);
-        if(idx != -1) {
-            reactions[idx] = {pubkey:$ndkUser.pubkey,content,timestamp:Date.now()};
-        } else {
-            reactions.push({pubkey:$ndkUser.pubkey,content,timestamp:Date.now()});
-        }
-        likeCount = reactions.filter((e)=>(e.content === '+')).length;
-        dislikeCount = reactions.filter((e)=>(e.content === '-')).length;
-        if(content === '-'){
+        } else if (content === '-'){
             liked = false;
             disliked = true;
         } else {
             liked = false;
             disliked = false;
-        }
+        }       
     };
-
-    onMount(async () => {
+    const initialization=async()=>{
+        
         const renderer = new marked.Renderer();
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
@@ -177,11 +140,11 @@
     
         editLvl+=1;
         relativeTime = calculateRelativeTime(event.created_at);
+        loading = false;
         let ndkFilter : NDKFilter = {kinds:[kindNotes],"#a":[ATag]};
-        let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
+        let fetchedEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:false});
         fetchedEvents.forEach(async(event1)=>{
-            replyEvents.push({...event1});
-            replyCount = replyEvents.length;
+            replyEvents = [...replyEvents,{...event1}];
             const content = await fetchUserProfile(event1.pubkey);
             if(!content.image)
                 content.image = profileImageUrl+event1.pubkey ;
@@ -193,7 +156,7 @@
         let latestTime = 0;
 
         ndkFilter = {kinds:[kindReaction],"#a":[ATag]};
-        let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:true,groupable:true});
+        let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter,{closeOnEose:false});
         fetchedReactionEvents.forEach((event2)=>{
             let idx = reactions.findIndex((e)=> e.pubkey === event2.pubkey)
                 if(idx != -1) {
@@ -217,10 +180,29 @@
                         disliked = false;
                     }
                 }
-        })
-        loading = false;
-    });
+        });
 
+        let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[event.pubkey]},{closeOnEose:true});
+        if(fetchRelays) {
+            fetchRelays.getMatchingTags("r").map((tags)=>{
+                if(!relay.read.includes(tags[1])){
+                    relay.read.push(tags[1]);
+                }      
+            });
+            fetchRelays.getMatchingTags("w").map((tags)=>{
+                if(!relay.write.includes(tags[1])){
+                    relay.write.push(tags[1]);
+                }      
+            });
+        }
+        published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1]?.slice(0,10);
+        if(published_at)
+            published_at = parseInt(published_at);
+        created_at = parseInt(event.created_at);
+    }
+    initialization();
+
+    
     const submitReply = async() =>{
         const privkey = $localStore.pk;
         if(privkey){
@@ -231,14 +213,12 @@
 		
         if(opinionContent === '' || !opinionContent)
         return;
-        console.log(event);
         const ndkEvent = new NDKEvent($ndk);
         ndkEvent.kind = kindNotes;
         ndkEvent.content = opinionContent;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
-        await ndkEvent.publish();
-        replyEvents.push({...ndkEvent});
-        replyCount = replyEvents.length;
+        await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write,$ndk));
+        replyEvents = [...replyEvents,{...ndkEvent}];
         opinionContent="";       
 	}
     function deleteFile(fileToDelete) {
@@ -249,7 +229,7 @@
 </script>
 {#if !isDeleted}
 {#if !loading && expertOpinions}
-<div class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
+<div transition:slide class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
     <div class="opinion-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div class="pubkey" style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 500;">
             <div>
@@ -278,8 +258,11 @@
                 <ApprovedBadge />
             {/if}
         </div>
+        
+        
+        
         <p class="date" style="color: #757575; font-size: 14px;">
-            {relativeTime}
+            {#if published_at && published_at < created_at } Edited. {/if}  {relativeTime}
         </p>
     </div>
     {#if !edit}
@@ -293,8 +276,8 @@
     </p>
     
     {:else}
-    <div style="margin: 2rem 0;">
-        <form on:submit|preventDefault={submit}>
+    <div transition:slide style="margin: 2rem 0;">
+        <form on:submit|preventDefault={()=>submit(published_at)}>
             <Editor bind:opinionContent={opinionContent} />
             <div id="sentiment-box" style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;">
                 <label for="sentiment" style="font-weight: 600;">Choose your overall sentiment</label>
@@ -319,7 +302,7 @@
     {/if}
     <div style="display: flex; gap: 2rem;">
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
-            <button on:click={() => likePost(event)} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
+            <button on:click={() => reactPost("+")} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
                 {#if liked === true}
                     <LikedButton/>
                 {:else}
@@ -329,7 +312,7 @@
             <span style="font-size: 14px;color:black;">{likeCount|| 0}</span>
         </div>
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
-            <button on:click={() => dislikePost(event)} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
+            <button on:click={() => reactPost("-")} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
                     {#if disliked === true}
                         <DislikedButton/>
                     {:else}
@@ -342,11 +325,11 @@
             <button on:click={() => {reply = !reply; edit=false;opinionContent="";replyContent=false;}} style="background-color: transparent; border: none; cursor: pointer;">
                 <ReplyButton/>
             </button>
-            <button on:click={()=>{replyContent=!replyContent;}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"><span style="font-size: 14px; pointer:cursor;">{replyCount}</span></button>
+            <button on:click={()=>{replyContent=!replyContent;}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"><span style="font-size: 14px; pointer:cursor;">{replyEvents.length}</span></button>
         </div>
     
         {#if $ndkUser?.pubkey === event.pubkey}
-            <DeleteEventData eventID={event.id} bind:isDeleted bind:count/>
+            <DeleteEventData eventID={event.id} bind:isDeleted bind:count />
         {/if}
         {#if $ndkUser?.pubkey === event.pubkey && editLvl == 1}
         <div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
@@ -357,7 +340,7 @@
         {/if}
     </div>
     {#if reply}
-        <div style="padding:1rem;">
+        <div transition:fade style="padding:1rem;">
         <TextArea bind:opinionContent/>
 		<!-- <Editor bind:opinionContent /> -->
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
@@ -374,11 +357,11 @@
     {#if replyContent}
     {#each replyEvents as event (event.id)} 
     <!-- Event loading!!! -->
-    <OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyCount}/>
+    <svelte:self {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count = {replyEvents.length}/>
     {/each}
     {/if}
 </div>
 {:else}
-	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;"><Loader/></p>
+	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">Loading...</p>
 {/if}
 {/if}

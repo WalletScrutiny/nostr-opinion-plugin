@@ -5,6 +5,7 @@
 	import ndk from '../stores/provider';
 	import { type NDKFilter } from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from '../utils/constants';
+	import { slide } from 'svelte/transition';
 
 	let showPrivateKeyInput = false;
 	let privkey = '';
@@ -43,7 +44,7 @@
 		let fetchEvent = await $ndk.fetchEvent(ndkFilter,{
 			closeOnEose:true,
 		});
-		showNewOpinion = false;
+		showNewOpinion = true;
 		profiles[$ndkUser.pubkey] = {content};
 		if(fetchEvent && fetchEvent.content)
 		opinionContent= fetchEvent.content;
@@ -51,9 +52,9 @@
 </script>
 
 
-
+<div transition:slide>
 {#if showPrivateKeyInput}
-  <div style="max-width: 600px;text-align: left; font-family: 'Lato', sans-serif;">
+  <div transition:slide style="max-width: 600px;text-align: left; font-family: 'Lato', sans-serif;">
     <h2 style="color: #333; font-size: 24px; margin-bottom: 8px; font-family: 'Lato', sans-serif;">Log in</h2>
     <p style="color: #666; margin-bottom: 24px; font-family: 'Lato', sans-serif;">Enter your <strong>Nostr</strong> private key below to be able to post an opinion.<br>
     Don't have a key? <a href="/" style="font-family: 'Lato', sans-serif;">Register</a>.</p>
@@ -70,3 +71,4 @@
 		<button on:click={()=>showPrivateKeyInput=!showPrivateKeyInput} style="background-color: #4DA84D; color: white; border: none; font-size: 16px; cursor: pointer; padding: 10px; margin-bottom: 16px; font-family: 'Lato', sans-serif;">Connect using private key</button>
 	</div>
 {/if}
+</div>
