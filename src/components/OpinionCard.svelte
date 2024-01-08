@@ -16,7 +16,7 @@
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
 	import { NDKEvent,NDKRelaySet,type NDKFilter } from '@nostr-dev-kit/ndk';
-	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
+	import { NDKlogin, calculateRelativeTime, fetchUserProfile, logout, privkeyLogin } from '../utils/helper';
 	import { DEFAULT_RELAY_URLS, kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	
 	import FilePreview from './FilePreview.svelte';
@@ -51,7 +51,8 @@
     let ATag = event.id;
     let isDeleted = false;
     let relativeTime = '';
-    let published_at = false;
+    let published_at = undefined;
+    let created_at = undefined;
     let relay = {
         read: DEFAULT_RELAY_URLS.read,
         write: DEFAULT_RELAY_URLS.write
@@ -194,7 +195,10 @@
                 }      
             });
         }
-        published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1];
+        published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1]?.slice(0,10);
+        if(published_at)
+            published_at = parseInt(published_at);
+        created_at = parseInt(event.created_at);
     }
     initialization();
 
@@ -225,7 +229,7 @@
 </script>
 {#if !isDeleted}
 {#if !loading && expertOpinions}
-<div transition:slide={{duration:1000}} class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
+<div transition:slide class="opinion-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;">
     <div class="opinion-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div class="pubkey" style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 500;">
             <div>
@@ -254,8 +258,11 @@
                 <ApprovedBadge />
             {/if}
         </div>
+        
+        
+        
         <p class="date" style="color: #757575; font-size: 14px;">
-            {relativeTime}
+            {#if published_at && published_at < created_at } Edited. {/if}  {relativeTime}
         </p>
     </div>
     {#if !edit}
@@ -269,7 +276,7 @@
     </p>
     
     {:else}
-    <div style="margin: 2rem 0;">
+    <div transition:slide style="margin: 2rem 0;">
         <form on:submit|preventDefault={()=>submit(published_at)}>
             <Editor bind:opinionContent={opinionContent} />
             <div id="sentiment-box" style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;">

@@ -159,9 +159,8 @@
 			await $ndk.connect();
 			console.log("NDK connected successfully");
 			const isloggedIn = $localStore.lastUserLogged;
-			
+			loading = false;
 			if(isloggedIn && window) {
-				loading = false;
 				let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[isloggedIn]},{closeOnEose:true});
 				if(fetchRelays) {
 					fetchRelays.getMatchingTags("r").map((tags)=>{
