@@ -243,6 +243,7 @@
             </div>
             {#if profiles[event.pubkey]}
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <!-- svelte-ignore a11y-img-redundant-alt -->
                     <img src={profiles[event.pubkey].content?.image ? profiles[event.pubkey].content?.image :profileImageUrl+event.pubkey} alt="Profile Picture" style="border-radius: 50%; width: 40px; height: 40px; object-fit: cover;"/>
                     <span style="color:black;">
                         {profiles[event.pubkey].content?.name || convertNostrPubKeyToBech32(event.pubkey).slice(0,8)+"..."+convertNostrPubKeyToBech32(event.pubkey).slice(-4)}
@@ -269,6 +270,8 @@
     <p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
         {@html showFullText ? marked(event.content) : marked(truncateText(event.content, maxLength))}
         {#if event.content.length > maxLength}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <span class="read-more" on:click={toggleFullText} style="color: var(--button-background-color); cursor: pointer;">
                 {showFullText ? ' Read Less' : ' Read More'}
             </span>
@@ -345,7 +348,7 @@
 		<!-- <Editor bind:opinionContent /> -->
         <div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
         {#each fileArray as file, index (file.url)}
-        <FilePreview key={index} file={file.files} onDelete={() => deleteFile(file)} />
+        <FilePreview file={file.files} onDelete={() => deleteFile(file)} />
         {/each}
         </div>
         <div style="display:flex; align-contents:center;">
