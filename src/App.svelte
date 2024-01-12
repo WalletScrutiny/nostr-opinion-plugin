@@ -22,7 +22,7 @@
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: any[] = [];
 	let filteredEvents: any[] = [];
-	let profiles: Record<string, {NDKUserProfile}|{pubkey:string,image:string}> = {};
+	let profiles: any = {};
 	let selectPositive:Boolean = false;
 	let selectNeutral:Boolean = true;
 	let selectNegative:Boolean = false;
@@ -45,7 +45,6 @@
 	let fileArray=[];
 
 	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
-	// const sub = $ndk.subscribe(ndkFilter,{closeOnEose:false});
 	const sub = $ndk.storeSubscribe(ndkFilter,{closeOnEose:false});
 	$: {
 		$sub.forEach(async(event)=>{
@@ -161,7 +160,10 @@
 			const isloggedIn = $localStore.lastUserLogged;
 			loading = false;
 			if(isloggedIn && window) {
-				let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[isloggedIn]},{closeOnEose:true});
+				let user = $ndk.getUser({
+					npub:isloggedIn,
+				});
+				let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[user.pubkey]});
 				if(fetchRelays) {
 					fetchRelays.getMatchingTags("r").map((tags)=>{
 						if(!DEFAULT_RELAY_URLS.read.includes(tags[1])){
@@ -174,9 +176,6 @@
 						}      
 					});
 				}
-				let user = $ndk.getUser({
-					npub:isloggedIn,
-				});
 				ndkUser.set(user);
 				profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 			}
@@ -275,7 +274,7 @@
 					</div>
 					<div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
 					{#each fileArray as file, index (file.url)}
-					<FilePreview key={index} file={file.files} onDelete={() => deleteFile(file)} />
+					<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
 					{/each}
 					</div>
 					<div style="display:flex; align-contents:center;">
@@ -335,10 +334,6 @@
 		display: flex;
 		flex-direction: row;
 		color: black;
-	}
-	.opinion-top {
-		display: flex;
-		justify-content: space-between;
 	}
 	.description {
 		color: #808080;

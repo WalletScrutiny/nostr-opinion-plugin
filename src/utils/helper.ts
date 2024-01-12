@@ -3,7 +3,6 @@ import {
 	NDKEvent,
 	type NDKUserProfile,
 	NDKNip07Signer,
-	type NDKSigner,
 	NDKPrivateKeySigner
 } from '@nostr-dev-kit/ndk';
 import { localStore, ndkUser } from '../stores/stores';
@@ -140,8 +139,8 @@ export function parseNostrUrls(rawContent: string): string {
 }
 
 export function calculateRelativeTime(timestamp) {
-	const now = new Date();
-	const eventDate = new Date(timestamp * 1000);
+	let now: any = new Date();
+	let eventDate: any = new Date(timestamp * 1000);
 	const diffInSeconds = Math.floor((now - eventDate) / 1000);
 
 	if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
