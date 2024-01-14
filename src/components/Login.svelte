@@ -22,12 +22,12 @@
 		switch (nostrKeyMethod) {
 			case 'pk': 
 				login  = await privkeyLogin(privkey);
-				return;
+				break;
 			case 'nip07':
 				login = await NDKlogin();
-				return;
+				break;
 		}
-		
+
 		if(!login) {
 			console.log("Something went wrong while login!!");
 			return;
