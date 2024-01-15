@@ -38,7 +38,7 @@
 		'0': 0,
 		'1': 0
 	};
-	let filter: 'approved' | 'all' = 'approved';
+	let filter: 'approved' | 'all'  = 'approved';
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
@@ -75,10 +75,14 @@
             !$ndk.signer && await NDKlogin();
         }
 		if (!newOpinion.content || !$ndk.signer) return;
+		const alreadyPresent = (await $ndk.fetchEvent({kinds:[kindOpinion],authors:[$ndkUser.pubkey]}))?.tags;
+		if(alreadyPresent?.length ===  3  && alreadyPresent[2][1]) {
+			published_at = alreadyPresent[2][1];
+		}
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
 		ndkEvent.content = newOpinion.content;
-		if(!published_at)
+		if(!published_at || !published_at.length)
 		{
 			ndkEvent.tags = [
 				["d",name],
@@ -219,13 +223,13 @@
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'approved'}
 				aria-label="filter by approved"
-				on:click={() => (filter = 'approved') && sortEvents()}>Approved</button
+				on:click={() => {filter = 'approved'; sortEvents(); showNewOpinion = false;} }>Approved</button
 			>
 			<button
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'all'}
 				aria-label="filter by all"
-				on:click={() => (filter = 'all') && sortEvents()}>All opinions</button
+				on:click={() => {filter = 'all'; sortEvents(); showNewOpinion = false;}}>All opinions</button
 			>
 		</div>
 	</nav>
