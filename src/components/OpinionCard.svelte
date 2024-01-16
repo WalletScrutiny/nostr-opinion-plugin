@@ -94,7 +94,7 @@
             content = '';
         } 
         const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindReaction;
+        ndkEvent.kind = NDKKind.Reaction;
         ndkEvent.content = content;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
         await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write,$ndk))
@@ -214,7 +214,7 @@
         if(opinionContent === '' || !opinionContent)
         return;
         const ndkEvent = new NDKEvent($ndk);
-        ndkEvent.kind = kindNotes;
+        ndkEvent.kind = NDKKind.Text;
         ndkEvent.content = opinionContent;
         ndkEvent.tags = [["a",ATag],["p",$ndkUser.pubkey]];
         await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write,$ndk));

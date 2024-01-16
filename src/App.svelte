@@ -8,7 +8,7 @@
 	import Register from './components/Register.svelte';
 	import Login from './components/Login.svelte';
 	import Editor from './components/Editor.svelte';
-	import OpinionCard from "./components/OpinionCard.svelte";
+	import OpinionCard from './components/OpinionCard.svelte';
 	import ndk from './stores/provider';
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
 	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
@@ -31,7 +31,7 @@
 		content: '',
 		sentiment: '0'
 	};
-	let opinionContent="";
+	let opinionContent = '';
 	let loading = true;
 	let sentimentCount = {
 		'-1': 0,
@@ -42,7 +42,8 @@
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
-	let fileArray=[];
+	let fileArray = [];
+	let badgeAwardedExperts = []
 
 	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
 	const sub = $ndk.storeSubscribe(ndkFilter,{closeOnEose:false});
@@ -100,21 +101,21 @@
 		ndkEvent.publish().then(()=>{
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
-				allEvents[index] = {...ndkEvent};
+				allEvents[index] = { ...ndkEvent };
 			} else {
-				allEvents = [{...ndkEvent}, ...allEvents];
+				allEvents = [{ ...ndkEvent }, ...allEvents];
 			}
 			sortEvents();
 		});
-		newOpinion={
+		newOpinion = {
 			content: '',
 			sentiment: '0'
 		};
 		selectPositive = false;
 		selectNeutral = true;
 		selectNegative = false;
-		showNewOpinion=false;
-		filter = "all";
+		showNewOpinion = false;
+		filter = 'all';
 	};
 
 	const sortEvents = () => {
@@ -143,24 +144,23 @@
 		});
 	};
 
-	async function findUserProfileData(pubkey:string){
+	async function findUserProfileData(pubkey: string) {
 		let content = await fetchUserProfile(pubkey);
-		if(!content){
-			content = {image: profileImageUrl+$ndkUser.pubkey,pubkey:$ndkUser.pubkey};
+		if (!content) {
+			content = { image: profileImageUrl + $ndkUser.pubkey, pubkey: $ndkUser.pubkey };
 		}
-		if(!content.image)
-			content.image = profileImageUrl+pubkey ;
-		if(!content.pubkey){
+		if (!content.image) content.image = profileImageUrl + pubkey;
+		if (!content.pubkey) {
 			content.pubkey = pubkey;
 		}
-		return {content};
+		return { content };
 	}
 
 	const initialization = async()=> {
 		expertOpinions = (await import('./main')).expertOpinions;
 		try {
 			await $ndk.connect();
-			console.log("NDK connected successfully");
+			console.log('NDK connected successfully');
 			const isloggedIn = $localStore.lastUserLogged;
 			loading = false;
 			if(isloggedIn && window) {
@@ -192,7 +192,7 @@
 
 	const Logout = () => {
 		logout();
-		opinionContent="";
+		opinionContent = '';
 	};
 
 	function deleteFile(fileToDelete) {
@@ -264,16 +264,48 @@
 					<div style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;">
 						<img src={profiles[$ndkUser?.pubkey]?.content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
 						<span style="color: black; font-size: 24px;">
-							{(!profiles[$ndkUser?.pubkey]?.content?.name || profiles[$ndkUser?.pubkey]?.content?.name=='') ? $ndkUser.npub.slice(0,4)+"..."+$ndkUser.npub.slice(-4) : profiles[$ndkUser?.pubkey]?.content?.name}
+							{!profiles[$ndkUser?.pubkey]?.content?.name ||
+							profiles[$ndkUser?.pubkey]?.content?.name == ''
+								? $ndkUser.npub.slice(0, 4) + '...' + $ndkUser.npub.slice(-4)
+								: profiles[$ndkUser?.pubkey]?.content?.name}
 						</span>
 					</div>
 					<Editor bind:opinionContent />
-					<div id="sentiment-box">	
-						<label for="sentiment" style="font-weight: 600;font-family: Arial, sans-serif;">Choose your overall sentiment</label>
-						<div style="display:flex; gap: 0.4rem;">	
-							<button class="btn-standard" class:selected-state={selectPositive} on:click|preventDefault={()=>{newOpinion.sentiment="1";selectPositive=true;selectNegative=false;selectNeutral=false;}}><Positive/> <span>Positive</span></button>
-							<button class="btn-standard" class:selected-state={selectNeutral} on:click|preventDefault={()=>{newOpinion.sentiment="0";selectPositive=false;selectNegative=false;selectNeutral=true}}><Neutral/> <span>Neutral</span></button>
-							<button class="btn-standard" class:selected-state={selectNegative} on:click|preventDefault={()=>{newOpinion.sentiment="-1";selectPositive=false;selectNegative=true;selectNeutral=false}}><Negative/> <span>Negative</span></button>
+					<div id="sentiment-box">
+						<label for="sentiment" style="font-weight: 600;font-family: Arial, sans-serif;"
+							>Choose your overall sentiment</label
+						>
+						<div style="display:flex; gap: 0.4rem;">
+							<button
+								class="btn-standard"
+								class:selected-state={selectPositive}
+								on:click|preventDefault={() => {
+									newOpinion.sentiment = '1';
+									selectPositive = true;
+									selectNegative = false;
+									selectNeutral = false;
+								}}><Positive /> <span>Positive</span></button
+							>
+							<button
+								class="btn-standard"
+								class:selected-state={selectNeutral}
+								on:click|preventDefault={() => {
+									newOpinion.sentiment = '0';
+									selectPositive = false;
+									selectNegative = false;
+									selectNeutral = true;
+								}}><Neutral /> <span>Neutral</span></button
+							>
+							<button
+								class="btn-standard"
+								class:selected-state={selectNegative}
+								on:click|preventDefault={() => {
+									newOpinion.sentiment = '-1';
+									selectPositive = false;
+									selectNegative = true;
+									selectNeutral = false;
+								}}><Negative /> <span>Negative</span></button
+							>
 						</div>
 					</div>
 					<div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
@@ -282,10 +314,12 @@
 					{/each}
 					</div>
 					<div style="display:flex; align-contents:center;">
-					<button class="primary-btn" style="width: 5rem;" type="submit" disabled={!$ndkUser}>Post</button>
-					<Upload bind:fileArray bind:opinionContent/>
+						<button class="primary-btn" style="width: 5rem;" type="submit" disabled={!$ndkUser}
+							>Post</button
+						>
+						<Upload bind:fileArray bind:opinionContent />
 					</div>
-				</form> 
+				</form>
 			{:else}
 				<div transition:slide>
 				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
@@ -313,8 +347,8 @@
 		--filter-active-color: #000000;
 		--filter-inactive-color: #808080;
 		--button-text-color: #ffffff;
-		--button-background-color: #4DA84D;
-		--sentiment-button-background-color:#4DA84D;
+		--button-background-color: #4da84d;
+		--sentiment-button-background-color: #4da84d;
 		font-family: Lato;
 		font-family: Arial, sans-serif;
 		background-color: black;
@@ -369,9 +403,9 @@
 	}
 
 	#review-input-details-container {
-		display:flex; 
-		flex-direction:column; 
-		gap:0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 		font-family: 'lato';
 		margin: 2rem 0rem;
 	}
@@ -380,7 +414,7 @@
 		width: 7rem;
 		height: 3rem;
 		cursor: pointer;
-		border: none;	
+		border: none;
 		padding-right: 1.5rem;
 		display:flex;
 		justify-content:center;
@@ -395,16 +429,15 @@
 	.btn-standard:hover {
 		color: #ffffff;
 	}
-	
+
 	#sentiment-box {
-		display:flex;
-		flex-direction:column;
-		gap:0.3rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
 	}
 	.selected-state {
-		background-color:var(--sentiment-button-background-color);
+		background-color: var(--sentiment-button-background-color);
 		color: #ffffff;
 		
 	}
 </style>
-					

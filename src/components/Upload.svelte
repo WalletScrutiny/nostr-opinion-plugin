@@ -1,5 +1,4 @@
 <script>
-// @ts-nocheck
 	import { NDKlogin } from '../utils/helper';
     import ndk from "../stores/provider";
     import UploadButton from './icons/UploadButton.svelte';
