@@ -35,7 +35,8 @@
     export let editLvl;
     export let name;
     export let count;
- 
+    export let deletedEventsArray=[];
+
     let replyEvents=[];
     let reactions = [];
     let expertOpinions;
@@ -49,7 +50,6 @@
     let disliked = false;
     let showFullText = false;
     let ATag = event.id;
-    let isDeleted = false;
     let relativeTime = '';
     let published_at = undefined;
     let created_at = undefined;
@@ -57,6 +57,7 @@
         read: DEFAULT_RELAY_URLS.read,
         write: DEFAULT_RELAY_URLS.write
     }
+    let isDeleted = false;
     
     let fileArray=[];
 
@@ -198,7 +199,7 @@
         published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1]?.slice(0,10);
         if(published_at)
             published_at = parseInt(published_at);
-        created_at = parseInt(event.created_at);
+        created_at = parseInt(event.created_at);   
     }
     initialization();
 
@@ -226,6 +227,11 @@
         opinionContent = opinionContent.replace(url,"");
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
+
+    $: if(isDeleted) {
+        deletedEventsArray = [...deletedEventsArray,event];
+    }
+ 
 </script>
 {#if !isDeleted}
 {#if !loading && expertOpinions}
@@ -280,7 +286,7 @@
     
     {:else}
     <div transition:slide style="margin: 2rem 0;">
-        <form on:submit|preventDefault={()=>submit(published_at)}>
+        <form on:submit|preventDefault={()=>submit(published_at.toString())}>
             <Editor bind:opinionContent={opinionContent} />
             <div id="sentiment-box" style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;">
                 <label for="sentiment" style="font-weight: 600;">Choose your overall sentiment</label>

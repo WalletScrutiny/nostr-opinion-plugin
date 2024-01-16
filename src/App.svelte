@@ -18,6 +18,8 @@
 	import { fade, slide } from 'svelte/transition';
 
 	export let name: string;
+	export let header: string;
+	export let footer: string;
 	
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: any[] = [];
@@ -43,6 +45,7 @@
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
 	let fileArray = [];
+	let deletedEventsArray=[];
 	let badgeAwardedExperts = []
 
 	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
@@ -88,12 +91,14 @@
 			ndkEvent.tags = [
 				["d",name],
 				["sentiment",newOpinion.sentiment],
+				["title",header],
 				["published_at",(Date.now()+5000).toString()]
 			];
 		} else {
 			ndkEvent.tags = [
 				["d",name],
 				["sentiment",newOpinion.sentiment],
+				["title",header],
 				["published_at",published_at]
 			];
 		}
@@ -235,7 +240,9 @@
 	</nav>
 	<div class="opinion-container" transition:slide>
 		{#each filteredEvents as event (event.id)}
-			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
+			{#if deletedEventsArray.includes(event) === false }
+				<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count bind:deletedEventsArray/>
+			{/if}
 		{/each}
 	</div>
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
@@ -407,7 +414,6 @@
 		flex-direction: column;
 		gap: 0.5rem;
 		font-family: 'lato';
-		margin: 2rem 0rem;
 	}
 	.btn-standard {
 		border-radius: 3px;
