@@ -40,14 +40,15 @@
 			content.image = profileImageUrl+$ndkUser.pubkey
 		if(!content.pubkey)
 			content.pubkey = $ndkUser.pubkey;
+		showNewOpinion = false;
 		const ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name],authors:[$ndkUser.pubkey]};
 		let fetchEvent = await $ndk.fetchEvent(ndkFilter,{
 			closeOnEose:true,
 		});
-		showNewOpinion = true;
 		profiles[$ndkUser.pubkey] = {content};
 		if(fetchEvent && fetchEvent.content)
 		opinionContent= fetchEvent.content;
+		
 	};
 </script>
 
