@@ -119,7 +119,7 @@
         }       
     };
     const initialization=async()=>{
-        
+        event.content = event.content.split("<!--HEADER END-->\n")[1].split("\n<!--FOOTER START-->")[0];    
         const renderer = new marked.Renderer();
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
@@ -283,7 +283,6 @@
             </span>
         {/if}
     </p>
-    
     {:else}
     <div transition:slide style="margin: 2rem 0;">
         <form on:submit|preventDefault={()=>submit(published_at.toString())}>
