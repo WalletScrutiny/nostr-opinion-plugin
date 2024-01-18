@@ -257,7 +257,7 @@
 	</nav>
 	<div class="opinion-container" transition:slide>
 		{#each filteredEvents as event (event.id)}
-			{#if deletedEventsArray.includes(event) === false }
+			{#if deletedEventsArray.includes(event) === false}
 				<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count bind:deletedEventsArray/>
 			{/if}
 		{/each}

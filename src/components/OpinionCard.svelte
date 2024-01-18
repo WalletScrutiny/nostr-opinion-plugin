@@ -36,7 +36,7 @@
     export let name;
     export let count;
     export let deletedEventsArray=[];
-
+    
     let replyEvents=[];
     let reactions = [];
     let expertOpinions;
@@ -119,7 +119,7 @@
         }       
     };
     const initialization=async()=>{
-        event.content = event.content.split("<!--HEADER END-->\n")[1].split("\n<!--FOOTER START-->")[0];    
+        event.content = event.content.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || event.content;
         const renderer = new marked.Renderer();
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
@@ -274,7 +274,7 @@
     </div>
     {#if !edit}
     <p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
-        {@html showFullText ? marked(event.content) : marked(truncateText(event.content, maxLength))}
+        {@html showFullText ? marked(event.content.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || event.content) : marked(truncateText(event.content.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || event.content, maxLength))}
         {#if event.content.length > maxLength}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
