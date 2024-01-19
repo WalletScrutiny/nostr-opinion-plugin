@@ -15,7 +15,7 @@
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
-	import { NDKEvent,NDKRelaySet,type NDKFilter } from '@nostr-dev-kit/ndk';
+	import { NDKEvent,NDKRelaySet,type NDKFilter, NDKKind } from '@nostr-dev-kit/ndk';
 	import { NDKlogin, calculateRelativeTime, fetchUserProfile, logout, privkeyLogin } from '../utils/helper';
 	import { DEFAULT_RELAY_URLS, kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	
