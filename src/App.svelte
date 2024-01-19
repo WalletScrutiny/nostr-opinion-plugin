@@ -11,7 +11,7 @@
 	import OpinionCard from './components/OpinionCard.svelte';
 	import ndk from './stores/provider';
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
-	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
+	import { NDKEvent, NDKRelaySet, type NDKFilter} from '@nostr-dev-kit/ndk';
 	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
@@ -120,7 +120,7 @@
 		});
 		newOpinion.content = newOpinion.content+"\n\n"+ footer;
 		ndkEvent.content = newOpinion.content;
-		ndkEvent.publish().then(()=>{
+		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write,$ndk)).then(()=>{
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
 				allEvents[index] = { ...ndkEvent };
@@ -193,12 +193,20 @@
 				if(fetchRelays) {
 					fetchRelays.getMatchingTags("r").map((tags)=>{
 						if(!DEFAULT_RELAY_URLS.read.includes(tags[1])){
-							DEFAULT_RELAY_URLS.read.push(tags[1]);
-						}      
-					});
-					fetchRelays.getMatchingTags("w").map((tags)=>{
-						if(!DEFAULT_RELAY_URLS.write.includes(tags[1])){
-							DEFAULT_RELAY_URLS.write.push(tags[1]);
+							if(tags.length === 3) {
+								if(tags[2] === "write" && !DEFAULT_RELAY_URLS.write.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.write.push(tags[1]);
+								} else if(tags[2] === "read" && !DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.read.push(tags[1]);
+								}
+							} else if (tags.length === 2) {
+								if(!DEFAULT_RELAY_URLS.write.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.write.push(tags[1]);
+								}
+								if(!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.read.push(tags[1]);
+								}
+							} 
 						}      
 					});
 				}

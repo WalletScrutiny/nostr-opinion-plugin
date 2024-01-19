@@ -186,14 +186,20 @@
         let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[event.pubkey]},{closeOnEose:true});
         if(fetchRelays) {
             fetchRelays.getMatchingTags("r").map((tags)=>{
-                if(!relay.read.includes(tags[1])){
-                    relay.read.push(tags[1]);
-                }      
-            });
-            fetchRelays.getMatchingTags("w").map((tags)=>{
-                if(!relay.write.includes(tags[1])){
-                    relay.write.push(tags[1]);
-                }      
+                if(tags.length === 3) {
+                    if(tags[2] === "write" && !relay.write.includes(tags[1])) {
+                        relay.write.push(tags[1]);
+                    } else if(tags[2] === "read" && !relay.read.includes(tags[1])) {
+                        relay.read.push(tags[1]);
+                    }
+                } else if (tags.length === 2) {
+                    if(!relay.write.includes(tags[1])) {
+                        relay.write.push(tags[1]);
+                    }
+                    if(!relay.read.includes(tags[1])) {
+                        relay.read.push(tags[1]);
+                    }
+                }    
             });
         }
         published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1]?.slice(0,10);
