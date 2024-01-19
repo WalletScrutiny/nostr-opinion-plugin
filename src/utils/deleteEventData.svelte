@@ -14,9 +14,9 @@
             const privkey = $localStore.pk;
 		    if(privkey){
             !$ndk.signer && await privkeyLogin(privkey);
-        } else {
-            !$ndk.signer && await NDKlogin();
-        }
+            } else {
+                !$ndk.signer && await NDKlogin();
+            }
             const ndkEvent = await $ndk.fetchEvent({ids:[eventID]});
             await db.events.delete(eventID);
             await ndkEvent.delete();

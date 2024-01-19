@@ -11,13 +11,19 @@
 	import OpinionCard from './components/OpinionCard.svelte';
 	import ndk from './stores/provider';
 	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
-	import { NDKEvent, type NDKFilter} from '@nostr-dev-kit/ndk';
+	import { NDKEvent, NDKRelaySet, type NDKFilter} from '@nostr-dev-kit/ndk';
 	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
 
 	export let name: string;
+	name = name.slice(0,-1);
+	export let header: string;
+	export let footer: string = "[Join the conversation!](https://www.walletscrutiny.com)";
+	export let title: string = header;
+	export let tags: string = "WalletScrutiny,NostrComment";
+	export let summary: string = `An opinion made about `+ `${name.split(".")[1]} Bitcoin ${name.split(".")[2]}` +` generated using nostr-opinion-plugin`
 	
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: any[] = [];
@@ -43,6 +49,7 @@
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
 	let fileArray = [];
+	let deletedEventsArray=[];
 	let badgeAwardedExperts = []
 
 	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
@@ -70,35 +77,50 @@
 	const submit = async (published_at) => {
 		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
+		let walletArraylen = name.split(".").length;
 		if(privkey){
             !$ndk.signer && await privkeyLogin(privkey);
         } else {
             !$ndk.signer && await NDKlogin();
         }
 		if (!newOpinion.content || !$ndk.signer) return;
+		newOpinion.content = header+"\n<!--HEADER END-->\n"+newOpinion.content+"\n<!--FOOTER START-->\n\n\n\n ";
 		const alreadyPresent = (await $ndk.fetchEvent({kinds:[kindOpinion],authors:[$ndkUser.pubkey]}))?.tags;
 		if(alreadyPresent?.length ===  3  && alreadyPresent[2][1]) {
 			published_at = alreadyPresent[2][1];
 		}
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
-		ndkEvent.content = newOpinion.content;
 		if(!published_at || !published_at.length)
 		{
 			ndkEvent.tags = [
 				["d",name],
 				["sentiment",newOpinion.sentiment],
-				["published_at",(Date.now()+5000).toString()]
+				["title",title],
+				["summary",summary],
+				["published_at",(Date.now()+5000).toString()],
+				["alt",`This is a comment made using nostr-plugin on WalletScrutiny's article about ${name.split(".")[walletArraylen-2]} ${name.split(".")[walletArraylen-1]}`]
 			];
 		} else {
 			ndkEvent.tags = [
 				["d",name],
 				["sentiment",newOpinion.sentiment],
-				["published_at",published_at]
+				["title",title],
+				["summary",summary],
+				["published_at",published_at],
+				["alt",`This is a comment made using nostr-plugin on WalletScrutiny's article about ${name.split(".")[walletArraylen-2]} ${name.split(".")[walletArraylen-1]}`]
 			];
 		}
-		
-		ndkEvent.publish().then(()=>{
+		tags.split(",").map((tag)=>{
+			if(tag == '' || !tag){
+				return;
+			}
+			ndkEvent.tags.push(["t",tag]);
+			newOpinion.content = newOpinion.content+`#${tag} `
+		});
+		newOpinion.content = newOpinion.content+"\n\n"+ footer;
+		ndkEvent.content = newOpinion.content;
+		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write,$ndk)).then(()=>{
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
 				allEvents[index] = { ...ndkEvent };
@@ -171,12 +193,20 @@
 				if(fetchRelays) {
 					fetchRelays.getMatchingTags("r").map((tags)=>{
 						if(!DEFAULT_RELAY_URLS.read.includes(tags[1])){
-							DEFAULT_RELAY_URLS.read.push(tags[1]);
-						}      
-					});
-					fetchRelays.getMatchingTags("w").map((tags)=>{
-						if(!DEFAULT_RELAY_URLS.write.includes(tags[1])){
-							DEFAULT_RELAY_URLS.write.push(tags[1]);
+							if(tags.length === 3) {
+								if(tags[2] === "write" && !DEFAULT_RELAY_URLS.write.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.write.push(tags[1]);
+								} else if(tags[2] === "read" && !DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.read.push(tags[1]);
+								}
+							} else if (tags.length === 2) {
+								if(!DEFAULT_RELAY_URLS.write.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.write.push(tags[1]);
+								}
+								if(!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+									DEFAULT_RELAY_URLS.read.push(tags[1]);
+								}
+							} 
 						}      
 					});
 				}
@@ -235,7 +265,9 @@
 	</nav>
 	<div class="opinion-container" transition:slide>
 		{#each filteredEvents as event (event.id)}
-			<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count/>
+			{#if deletedEventsArray.includes(event) === false}
+				<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count bind:deletedEventsArray/>
+			{/if}
 		{/each}
 	</div>
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
@@ -407,7 +439,6 @@
 		flex-direction: column;
 		gap: 0.5rem;
 		font-family: 'lato';
-		margin: 2rem 0rem;
 	}
 	.btn-standard {
 		border-radius: 3px;

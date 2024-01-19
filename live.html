@@ -7,8 +7,16 @@
 		<title>Document</title>
 	</head>
 	<body>
-		<nostr-opinion name="/android/com.mycelium.wallet/"></nostr-opinion>
-		<nostr-opinion name="/android/com.coinomi.wallet/"></nostr-opinion>
+		<nostr-opinion
+			name="/android/com.mycelium.wallet/"
+			header="Opinion about mycelium wallet"
+			footer="[join the conversation!](https://walletscrutiny.com/)"
+		></nostr-opinion>
+		<nostr-opinion
+			name="/android/com.coinomi.wallet/"
+			header="Opinion about coinomi wallet"
+			footer="[join the conversation!](https://walletscrutiny.com/)"
+		></nostr-opinion>
 		<script type="module">
 			import { expertOpinions } from '/dist/nostr-opinion.js';
 			expertOpinions.trustedAuthors = [
