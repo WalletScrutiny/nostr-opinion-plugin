@@ -7,7 +7,7 @@
 
     export let eventID:string;
     export let isDeleted;
-    export let count;
+    export let count: number;
 
     async function deleteEventData(eventID:string) {
         try {
@@ -19,7 +19,7 @@
             }
             const ndkEvent = await $ndk.fetchEvent({ids:[eventID]});
             await db.events.delete(eventID);
-            await ndkEvent.delete();
+            await ndkEvent?.delete();
             isDeleted = true;
             count = count == 0 ? 0: count - 1;
         } catch (error) {

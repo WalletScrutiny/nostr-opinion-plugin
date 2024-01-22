@@ -2,7 +2,7 @@ import NDK, { NDKEvent, type NDKFilter } from '@nostr-dev-kit/ndk';
 
 export default class Summariser {
 	opinions: Record<string, NDKEvent[]>;
-	ndk;
+	ndk: NDK;
 	trustedAuthors: string[];
 
 	constructor({
