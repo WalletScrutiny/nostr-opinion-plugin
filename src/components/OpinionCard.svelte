@@ -15,7 +15,7 @@
     import { convertNostrPubKeyToBech32 } from "../utils/covertBech";
 	import {localStore, ndkUser } from '../stores/stores';
     import ndk from "../stores/provider";
-	import { NDKEvent,NDKRelaySet,type NDKFilter } from '@nostr-dev-kit/ndk';
+	import { NDKEvent,NDKRelaySet,type NDKFilter, NDKKind } from '@nostr-dev-kit/ndk';
 	import { NDKlogin, calculateRelativeTime, fetchUserProfile, logout, privkeyLogin } from '../utils/helper';
 	import { DEFAULT_RELAY_URLS, kindNotes, kindOpinion, kindReaction, profileImageUrl } from '../utils/constants';
 	
@@ -35,7 +35,8 @@
     export let editLvl;
     export let name;
     export let count;
- 
+    export let deletedEventsArray=[];
+    
     let replyEvents=[];
     let reactions = [];
     let expertOpinions;
@@ -49,7 +50,6 @@
     let disliked = false;
     let showFullText = false;
     let ATag = event.id;
-    let isDeleted = false;
     let relativeTime = '';
     let published_at = undefined;
     let created_at = undefined;
@@ -57,6 +57,7 @@
         read: DEFAULT_RELAY_URLS.read,
         write: DEFAULT_RELAY_URLS.write
     }
+    let isDeleted = false;
     
     let fileArray=[];
 
@@ -118,7 +119,7 @@
         }       
     };
     const initialization=async()=>{
-        
+        event.content = event.content.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || event.content;
         const renderer = new marked.Renderer();
 
         const imageStyles = "max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;";
@@ -185,20 +186,26 @@
         let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[event.pubkey]},{closeOnEose:true});
         if(fetchRelays) {
             fetchRelays.getMatchingTags("r").map((tags)=>{
-                if(!relay.read.includes(tags[1])){
-                    relay.read.push(tags[1]);
-                }      
-            });
-            fetchRelays.getMatchingTags("w").map((tags)=>{
-                if(!relay.write.includes(tags[1])){
-                    relay.write.push(tags[1]);
-                }      
+                if(tags.length === 3) {
+                    if(tags[2] === "write" && !relay.write.includes(tags[1])) {
+                        relay.write.push(tags[1]);
+                    } else if(tags[2] === "read" && !relay.read.includes(tags[1])) {
+                        relay.read.push(tags[1]);
+                    }
+                } else if (tags.length === 2) {
+                    if(!relay.write.includes(tags[1])) {
+                        relay.write.push(tags[1]);
+                    }
+                    if(!relay.read.includes(tags[1])) {
+                        relay.read.push(tags[1]);
+                    }
+                }    
             });
         }
         published_at = event.tags.filter((value)=> value[0] === 'published_at')[0]?.[1]?.slice(0,10);
         if(published_at)
             published_at = parseInt(published_at);
-        created_at = parseInt(event.created_at);
+        created_at = parseInt(event.created_at);   
     }
     initialization();
 
@@ -226,6 +233,11 @@
         opinionContent = opinionContent.replace(url,"");
         fileArray = fileArray.filter(file => file !== fileToDelete);
     }
+
+    $: if(isDeleted) {
+        deletedEventsArray = [...deletedEventsArray,event];
+    }
+ 
 </script>
 {#if !isDeleted}
 {#if !loading && expertOpinions}
@@ -268,7 +280,7 @@
     </div>
     {#if !edit}
     <p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
-        {@html showFullText ? marked(event.content) : marked(truncateText(event.content, maxLength))}
+        {@html showFullText ? marked(event.content.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || event.content) : marked(truncateText(event.content.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || event.content, maxLength))}
         {#if event.content.length > maxLength}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -277,10 +289,9 @@
             </span>
         {/if}
     </p>
-    
     {:else}
     <div transition:slide style="margin: 2rem 0;">
-        <form on:submit|preventDefault={()=>submit(published_at)}>
+        <form on:submit|preventDefault={()=>submit(published_at.toString())}>
             <Editor bind:opinionContent={opinionContent} />
             <div id="sentiment-box" style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;">
                 <label for="sentiment" style="font-weight: 600;">Choose your overall sentiment</label>
