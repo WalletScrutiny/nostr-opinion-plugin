@@ -13,7 +13,7 @@
 
 	export let profiles: { [key: string]: { content: NDKUserProfile } } = {};
 	export let opinionContent: string;
-	export let name: string;
+	export let subject: string;
 	export let showNewOpinion;
 
 	const login = async (nostrKeyMethod: string | undefined) => {
@@ -45,7 +45,7 @@
 		if (!content.image) content.image = profileImageUrl + $ndkUser.pubkey;
 		if (!content.pubkey) content.pubkey = $ndkUser.pubkey;
 		showNewOpinion = false;
-		const ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [name], authors: [$ndkUser.pubkey] };
+		const ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject], authors: [$ndkUser.pubkey] };
 		let fetchEvent = await $ndk.fetchEvent(ndkFilter, {
 			closeOnEose: true
 		});

@@ -49,7 +49,7 @@
 		sentiment: string
 	};
 	export let editLvl: number; // TODO: create an enum for this type
-	export let name: string;
+	export let subject: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
     opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
@@ -81,7 +81,7 @@
 	const maxLength = 500;
 
 	if (editLvl === 0) {
-		ATag = kindOpinion + ':' + event.pubkey + ':' + name;
+		ATag = kindOpinion + ':' + event.pubkey + ':' + subject;
 	}
 
 	function toggleFullText() {
@@ -538,7 +538,7 @@
 						{selectNegative}
 						{newOpinion}
 						{editLvl}
-						{name}
+						{subject}
 						bind:count={replyEvents.length}
 					/>
 				{/each}
