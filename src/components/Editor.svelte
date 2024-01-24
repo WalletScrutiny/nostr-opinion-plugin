@@ -34,19 +34,17 @@
 	const getData = () => {
 		isInternalUpdate = true;
 		opinionContent = editor.getMarkdown();
-		console.log(opinionContent);
 	};
 
 	onMount(() => {
-		console.log(opinionContent);
+		opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
 		editor = new Editor({
 			el: container,
 			height: '200px',
 			initialEditType: 'markdown',
 			previewStyle: 'tab',
 			initialValue: opinionContent,
-			placeholder: 'Enter your opinion',
-			theme: 'dark',
+			theme:'dark',
 			events: {
 				change: function () {
 					getData();

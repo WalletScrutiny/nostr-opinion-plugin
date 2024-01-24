@@ -52,6 +52,7 @@
 	export let name: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
+    opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
 
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];

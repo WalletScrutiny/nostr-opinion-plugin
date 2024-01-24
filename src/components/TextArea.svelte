@@ -18,12 +18,10 @@
 	}
 </script>
 
-<textarea
-	transition:slide
-	bind:this={textarea}
-	on:input={updateContent}
-	placeholder="Enter your opinion"
-	style="
+<textarea  transition:slide bind:this={textarea}
+          on:input={updateContent}
+          placeholder="Reply" 
+          style="
             width: 100%;
             height: 200px;
             background-color: #f8f8f8; 
