@@ -18,16 +18,13 @@
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 
-	export let name: string;
-	name = name.slice(0, -1);
-	export let header: string;
-	export let footer: string = '[Join the conversation!](https://www.walletscrutiny.com)';
-	export let title: string = header;
-	export let tags: string = 'WalletScrutiny,NostrComment';
+	export let subject: string;
+	export let opinionHeader: string = '';
+	export let opinionFooter: string = '';
+	export let opinionTitle: string = opinionHeader;
+	export let opinionTags: string = 'NostrOpinion';
 	export let summary: string =
-		`An opinion made about ` +
-		`${name.split('.')[1]} Bitcoin ${name.split('.')[2]}` +
-		` generated using nostr-opinion-plugin`;
+		`An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
@@ -55,7 +52,7 @@
 	let fileArray: { files: File; url: string }[] = [];
 	let deletedEventsArray: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 
-	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [name] };
+	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject] };
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
 	$: {
 		$sub.forEach(async (event) => {
@@ -80,7 +77,6 @@
 	const submit = async (published_at: string) => {
 		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
-		let walletArraylen = name.split('.').length;
 		if (privkey) {
 			!$ndk.signer && (await privkeyLogin(privkey));
 		} else {
@@ -88,7 +84,7 @@
 		}
 		if (!newOpinion.content || !$ndk.signer) return;
 		newOpinion.content =
-			header + '\n<!--HEADER END-->\n' + newOpinion.content + '\n<!--FOOTER START-->\n\n\n\n ';
+			opinionHeader + '\n<!--HEADER END-->\n' + newOpinion.content + '\n<!--FOOTER START-->\n\n\n\n ';
 		const alreadyPresent = (
 			await $ndk.fetchEvent({ kinds: [kindOpinion], authors: [$ndkUser!.pubkey] })
 		)?.tags;
@@ -98,42 +94,27 @@
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
 		if (!published_at || !published_at.length) {
-			ndkEvent.tags = [
-				['d', name],
-				['sentiment', newOpinion.sentiment],
-				['title', title],
-				['summary', summary],
-				['published_at', (Date.now() + 5000).toString()],
-				[
-					'alt',
-					`This is a comment made using nostr-plugin on WalletScrutiny's article about ${
-						name.split('.')[walletArraylen - 2]
-					} ${name.split('.')[walletArraylen - 1]}`
-				]
-			];
-		} else {
-			ndkEvent.tags = [
-				['d', name],
-				['sentiment', newOpinion.sentiment],
-				['title', title],
-				['summary', summary],
-				['published_at', published_at],
-				[
-					'alt',
-					`This is a comment made using nostr-plugin on WalletScrutiny's article about ${
-						name.split('.')[walletArraylen - 2]
-					} ${name.split('.')[walletArraylen - 1]}`
-				]
-			];
+			published_at = (Date.now() + 5000).toString()
 		}
-		tags.split(',').map((tag) => {
+		ndkEvent.tags = [
+			['d', subject],
+			['sentiment', newOpinion.sentiment],
+			['opinionTitle', opinionTitle],
+			['summary', summary],
+			['published_at', published_at],
+			[
+				'alt',
+				`An opinion made using the nostr-opinion-plugin on ${subject} titled ${opinionTitle}.`
+			]
+		];
+		opinionTags.split(',').map((tag) => {
 			if (tag == '' || !tag) {
 				return;
 			}
 			ndkEvent.tags.push(['t', tag]);
 			newOpinion.content = newOpinion.content + `#${tag} `;
 		});
-		newOpinion.content = newOpinion.content + '\n\n' + footer;
+		newOpinion.content = newOpinion.content + '\n\n' + opinionFooter;
 		ndkEvent.content = newOpinion.content;
 		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write, $ndk)).then(() => {
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
@@ -254,15 +235,15 @@
 	}
 </script>
 
-<h1>Community opinions ({allEvents?.length || '0'})</h1>
-<p class="description">
-	These comments are contributed by members of the Wallet Scrutiny community like you. Thank you for
-	helping review wallets for security issues and enabling more people to secure and custody their
-	bitcoin.
-</p>
 {#if loading}
 	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">loading...</p>
 {:else}
+	<h1 class="expertOpinionsHeadline">{expertOpinions.headline
+		.replace('$$nAll$$', allEvents?.length || '0')
+		.replace('$$nTrusted$$', filteredEvents?.length || '0')}</h1>
+	<p class="description">
+		{expertOpinions.description}
+	</p>
 	<nav class="top-nav" transition:fade>
 		<div class="count-container">
 			<span class="nav-count"><Positive /> {sentimentCount['1']} positive</span>
@@ -305,7 +286,7 @@
 					{selectNegative}
 					{newOpinion}
 					{editLvl}
-					{name}
+					{subject}
 					bind:count
 					bind:deletedEventsArray
 				/>
@@ -319,15 +300,7 @@
 		<div class="add-opinion-init" transition:fade>
 			<h3 style="color:black;">Add your opinion</h3>
 			<div class="description">
-				<p>
-					Thank you for contributing your security review of {name}. Please make sure to follow
-					these guidelines:
-				</p>
-				<ul>
-					<li>Stay objective in your review Focus on security-related aspects</li>
-					<li>that's what we're about here Consider contributing a full review</li>
-					<li>see our methodology</li>
-				</ul>
+				{@html expertOpinions.newOpinionDescription}
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
 				<p style="color:black;">Logged in as {$ndkUser?.npub || '0'}</p>
@@ -412,7 +385,7 @@
 						>Register</button
 					>
 					{#if showLoginOrRegister === 'login'}
-						<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
+						<Login bind:profiles bind:opinionContent bind:showNewOpinion {subject} />
 					{:else if showLoginOrRegister === 'register'}
 						<Register bind:profiles bind:showNewOpinion />
 					{/if}
