@@ -17,11 +17,6 @@
 	export let showNewOpinion;
 
 	const login = async (nostrKeyMethod: string | undefined) => {
-		if (!$ndkUser) {
-			console.log("Can't proceed. $ndkUser is null");
-			return;
-		}
-
 		if (!nostrKeyMethod) return;
 		let login;
 		switch (nostrKeyMethod) {
@@ -37,6 +32,12 @@
 			console.log('Something went wrong while login!!');
 			return;
 		}
+		
+		if (!$ndkUser) {
+			console.log("Can't proceed. $ndkUser is null");
+			return;
+		}
+
 		let content = await fetchUserProfile($ndkUser.pubkey);
 		if (!content) {
 			content = { image: profileImageUrl + $ndkUser.pubkey, pubkey: $ndkUser.pubkey };
