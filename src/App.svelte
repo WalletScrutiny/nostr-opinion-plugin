@@ -1,7 +1,7 @@
 <svelte:options customElement="nostr-opinion" />
 
 <script lang="ts">
-	import {  localStore, ndkUser } from './stores/stores';
+	import { localStore, ndkUser } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
@@ -10,28 +10,32 @@
 	import Editor from './components/Editor.svelte';
 	import OpinionCard from './components/OpinionCard.svelte';
 	import ndk from './stores/provider';
-	import {NDKlogin, fetchUserProfile, logout, privkeyLogin} from './utils/helper'
-	import { NDKEvent, NDKRelaySet, type NDKFilter} from '@nostr-dev-kit/ndk';
+	import { NDKlogin, fetchUserProfile, logout, privkeyLogin } from './utils/helper';
+	import { NDKEvent, NDKRelaySet, type NDKFilter, type NDKUserProfile } from '@nostr-dev-kit/ndk';
 	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
+	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 
 	export let name: string;
-	name = name.slice(0,-1);
+	name = name.slice(0, -1);
 	export let header: string;
-	export let footer: string = "[Join the conversation!](https://www.walletscrutiny.com)";
+	export let footer: string = '[Join the conversation!](https://www.walletscrutiny.com)';
 	export let title: string = header;
-	export let tags: string = "WalletScrutiny,NostrComment";
-	export let summary: string = `An opinion made about `+ `${name.split(".")[1]} Bitcoin ${name.split(".")[2]}` +` generated using nostr-opinion-plugin`
-	
+	export let tags: string = 'WalletScrutiny,NostrComment';
+	export let summary: string =
+		`An opinion made about ` +
+		`${name.split('.')[1]} Bitcoin ${name.split('.')[2]}` +
+		` generated using nostr-opinion-plugin`;
+
 	let expertOpinions: typeof import('./main').expertOpinions;
-	let allEvents: any[] = [];
-	let filteredEvents: any[] = [];
-	let profiles: any = {};
-	let selectPositive:Boolean = false;
-	let selectNeutral:Boolean = true;
-	let selectNegative:Boolean = false;
+	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
+	let filteredEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
+	let profiles: { [key: string]: { content: NDKUserProfile } | undefined } = {};
+	let selectPositive: boolean = false;
+	let selectNeutral: boolean = true;
+	let selectNegative: boolean = false;
 	let editLvl = 0;
 	let newOpinion = {
 		content: '',
@@ -39,93 +43,104 @@
 	};
 	let opinionContent = '';
 	let loading = true;
-	let sentimentCount = {
+	let sentimentCount: { [key: string]: number } = {
 		'-1': 0,
 		'0': 0,
 		'1': 0
 	};
-	let filter: 'approved' | 'all'  = 'approved';
+	let filter: 'approved' | 'all' = 'approved';
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let count = 0;
-	let fileArray = [];
-	let deletedEventsArray=[];
-	let badgeAwardedExperts = []
+	let fileArray: { files: File; url: string }[] = [];
+	let deletedEventsArray: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 
-	let ndkFilter:NDKFilter = {kinds:[kindOpinion],"#d":[name]};
-	const sub = $ndk.storeSubscribe(ndkFilter,{closeOnEose:false});
+	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [name] };
+	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
 	$: {
-		$sub.forEach(async(event)=>{
-			const value = allEvents.filter((e)=>{
-			return e.pubkey === event.pubkey;
+		$sub.forEach(async (event) => {
+			const value = allEvents.filter((e) => {
+				return e.pubkey === event.pubkey;
 			});
-			if(value.length) {
-				allEvents = allEvents.map((e)=>{
-					if(e.pubkey === event.pubkey) {
+			if (value.length) {
+				allEvents = allEvents.map((e) => {
+					if (e.pubkey === event.pubkey) {
 						return event;
 					} else {
 						return e;
 					}
 				});
 			} else {
-				allEvents = [...allEvents, {...event}];
+				allEvents = [...allEvents, { ...event } as NDKEvent];
 				profiles[event.pubkey] = await findUserProfileData(event.pubkey);
 			}
 			sortEvents();
-		})
-	};
-	const submit = async (published_at) => {
+		});
+	}
+	const submit = async (published_at: string) => {
 		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
-		let walletArraylen = name.split(".").length;
-		if(privkey){
-            !$ndk.signer && await privkeyLogin(privkey);
-        } else {
-            !$ndk.signer && await NDKlogin();
-        }
+		let walletArraylen = name.split('.').length;
+		if (privkey) {
+			!$ndk.signer && (await privkeyLogin(privkey));
+		} else {
+			!$ndk.signer && (await NDKlogin());
+		}
 		if (!newOpinion.content || !$ndk.signer) return;
-		newOpinion.content = header+"\n<!--HEADER END-->\n"+newOpinion.content+"\n<!--FOOTER START-->\n\n\n\n ";
-		const alreadyPresent = (await $ndk.fetchEvent({kinds:[kindOpinion],authors:[$ndkUser.pubkey]}))?.tags;
-		if(alreadyPresent?.length ===  3  && alreadyPresent[2][1]) {
+		newOpinion.content =
+			header + '\n<!--HEADER END-->\n' + newOpinion.content + '\n<!--FOOTER START-->\n\n\n\n ';
+		const alreadyPresent = (
+			await $ndk.fetchEvent({ kinds: [kindOpinion], authors: [$ndkUser!.pubkey] })
+		)?.tags;
+		if (alreadyPresent?.length === 3 && alreadyPresent[2][1]) {
 			published_at = alreadyPresent[2][1];
 		}
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
-		if(!published_at || !published_at.length)
-		{
+		if (!published_at || !published_at.length) {
 			ndkEvent.tags = [
-				["d",name],
-				["sentiment",newOpinion.sentiment],
-				["title",title],
-				["summary",summary],
-				["published_at",(Date.now()+5000).toString()],
-				["alt",`This is a comment made using nostr-plugin on WalletScrutiny's article about ${name.split(".")[walletArraylen-2]} ${name.split(".")[walletArraylen-1]}`]
+				['d', name],
+				['sentiment', newOpinion.sentiment],
+				['title', title],
+				['summary', summary],
+				['published_at', (Date.now() + 5000).toString()],
+				[
+					'alt',
+					`This is a comment made using nostr-plugin on WalletScrutiny's article about ${
+						name.split('.')[walletArraylen - 2]
+					} ${name.split('.')[walletArraylen - 1]}`
+				]
 			];
 		} else {
 			ndkEvent.tags = [
-				["d",name],
-				["sentiment",newOpinion.sentiment],
-				["title",title],
-				["summary",summary],
-				["published_at",published_at],
-				["alt",`This is a comment made using nostr-plugin on WalletScrutiny's article about ${name.split(".")[walletArraylen-2]} ${name.split(".")[walletArraylen-1]}`]
+				['d', name],
+				['sentiment', newOpinion.sentiment],
+				['title', title],
+				['summary', summary],
+				['published_at', published_at],
+				[
+					'alt',
+					`This is a comment made using nostr-plugin on WalletScrutiny's article about ${
+						name.split('.')[walletArraylen - 2]
+					} ${name.split('.')[walletArraylen - 1]}`
+				]
 			];
 		}
-		tags.split(",").map((tag)=>{
-			if(tag == '' || !tag){
+		tags.split(',').map((tag) => {
+			if (tag == '' || !tag) {
 				return;
 			}
-			ndkEvent.tags.push(["t",tag]);
-			newOpinion.content = newOpinion.content+`#${tag} `
+			ndkEvent.tags.push(['t', tag]);
+			newOpinion.content = newOpinion.content + `#${tag} `;
 		});
-		newOpinion.content = newOpinion.content+"\n\n"+ footer;
+		newOpinion.content = newOpinion.content + '\n\n' + footer;
 		ndkEvent.content = newOpinion.content;
-		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write,$ndk)).then(()=>{
+		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write, $ndk)).then(() => {
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
-				allEvents[index] = { ...ndkEvent };
+				allEvents[index] = { ...ndkEvent } as NDKEvent;
 			} else {
-				allEvents = [{ ...ndkEvent }, ...allEvents];
+				allEvents = [{ ...ndkEvent } as NDKEvent, ...allEvents];
 			}
 			sortEvents();
 		});
@@ -152,7 +167,9 @@
 				if (!trusted) return false;
 			}
 			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
-			if (sentiment) sentimentCount[sentiment] += 1;
+			if (sentiment) {
+				sentimentCount[sentiment] += 1;
+			}
 			return true;
 		});
 		filteredEvents = filteredEvents.sort((a, b) => {
@@ -167,6 +184,10 @@
 	};
 
 	async function findUserProfileData(pubkey: string) {
+		if (!$ndkUser) {
+			console.log("Can't find user profile. $ndkUser is undefined");
+			return;
+		}
 		let content = await fetchUserProfile(pubkey);
 		if (!content) {
 			content = { image: profileImageUrl + $ndkUser.pubkey, pubkey: $ndkUser.pubkey };
@@ -178,46 +199,47 @@
 		return { content };
 	}
 
-	const initialization = async()=> {
+	const initialization = async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
 		try {
 			await $ndk.connect();
 			console.log('NDK connected successfully');
 			const isloggedIn = $localStore.lastUserLogged;
 			loading = false;
-			if(isloggedIn && window) {
+			if (isloggedIn && window) {
 				let user = $ndk.getUser({
-					npub:isloggedIn,
+					npub: isloggedIn
 				});
-				let fetchRelays = await $ndk.fetchEvent({kinds:[10002],authors:[user.pubkey]});
-				if(fetchRelays) {
-					fetchRelays.getMatchingTags("r").map((tags)=>{
-						if(!DEFAULT_RELAY_URLS.read.includes(tags[1])){
-							if(tags.length === 3) {
-								if(tags[2] === "write" && !DEFAULT_RELAY_URLS.write.includes(tags[1])) {
+				let fetchRelays = await $ndk.fetchEvent({ kinds: [10002], authors: [user.pubkey] });
+				if (fetchRelays) {
+					fetchRelays.getMatchingTags('r').map((tags) => {
+						if (!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+							if (tags.length === 3) {
+								if (tags[2] === 'write' && !DEFAULT_RELAY_URLS.write.includes(tags[1])) {
 									DEFAULT_RELAY_URLS.write.push(tags[1]);
-								} else if(tags[2] === "read" && !DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+								} else if (tags[2] === 'read' && !DEFAULT_RELAY_URLS.read.includes(tags[1])) {
 									DEFAULT_RELAY_URLS.read.push(tags[1]);
 								}
 							} else if (tags.length === 2) {
-								if(!DEFAULT_RELAY_URLS.write.includes(tags[1])) {
+								if (!DEFAULT_RELAY_URLS.write.includes(tags[1])) {
 									DEFAULT_RELAY_URLS.write.push(tags[1]);
 								}
-								if(!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+								if (!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
 									DEFAULT_RELAY_URLS.read.push(tags[1]);
 								}
-							} 
-						}      
+							}
+						}
 					});
 				}
 				ndkUser.set(user);
-				profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
+				if ($ndkUser) {
+					profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
+				}
 			}
-			
 		} catch (error) {
 			console.log(error);
 		}
-	}
+	};
 	initialization();
 
 	const Logout = () => {
@@ -225,12 +247,11 @@
 		opinionContent = '';
 	};
 
-	function deleteFile(fileToDelete) {
-        const url = fileArray.filter(file => file === fileToDelete)[0].url;
-        opinionContent = opinionContent.replace(url,"");
-        fileArray = fileArray.filter(file => file !== fileToDelete);
-    }
-
+	function deleteFile(fileToDelete: { files: File; url: string }) {
+		const url = fileArray.filter((file) => file === fileToDelete)[0].url;
+		opinionContent = opinionContent.replace(url, '');
+		fileArray = fileArray.filter((file) => file !== fileToDelete);
+	}
 </script>
 
 <h1>Community opinions ({allEvents?.length || '0'})</h1>
@@ -253,20 +274,41 @@
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'approved'}
 				aria-label="filter by approved"
-				on:click={() => {filter = 'approved'; sortEvents(); showNewOpinion = false;} }>Approved</button
+				on:click={() => {
+					filter = 'approved';
+					sortEvents();
+					showNewOpinion = false;
+				}}>Approved</button
 			>
 			<button
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'all'}
 				aria-label="filter by all"
-				on:click={() => {filter = 'all'; sortEvents(); showNewOpinion = false;}}>All opinions</button
+				on:click={() => {
+					filter = 'all';
+					sortEvents();
+					showNewOpinion = false;
+				}}>All opinions</button
 			>
 		</div>
 	</nav>
 	<div class="opinion-container" transition:slide>
 		{#each filteredEvents as event (event.id)}
 			{#if deletedEventsArray.includes(event) === false}
-				<OpinionCard {event} {profiles} {submit} bind:opinionContent {selectPositive} {selectNeutral} {selectNegative} {newOpinion} {editLvl} {name} bind:count bind:deletedEventsArray/>
+				<OpinionCard
+					{event}
+					{profiles}
+					{submit}
+					bind:opinionContent
+					{selectPositive}
+					{selectNeutral}
+					{selectNegative}
+					{newOpinion}
+					{editLvl}
+					{name}
+					bind:count
+					bind:deletedEventsArray
+				/>
 			{/if}
 		{/each}
 	</div>
@@ -288,13 +330,22 @@
 				</ul>
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
-				<p style="color:black;">Logged in as {$ndkUser?.npub || "0"}</p>
+				<p style="color:black;">Logged in as {$ndkUser?.npub || '0'}</p>
 				<button class="primary-btn" on:click={Logout}>Logout</button>
 				<h3 style="color:black;">Share your opinion</h3>
-				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">We use Nostr to store opinions. You can post and access your posts via a unique private key.</p>
+				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">
+					We use Nostr to store opinions. You can post and access your posts via a unique private
+					key.
+				</p>
 				<form on:submit|preventDefault={submit} id="review-input-details-container">
-					<div style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;">
-						<img src={profiles[$ndkUser?.pubkey]?.content?.image} alt="Miranda" style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"/>
+					<div
+						style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;"
+					>
+						<img
+							src={profiles[$ndkUser?.pubkey]?.content?.image}
+							alt="Miranda"
+							style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"
+						/>
 						<span style="color: black; font-size: 24px;">
 							{!profiles[$ndkUser?.pubkey]?.content?.name ||
 							profiles[$ndkUser?.pubkey]?.content?.name == ''
@@ -341,9 +392,9 @@
 						</div>
 					</div>
 					<div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
-					{#each fileArray as file, index (file.url)}
-					<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
-					{/each}
+						{#each fileArray as file (file.url)}
+							<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
+						{/each}
 					</div>
 					<div style="display:flex; align-contents:center;">
 						<button class="primary-btn" style="width: 5rem;" type="submit" disabled={!$ndkUser}
@@ -354,15 +405,17 @@
 				</form>
 			{:else}
 				<div transition:slide>
-				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
-				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
-					>Register</button
-				>
-				{#if showLoginOrRegister === 'login'}
-					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
-				{:else if showLoginOrRegister === 'register'}
-					<Register bind:profiles bind:showNewOpinion/>
-				{/if}
+					<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}
+						>Log in</button
+					>
+					<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
+						>Register</button
+					>
+					{#if showLoginOrRegister === 'login'}
+						<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
+					{:else if showLoginOrRegister === 'register'}
+						<Register bind:profiles bind:showNewOpinion />
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -447,9 +500,9 @@
 		cursor: pointer;
 		border: none;
 		padding-right: 1.5rem;
-		display:flex;
-		justify-content:center;
-		align-items:center;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 		color: #808080;
 	}
 
@@ -469,6 +522,5 @@
 	.selected-state {
 		background-color: var(--sentiment-button-background-color);
 		color: #ffffff;
-		
 	}
 </style>

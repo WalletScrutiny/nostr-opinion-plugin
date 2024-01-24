@@ -26,7 +26,7 @@ export function sortEventList(eventList: NDKEvent[]) {
 	eventList.sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0));
 }
 
-export async function fetchUserProfile(opts: string): Promise<NDKUserProfile | undefined> {
+export async function fetchUserProfile(opts: string): Promise<NDKUserProfile> {
 	try {
 		if (window) {
 			const user = await db.users.where({ pubkey: opts }).first();
@@ -44,7 +44,7 @@ export async function fetchUserProfile(opts: string): Promise<NDKUserProfile | u
 				return user.profile as NDKUserProfile;
 			}
 		} else {
-			return undefined;
+			return {};
 		}
 	} catch (error) {
 		console.error(error);
@@ -77,7 +77,7 @@ export async function NDKlogin(): Promise<NDKUser | undefined> {
 		$ndk.signer = signer;
 		ndkStore.set($ndk);
 		const ndkCurrentUser = await signer.user();
-		let user = $ndk.getUser({
+		const user = $ndk.getUser({
 			pubkey: ndkCurrentUser.pubkey,
 			npub: ndkCurrentUser.npub
 		});
@@ -97,7 +97,7 @@ export async function privkeyLogin(pk: string): Promise<NDKUser | undefined> {
 		$ndk.signer = signer;
 		ndkStore.set($ndk);
 		const ndkCurrentUser = await signer.user();
-		let user = $ndk.getUser({
+		const user = $ndk.getUser({
 			pubkey: ndkCurrentUser.pubkey,
 			npub: ndkCurrentUser.npub
 		});
@@ -138,10 +138,10 @@ export function parseNostrUrls(rawContent: string): string {
 	});
 }
 
-export function calculateRelativeTime(timestamp) {
-	let now: any = new Date();
-	let eventDate: any = new Date(timestamp * 1000);
-	const diffInSeconds = Math.floor((now - eventDate) / 1000);
+export function calculateRelativeTime(timestamp: number) {
+	const now = new Date();
+	const eventDate = new Date(timestamp * 1000);
+	const diffInSeconds = Math.floor((now.valueOf() - eventDate.valueOf()) / 1000);
 
 	if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
 	if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;

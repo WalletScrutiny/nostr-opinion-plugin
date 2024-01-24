@@ -1,21 +1,21 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
 
-    let textarea;
-    export let opinionContent;
+	let textarea: HTMLTextAreaElement;
+	export let opinionContent: string;
 
-    const updateContent = () => {
-        opinionContent = textarea.value;
-    };
+	const updateContent = () => {
+		opinionContent = textarea.value;
+	};
 
-    onMount(() => {
-        textarea.value = opinionContent;
-    });
+	onMount(() => {
+		textarea.value = opinionContent;
+	});
 
-    $: if (textarea) {
-        textarea.value = opinionContent;
-    }
+	$: if (textarea) {
+		textarea.value = opinionContent;
+	}
 </script>
 
 <textarea  transition:slide bind:this={textarea}
@@ -35,5 +35,6 @@
             resize: vertical;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: border-color 0.3s, box-shadow 0.3s;
-          ">
+          "
+>
 </textarea>
