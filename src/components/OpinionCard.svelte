@@ -52,6 +52,7 @@
 	export let subject: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
+	export let isMine = false;
     opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
 
 	let replyEvents: NDKEvent[] = [];
@@ -288,6 +289,9 @@
 	}
 
 	$: if (isDeleted) {
+		if(editLvl == 1 ) {
+			isMine = false;
+		}
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
 </script>
@@ -364,14 +368,14 @@
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html showFullText
 						? ( editLvl > 1 ? ( event.content)  : marked(
-								 event.content
+							event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] || event.content
 							))
 						:( editLvl > 1 ? truncateText(
 									 event.content,
 									maxLength
 								):  marked(
 								truncateText(
-									event.content,
+									event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] || event.content,
 									maxLength
 								)
 							))
