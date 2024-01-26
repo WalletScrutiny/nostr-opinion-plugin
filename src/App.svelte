@@ -51,7 +51,26 @@
 	let count = 0;
 	let fileArray: { files: File; url: string }[] = [];
 	let deletedEventsArray: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
+	let isMine: Boolean | undefined = false;
+	let allEventLength = 0;
+	let filteredEventLength = 0;
 
+	$: {
+		allEventLength = allEvents.filter((e)=> {
+			if(deletedEventsArray.includes(e)) {
+				return false;
+			}
+			return true;
+		}).length;
+
+		filteredEventLength = filteredEvents.filter((e)=>{
+			if(filteredEvents.includes(e)) {
+				return false;
+			}
+			return true;
+		}).length;
+
+	}
 	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject] };
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
 	$: {
@@ -125,6 +144,9 @@
 			}
 			sortEvents();
 		});
+		let value = deletedEventsArray.filter((e)=>e.pubkey != $ndkUser?.pubkey);
+		deletedEventsArray = [...value];
+		isMine = true;
 		newOpinion = {
 			content: '',
 			sentiment: '0'
@@ -216,6 +238,11 @@
 				if ($ndkUser) {
 					profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 				}
+				allEvents.map((e)=> {
+					if(e.pubkey === $ndkUser?.pubkey) {
+						isMine = true;
+					}
+				})
 			}
 		} catch (error) {
 			console.log(error);
@@ -239,8 +266,8 @@
 	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">loading...</p>
 {:else}
 	<h1 class="expertOpinionsHeadline">{expertOpinions.headline
-		.replace('$$nAll$$', allEvents?.length || '0')
-		.replace('$$nTrusted$$', filteredEvents?.length || '0')}</h1>
+		.replace('$$nAll$$', allEventLength || '0')
+		.replace('$$nTrusted$$', filter === 'approved'? filteredEventLength : allEventLength)}</h1>
 	<p class="description">
 		{expertOpinions.description}
 	</p>
@@ -289,16 +316,17 @@
 					{subject}
 					bind:count
 					bind:deletedEventsArray
+					bind:isMine
 				/>
 			{/if}
 		{/each}
 	</div>
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
-		>Add your opinion</button
+		>{!isMine ? "Add" : "Edit"} your opinion</button
 	>
 	{#if showNewOpinion}
 		<div class="add-opinion-init" transition:fade>
-			<h3 style="color:black;">Add your opinion</h3>
+			<h3 style="color:black;">{!isMine ? "Add" : "Edit"} your opinion</h3>
 			<div class="description">
 				{@html expertOpinions.newOpinionDescription}
 			</div>
