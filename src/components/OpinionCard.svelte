@@ -53,6 +53,7 @@
 	export let subject: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
+	export let isMine = false;
 	opinionContent =
 		opinionContent.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] ||
 		opinionContent;
@@ -302,6 +303,9 @@
 	}
 
 	$: if (isDeleted) {
+		if(editLvl == 1 ) {
+			isMine = false;
+		}
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
 </script>
@@ -322,11 +326,11 @@
 					style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 500;"
 				>
 					<div>
-						{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1'}
+						{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1' && editLvl === 1}
 							<Negative />
-						{:else if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '0'}
+						{:else if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '0' && editLvl === 1}
 							<Neutral />
-						{:else}
+						{:else if editLvl === 1}
 							<Positive />
 						{/if}
 					</div>
@@ -383,6 +387,19 @@
 						: editLvl > 1
 							? truncateText(event.content, maxLength)
 							: marked(truncateText(event.content, maxLength))}
+						? ( editLvl > 1 ? ( event.content)  : marked(
+							event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] || event.content
+							))
+						:( editLvl > 1 ? truncateText(
+									 event.content,
+									maxLength
+								):  marked(
+								truncateText(
+									event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] || event.content,
+									maxLength
+								)
+							))
+					}
 					{#if event.content.length > maxLength}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->

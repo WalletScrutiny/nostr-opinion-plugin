@@ -20,7 +20,6 @@
 
 <textarea  transition:slide bind:this={textarea}
           on:input={updateContent}
-          placeholder="Reply" 
           style="
             width: 100%;
             height: 200px;
