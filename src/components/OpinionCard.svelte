@@ -13,7 +13,6 @@
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
 	import { marked } from 'marked';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
-	import { expertOpinions as expertOpinionsExported } from '../main';
 	import { localStore, ndkUser } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
@@ -21,7 +20,8 @@
 		NDKRelaySet,
 		type NDKFilter,
 		NDKKind,
-		type NDKUserProfile
+		type NDKUserProfile,
+		type Hexpubkey
 	} from '@nostr-dev-kit/ndk';
 	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import {
@@ -36,6 +36,7 @@
 	import Upload from './Upload.svelte';
 	import DeleteEventData from '../utils/deleteEventData.svelte';
 	import TextArea from './TextArea.svelte';
+	import { nip19 } from 'nostr-tools';
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
@@ -45,18 +46,21 @@
 	export let selectNeutral: boolean;
 	export let selectNegative: boolean;
 	export let newOpinion: {
-		content: string,
-		sentiment: string
+		content: string;
+		sentiment: string;
 	};
 	export let editLvl: number; // TODO: create an enum for this type
 	export let subject: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
-    opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
+	opinionContent =
+		opinionContent.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] ||
+		opinionContent;
 
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
-	let expertOpinions: typeof expertOpinionsExported;
+	let expertOpinions: typeof import('../main').expertOpinions;
+	let trustedAuthors: Hexpubkey[];
 	let likeCount = 0;
 	let dislikeCount = 0;
 	let edit = false;
@@ -166,6 +170,16 @@
 		marked.setOptions({ renderer });
 
 		expertOpinions = (await import('../main')).expertOpinions;
+		trustedAuthors = expertOpinions.trustedAuthors
+			.map((author) => {
+				const decoded = nip19.decode(author);
+				if (decoded.type == 'npub') {
+					return decoded.data;
+				} else if (decoded.type == 'nprofile') {
+					return decoded.data.pubkey;
+				}
+			})
+			.filter((hexKey): hexKey is string => hexKey != undefined);
 
 		editLvl += 1;
 		relativeTime = calculateRelativeTime(event.created_at as number); // TODO: created_at can be undefined, "as number" isn't a solution
@@ -347,7 +361,7 @@
 							>
 						</div>
 					{/if}
-					{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
+					{#if trustedAuthors.includes(event.pubkey)}
 						<ApprovedBadge />
 					{/if}
 				</div>
@@ -363,19 +377,12 @@
 				<p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html showFullText
-						? ( editLvl > 1 ? ( event.content)  : marked(
-								 event.content
-							))
-						:( editLvl > 1 ? truncateText(
-									 event.content,
-									maxLength
-								):  marked(
-								truncateText(
-									event.content,
-									maxLength
-								)
-							))
-					}
+						? editLvl > 1
+							? event.content
+							: marked(event.content)
+						: editLvl > 1
+							? truncateText(event.content, maxLength)
+							: marked(truncateText(event.content, maxLength))}
 					{#if event.content.length > maxLength}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->

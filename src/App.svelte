@@ -11,22 +11,31 @@
 	import OpinionCard from './components/OpinionCard.svelte';
 	import ndk from './stores/provider';
 	import { NDKlogin, fetchUserProfile, logout, privkeyLogin } from './utils/helper';
-	import { NDKEvent, NDKRelaySet, type NDKFilter, type NDKUserProfile } from '@nostr-dev-kit/ndk';
+	import {
+		NDKEvent,
+		NDKRelaySet,
+		type NDKFilter,
+		type NDKUserProfile,
+		type Hexpubkey,
+		NDKKind
+	} from '@nostr-dev-kit/ndk';
 	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
+	import { nip19 } from 'nostr-tools';
 
 	export let subject: string;
 	export let opinionHeader: string = '';
 	export let opinionFooter: string = '';
 	export let opinionTitle: string = opinionHeader;
 	export let opinionTags: string = 'NostrOpinion';
-	export let summary: string =
-		`An opinion made about ${subject} generated using nostr-opinion-plugin.`;
+	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 
 	let expertOpinions: typeof import('./main').expertOpinions;
+	let trustedAuthors: Hexpubkey[];
+
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let filteredEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let profiles: { [key: string]: { content: NDKUserProfile } | undefined } = {};
@@ -84,7 +93,10 @@
 		}
 		if (!newOpinion.content || !$ndk.signer) return;
 		newOpinion.content =
-			opinionHeader + '\n<!--HEADER END-->\n' + newOpinion.content + '\n<!--FOOTER START-->\n\n\n\n ';
+			opinionHeader +
+			'\n<!--HEADER END-->\n' +
+			newOpinion.content +
+			'\n<!--FOOTER START-->\n\n\n\n ';
 		const alreadyPresent = (
 			await $ndk.fetchEvent({ kinds: [kindOpinion], authors: [$ndkUser!.pubkey] })
 		)?.tags;
@@ -94,7 +106,7 @@
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
 		if (!published_at || !published_at.length) {
-			published_at = (Date.now() + 5000).toString()
+			published_at = (Date.now() + 5000).toString();
 		}
 		ndkEvent.tags = [
 			['d', subject],
@@ -144,7 +156,7 @@
 		};
 		filteredEvents = allEvents.filter((e) => {
 			if (filter === 'approved') {
-				const trusted = expertOpinions.trustedAuthors.includes(e.pubkey);
+				const trusted = trustedAuthors.includes(e.pubkey);
 				if (!trusted) return false;
 			}
 			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
@@ -153,13 +165,14 @@
 			}
 			return true;
 		});
+
 		filteredEvents = filteredEvents.sort((a, b) => {
-			const aTrusted = expertOpinions.trustedAuthors.includes(a.pubkey);
-			const bTrusted = expertOpinions.trustedAuthors.includes(b.pubkey);
+			const aTrusted = trustedAuthors.includes(a.pubkey);
+			const bTrusted = trustedAuthors.includes(b.pubkey);
 			if (aTrusted && !bTrusted) return -1;
 			if (!aTrusted && bTrusted) return 1;
-			if (a.created_at > b.created_at) return -1;
-			if (a.created_at < b.created_at) return 1;
+			if (a.created_at && b.created_at && a.created_at > b.created_at) return -1;
+			if (a.created_at && b.created_at && a.created_at < b.created_at) return 1;
 			return 0;
 		});
 	};
@@ -182,6 +195,70 @@
 
 	const initialization = async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
+
+		trustedAuthors = expertOpinions.trustedAuthors
+			.map((author) => {
+				const decoded = nip19.decode(author);
+				if (decoded.type == 'npub') {
+					return decoded.data;
+				}
+				if (decoded.type == 'nprofile') {
+					return decoded.data.pubkey;
+				}
+			})
+			.filter((hexKey): hexKey is string => hexKey != undefined);
+
+		const trustedBadgeAuthors = expertOpinions.trustedBadgeAuthors
+			.map((badgeAuthor) => {
+				const decoded = nip19.decode(badgeAuthor);
+				if (decoded.type == 'npub') {
+					return decoded.data;
+				}
+				if (decoded.type == 'nprofile') {
+					return decoded.data.pubkey;
+				}
+			})
+			.filter((hexKey): hexKey is string => hexKey != undefined);
+
+		const trustedBadges: string[] = expertOpinions.trustedBadges
+			.map((badge) => {
+				const decoded = nip19.decode(badge);
+				if (decoded.type == 'naddr' && decoded.data.kind == NDKKind.BadgeDefinition) {
+					return `${decoded.data.kind}:${decoded.data.pubkey}:${decoded.data.identifier}`;
+				}
+			})
+			.filter((hexKey): hexKey is string => hexKey != undefined);
+
+		await $ndk.connect();
+		const badgesByTrustedBadgeAuthors = await $ndk.fetchEvents({
+			kinds: [NDKKind.BadgeDefinition],
+			authors: trustedBadgeAuthors
+		});
+
+		badgesByTrustedBadgeAuthors.forEach((value) => {
+			const dTag = value.tags.find((tag) => tag[0] == 'd');
+			if (dTag) {
+				trustedBadges.push(`${value.kind}:${value.pubkey}:${dTag[1]}`);
+			}
+		});
+
+		const badgeAwardees: string[] = [];
+
+		(
+			await $ndk.fetchEvents({
+				kinds: [NDKKind.BadgeAward],
+				'#a': trustedBadges
+			})
+		).forEach((award) => {
+			const pTags = award.tags.filter((tag) => tag[0] == 'p');
+			if (pTags.length) {
+				pTags.forEach((p) => badgeAwardees.push(p[1]));
+			}
+		});
+
+		trustedAuthors.push(...badgeAwardees);
+		expertOpinions.trustedAuthors.push(...trustedAuthors.map((author) => nip19.npubEncode(author)));
+
 		try {
 			await $ndk.connect();
 			console.log('NDK connected successfully');
@@ -238,9 +315,11 @@
 {#if loading}
 	<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">loading...</p>
 {:else}
-	<h1 class="expertOpinionsHeadline">{expertOpinions.headline
-		.replace('$$nAll$$', allEvents?.length || '0')
-		.replace('$$nTrusted$$', filteredEvents?.length || '0')}</h1>
+	<h1 class="expertOpinionsHeadline">
+		{expertOpinions.headline
+			.replace('$$nAll$$', (allEvents?.length || 0).toString())
+			.replace('$$nTrusted$$', (filteredEvents?.length || 0).toString())}
+	</h1>
 	<p class="description">
 		{expertOpinions.description}
 	</p>
@@ -300,6 +379,7 @@
 		<div class="add-opinion-init" transition:fade>
 			<h3 style="color:black;">Add your opinion</h3>
 			<div class="description">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html expertOpinions.newOpinionDescription}
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
