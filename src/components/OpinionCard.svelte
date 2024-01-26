@@ -363,19 +363,19 @@
 				<p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html showFullText
-						? marked(
-								event.content
-									.split('<!--HEADER END-->\n')?.[1]
-									?.split('\n<!--FOOTER START-->')?.[0] || event.content
-							)
-						: marked(
+						? ( editLvl > 1 ? ( event.content)  : marked(
+								 event.content
+							))
+						:( editLvl > 1 ? truncateText(
+									 event.content,
+									maxLength
+								):  marked(
 								truncateText(
-									event.content
-										.split('<!--HEADER END-->\n')?.[1]
-										?.split('\n<!--FOOTER START-->')?.[0] || event.content,
+									event.content,
 									maxLength
 								)
-							)}
+							))
+					}
 					{#if event.content.length > maxLength}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
