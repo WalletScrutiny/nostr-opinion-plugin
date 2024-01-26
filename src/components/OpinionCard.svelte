@@ -312,11 +312,11 @@
 					style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 500;"
 				>
 					<div>
-						{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1'}
+						{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1' && editLvl === 1}
 							<Negative />
-						{:else if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '0'}
+						{:else if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '0' && editLvl === 1}
 							<Neutral />
-						{:else}
+						{:else if editLvl === 1}
 							<Positive />
 						{/if}
 					</div>
