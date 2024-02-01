@@ -17,6 +17,7 @@
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
+	import DOMPurify from 'dompurify';
 
 	export let subject: string;
 	export let opinionHeader: string = '';
@@ -51,7 +52,7 @@
 	let count = 0;
 	let fileArray: { files: File; url: string }[] = [];
 	let deletedEventsArray: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
-	let isMine: Boolean | undefined = false;
+	let isMine: boolean | undefined = false;
 	let allEventLength = 0;
 	let filteredEventLength = 0;
 
@@ -328,7 +329,8 @@
 		<div class="add-opinion-init" transition:fade>
 			<h3 style="color:black;">{!isMine ? "Add" : "Edit"} your opinion</h3>
 			<div class="description">
-				{@html expertOpinions.newOpinionDescription}
+				<!-- eslint-disable svelte/no-at-html-tags -->
+				{@html DOMPurify.sanitize(expertOpinions.newOpinionDescription)}
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
 				<p style="color:black;">Logged in as {$ndkUser?.npub || '0'}</p>
