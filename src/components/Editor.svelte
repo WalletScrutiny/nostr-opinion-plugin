@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import Editor from '@toast-ui/editor';
 	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
+	import DOMPurify from 'dompurify';
+
 
 	let container: HTMLElement;
 	let editor: Editor;
@@ -58,7 +60,7 @@
 
 <!-- TODO: Fix this later. Using @html can enable XSS attacks -->
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<svelte:element this="style">{@html css}</svelte:element>
+<svelte:element this="style">{@html DOMPurify.sanitize(css)}</svelte:element>
 <div bind:this={container} />
 
 <style>
