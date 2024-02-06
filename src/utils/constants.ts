@@ -28,3 +28,7 @@ export const DEFAULT_RELAY_URLS = {
 	read: ['wss://nos.lol'],
 	write: ['wss://nos.lol']
 };
+export const opinionHeaderSeparator = '\n<!--HEADER END-->\n';
+export const opinionFooterSeparator = '\n<!--FOOTER START-->\n\n\n\n';
+export const opinionHeaderRegex = new RegExp(`^[\\s\\S]*${opinionHeaderSeparator}`);
+export const opinionFooterRegex = new RegExp(`${opinionFooterSeparator}[\\s\\S]*$`);
