@@ -3,6 +3,7 @@
 	import Editor from '@toast-ui/editor';
 	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
 	import DOMPurify from 'dompurify';
+	import { opinionFooterRegex, opinionHeaderRegex } from '../utils/constants';
 
 
 	let container: HTMLElement;
@@ -39,7 +40,7 @@
 	};
 
 	onMount(() => {
-		opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
+		opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
 		editor = new Editor({
 			el: container,
 			height: '200px',
@@ -60,7 +61,7 @@
 
 <!-- TODO: Fix this later. Using @html can enable XSS attacks -->
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<svelte:element this="style">{@html DOMPurify.sanitize(css)}</svelte:element>
+<svelte:element this="style">{@html css}</svelte:element>
 <div bind:this={container} />
 
 <style>
