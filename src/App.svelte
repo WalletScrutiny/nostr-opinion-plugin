@@ -1,8 +1,4 @@
-<svelte:options customElement={{
-	tag:"nostr-opinion",
-	shadow:"none"
-}} />
-
+<svelte:options customElement="nostr-opinion" />
 
 <script lang="ts">
 	import { localStore, ndkUser } from './stores/stores';

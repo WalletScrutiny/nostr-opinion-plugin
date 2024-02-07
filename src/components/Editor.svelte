@@ -2,13 +2,13 @@
 	import { onMount } from 'svelte';
 	import Editor from '@toast-ui/editor';
 	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
+	import DOMPurify from 'dompurify';
 	import { opinionFooterRegex, opinionHeaderRegex } from '../utils/constants';
 
 
-	export let opinionContent: string;
-
 	let container: HTMLElement;
 	let editor: Editor;
+	export let opinionContent: string;
 	let isInternalUpdate = false;
 
 	const convertImageUrlsToMarkdown = (content: string) => {
@@ -51,9 +51,8 @@
 			events: {
 				change: function () {
 					getData();
-				},
-			},
-			extendedAutolinks: true,
+				}
+			}
 		});
 
 		editor.getMarkdown();
