@@ -15,8 +15,10 @@
 	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
 	import Loader from './components/Loader.svelte';
+	import FloatingForm from './components/FloatingForm.svelte';
 
 	export let name: string;
+	
 	let expertOpinions: typeof import('./main').expertOpinions;
 	let allEvents: any[] = [];
 	let filteredEvents: any[] = [];
@@ -39,6 +41,10 @@
 	let filter: 'approved' | 'all' = 'approved';
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
+	let showForm = false;
+	let formMode = 'login';
+
+	$: showForm = !$ndkUser;
 
 	const submit = async () => {
 		newOpinion.content = opinionContent;
@@ -180,6 +186,9 @@
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
 	>
+	
+	<FloatingForm show={showForm} {formMode} />
+
 	{#if showNewOpinion}
 		<div class="add-opinion-init">
 			<h3>Add your opinion</h3>
