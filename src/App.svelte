@@ -15,7 +15,6 @@
 	import { NDKEvent, type NDKFilter,type NDKUserProfile} from '@nostr-dev-kit/ndk';
 	import { kindOpinion, profileImageUrl } from './utils/constants';
 	import Loader from './components/Loader.svelte';
-	import FloatingForm from './components/FloatingForm.svelte';
 
 	export let name: string;
 	
@@ -186,8 +185,7 @@
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
 	>
-	
-	<FloatingForm show={showForm} {formMode} />
+
 
 	{#if showNewOpinion}
 		<div class="add-opinion-init">
@@ -232,9 +230,13 @@
 					>Register</button
 				>
 				{#if showLoginOrRegister === 'login'}
-					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name} />
+				<div class="floating-form-container btn-hover-effect"> 
+					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name}/>
+					</div>
 				{:else if showLoginOrRegister === 'register'}
+				<div class="floating-form-container btn-hover-effect"> 
 					<Register />
+				</div>
 				{/if}
 			{/if}
 		</div>
@@ -374,5 +376,25 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
+
+	.floating-form-container {
+        position: fixed;
+        bottom: 20px; /* Adjust as needed */
+        right: 20px; /* Adjust as needed */
+        width: auto; /* Adjust as needed */
+        max-width: 250px;
+        background-color: #f5deb3;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1000; /* Ensure it floats above other content */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+        max-height: 180vh;
+    }
+
 </style>
 					
