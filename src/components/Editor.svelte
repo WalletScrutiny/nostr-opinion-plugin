@@ -59,8 +59,6 @@
 		editor.getMarkdown();
 	});
 </script>
-
-<!-- TODO: Fix this later. Using @html can enable XSS attacks -->
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
 <svelte:element this="style">{@html css}</svelte:element>
 <div bind:this={container} />

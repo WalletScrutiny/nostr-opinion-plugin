@@ -48,7 +48,7 @@
 		content: string,
 		sentiment: string
 	};
-	export let sentimentCount:any;
+	export let sentimentCount: { [key: string]: number };
 	export let editLvl: number; // TODO: create an enum for this type
 	export let subject: string;
 	export let count: number;
