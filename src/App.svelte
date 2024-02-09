@@ -1,7 +1,4 @@
-<svelte:options customElement={{
-	tag:"nostr-opinion",
-	shadow:"none"
-}} />
+<svelte:options customElement="nostr-opinion"/>
 
 
 <script lang="ts">
@@ -352,7 +349,7 @@
 		<div class="add-opinion-init" transition:fade>
 			<h3 style="color:black;">{!isMine ? 'Add' : 'Edit'} your opinion</h3>
 			<div class="description">
-				<!-- eslint-disable svelte/no-at-html-tags -->
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html DOMPurify.sanitize(expertOpinions.newOpinionDescription)}
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
