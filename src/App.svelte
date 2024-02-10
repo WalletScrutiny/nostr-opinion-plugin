@@ -41,7 +41,7 @@
 	let showNewOpinion = false;
 	let showLoginOrRegister: 'login' | 'register' | false = false;
 	let showForm = false;
-	let formMode = 'login';
+	let showFloatingDiv = true;
 
 	$: showForm = !$ndkUser;
 
@@ -185,7 +185,24 @@
 	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
 		>Add your opinion</button
 	>
-
+	
+	{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
+				{#if showFloatingDiv}
+				<div class="floating-form-container btn-hover-effect"> 
+					<button class="close-btn" on:click={() => {showFloatingDiv =false}}>X</button>
+					<p>Logged in as {profiles[$ndkUser?.pubkey]?.content?.name  || "0"}</p>
+					<button class="primary-btn" on:click={Logout}>Logout</button>
+				</div>
+			{/if}
+	{:else}
+	{#if showFloatingDiv}
+	<div class="floating-form-container btn-hover-effect"> 
+		<button class="close-btn" on:click={() => {showFloatingDiv =false}}>X</button>
+		<Login bind:profiles bind:opinionContent bind:showNewOpinion {name}/>
+	</div>
+	{/if}
+	{/if}
+	
 
 	{#if showNewOpinion}
 		<div class="add-opinion-init">
@@ -202,8 +219,7 @@
 				</ul>
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
-				<p>Logged in as {$ndkUser?.npub || "0"}</p>
-				<button class="primary-btn" on:click={Logout}>Logout</button>
+				<p>Logged in as {$ndkUser?.npub || "0"}</p>				
 				<h3>Share your opinion</h3>
 				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">We use Nostr to store opinions. You can post and access your posts via a unique private key.</p>
 				<form on:submit|preventDefault={submit} id="review-input-details-container">
@@ -225,18 +241,24 @@
 					<button class="primary-btn" style="width: 5rem;" type="submit" disabled={!$ndkUser}>Post</button>
 				</form> 
 			{:else}
-				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'login')}>Log in</button>
-				<button class="primary-btn" on:click={() => (showLoginOrRegister = 'register')}
+				<button class="primary-btn" on:click={() => { showFloatingDiv = true; showLoginOrRegister = 'login'; }}>Log in</button>
+				<button class="primary-btn" on:click={() => { showFloatingDiv = true; showLoginOrRegister = 'register'; }}
 					>Register</button
 				>
-				{#if showLoginOrRegister === 'login'}
-				<div class="floating-form-container btn-hover-effect"> 
-					<Login bind:profiles bind:opinionContent bind:showNewOpinion {name}/>
+			
+				{#if showFloatingDiv}
+					{#if showLoginOrRegister === 'login'}
+					
+					<div class="floating-form-container btn-hover-effect"> 
+						<button class="close-btn" on:click={() => {showFloatingDiv =false}}>X</button>
+						<Login bind:profiles bind:opinionContent bind:showNewOpinion {name}/>
+						</div>
+					{:else if showLoginOrRegister === 'register'}
+					<div class="floating-form-container btn-hover-effect"> 
+						<button class="close-btn" on:click={() => {showFloatingDiv =false}}>X</button>
+						<Register />
 					</div>
-				{:else if showLoginOrRegister === 'register'}
-				<div class="floating-form-container btn-hover-effect"> 
-					<Register />
-				</div>
+					{/if}
 				{/if}
 			{/if}
 		</div>
@@ -379,22 +401,37 @@
 
 	.floating-form-container {
         position: fixed;
-        bottom: 20px; /* Adjust as needed */
-        right: 20px; /* Adjust as needed */
-        width: auto; /* Adjust as needed */
-        max-width: 250px;
+        bottom: 1.25em;
+        right: 1.25em;
+        width: auto;
+        max-width: 16em;
         background-color: #f5deb3;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
+        border-radius: 0.5em;
         padding: 20px;
-        z-index: 1000; /* Ensure it floats above other content */
+        z-index: 1000;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        overflow: auto;
         max-height: 180vh;
+		overflow: auto;
     }
 
+	.close-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      border: none;
+	  border-radius: 3em;
+	  font-size:1em;
+	  font-weight: bold;
+	  padding-top: 6px;
+	  padding-bottom: 6px;
+	  padding-left: 10px;
+	  padding-right: 10px;
+      background-color: rgba(114, 113, 96, 0.2);
+      cursor: pointer;
+    }
 </style>
 					

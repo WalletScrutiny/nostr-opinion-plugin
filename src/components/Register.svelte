@@ -85,11 +85,11 @@
       This information will be shown with your comments. To upload images, use a service like Piccy.
     </p>
     <input type="text" placeholder="Enter your name..." bind:value={name}
-           style="font-family: 'Lato', sans-serif; margin-bottom: 1em; width: 50%; height: 40px;display:block" required/>
+           style="font-family: 'Lato', sans-serif; margin-bottom: 1em; width: 100%; height: 40px;display:block" required/>
     <textarea placeholder="Share a bit about yourself..." bind:value={about}
-              style="font-family: 'Lato', sans-serif; margin-bottom: 1em; width: 50%; height: 100px;display:block" required></textarea>
+              style="font-family: 'Lato', sans-serif; margin-bottom: 1em; width: 100%; height: 100px;display:block" required></textarea>
     <input type="text" placeholder="Link to a profile image..." bind:value={imageUrl}
-           style="font-family: 'Lato', sans-serif; margin-bottom: 1em; width: 50%; height: 40px;display:block"/>
+           style="font-family: 'Lato', sans-serif; margin-bottom: 1em; width: 100%; height: 40px;display:block"/>
     <button type="submit" 
             style="background-color: #4DA84D; color: white; border: none; padding: 10px 15px; 
                    font-family: 'Lato', sans-serif; border-radius: 4px; cursor: pointer;">
