@@ -5,7 +5,7 @@
 	import { NDKlogin, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import ndk from '../stores/provider';
 	import { type NDKFilter, type NDKUserProfile } from '@nostr-dev-kit/ndk';
-	import { kindOpinion, profileImageUrl } from '../utils/constants';
+	import {kindOpinion, profileImageUrl } from '../utils/constants';
 	import { slide } from 'svelte/transition';
 
 	let showPrivateKeyInput = false;

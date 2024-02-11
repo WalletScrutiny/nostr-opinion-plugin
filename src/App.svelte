@@ -1,4 +1,5 @@
-<svelte:options customElement="nostr-opinion" />
+<svelte:options customElement="nostr-opinion"/>
+
 
 <script lang="ts">
 	import { localStore, ndkUser } from './stores/stores';
@@ -19,12 +20,22 @@
 		type Hexpubkey,
 		NDKKind
 	} from '@nostr-dev-kit/ndk';
-	import { DEFAULT_RELAY_URLS, kindOpinion, profileImageUrl } from './utils/constants';
+	import {
+		DEFAULT_RELAY_URLS,
+		opinionHeaderRegex,
+		opinionFooterRegex,
+		opinionFooterSeparator,
+		opinionHeaderSeparator,
+		kindDelete,
+		kindOpinion,
+		profileImageUrl
+	} from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 	import { nip19 } from 'nostr-tools';
+	import DOMPurify from 'dompurify';
 
 	export let subject: string;
 	export let opinionHeader: string = '';
@@ -39,9 +50,6 @@
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let filteredEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let profiles: { [key: string]: { content: NDKUserProfile } | undefined } = {};
-	let selectPositive: boolean = false;
-	let selectNeutral: boolean = true;
-	let selectNegative: boolean = false;
 	let editLvl = 0;
 	let newOpinion = {
 		content: '',
@@ -63,21 +71,11 @@
 	let isMine: boolean | undefined = false;
 	let allEventLength = 0;
 	let filteredEventLength = 0;
-
+	$: showNewOpinion,checkIfOpinionExists();
 	$: {
-		allEventLength = allEvents.filter((e) => {
-			if (deletedEventsArray.includes(e)) {
-				return false;
-			}
-			return true;
-		}).length;
+		allEventLength = allEvents.filter((e) => !deletedEventsArray.includes(e)).length;
 
-		filteredEventLength = filteredEvents.filter((e) => {
-			if (filteredEvents.includes(e)) {
-				return false;
-			}
-			return true;
-		}).length;
+		filteredEventLength = filteredEvents.filter((e) => !deletedEventsArray.includes(e)).length;
 	}
 	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject] };
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
@@ -102,19 +100,15 @@
 		});
 	}
 	const submit = async (published_at: string) => {
-		newOpinion.content = opinionContent;
 		const privkey = $localStore.pk;
 		if (privkey) {
 			!$ndk.signer && (await privkeyLogin(privkey));
 		} else {
 			!$ndk.signer && (await NDKlogin());
 		}
-		if (!newOpinion.content || !$ndk.signer) return;
+		if (!opinionContent || !$ndk.signer) return;
 		newOpinion.content =
-			opinionHeader +
-			'\n<!--HEADER END-->\n' +
-			newOpinion.content +
-			'\n<!--FOOTER START-->\n\n\n\n ';
+			opinionHeader + opinionHeaderSeparator + opinionContent + opinionFooterSeparator;
 		const alreadyPresent = (
 			await $ndk.fetchEvent({ kinds: [kindOpinion], authors: [$ndkUser!.pubkey] })
 		)?.tags;
@@ -158,13 +152,6 @@
 		let value = deletedEventsArray.filter((e) => e.pubkey != $ndkUser?.pubkey);
 		deletedEventsArray = [...value];
 		isMine = true;
-		newOpinion = {
-			content: '',
-			sentiment: '0'
-		};
-		selectPositive = false;
-		selectNeutral = true;
-		selectNegative = false;
 		showNewOpinion = false;
 		filter = 'all';
 	};
@@ -181,7 +168,7 @@
 				if (!trusted) return false;
 			}
 			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
-			if (sentiment) {
+			if (sentiment && !deletedEventsArray.includes(e)) {
 				sentimentCount[sentiment] += 1;
 			}
 			return true;
@@ -289,6 +276,7 @@
 				let user = $ndk.getUser({
 					npub: isloggedIn
 				});
+				checkIfOpinionExists();
 				let fetchRelays = await $ndk.fetchEvent({ kinds: [10002], authors: [user.pubkey] });
 				if (fetchRelays) {
 					fetchRelays.getMatchingTags('r').map((tags) => {
@@ -327,6 +315,7 @@
 	initialization();
 
 	const Logout = () => {
+		isMine = false;
 		logout();
 		opinionContent = '';
 	};
@@ -336,6 +325,37 @@
 		opinionContent = opinionContent.replace(url, '');
 		fileArray = fileArray.filter((file) => file !== fileToDelete);
 	}
+
+	const checkIfOpinionExists = async () => {
+		if ($ndkUser) {
+			let ndkFilter = { kinds: [kindOpinion], '#d': [subject], authors: [$ndkUser.pubkey] };
+			const opinion = await $ndk.fetchEvent(ndkFilter);
+			let deleteFilter = {
+				kinds: [kindDelete],
+				'#a': [`${kindOpinion}:${$ndkUser.pubkey}:${subject}`],
+				authors: [$ndkUser.pubkey]
+			};
+			const del = await $ndk.fetchEvent(deleteFilter);
+			if (del?.created_at < opinion?.created_at || (!del && opinion)) {
+				isMine = true;
+				let content =
+					opinion?.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '') || '';
+				const sentiment = opinion?.tagValue('sentiment') || '0';
+				newOpinion = {
+					content,
+					sentiment
+				};
+				opinionContent = content;
+			} else  if (showNewOpinion){
+				isMine = false;
+				newOpinion = {
+					content: '',
+					sentiment: '0'
+				};
+				opinionContent = '';
+			}
+		} 
+	}
 </script>
 
 {#if loading}
@@ -343,10 +363,9 @@
 {:else}
 	<h1 class="expertOpinionsHeadline">
 		{expertOpinions.headline
-			.replace('$$nAll$$', (allEventLength || 0).toString())
+			.replace('$$nAll$$', allEventLength.toString() || '0')
 			.replace('$$nTrusted$$', filter === 'approved' ? filteredEventLength.toString() : allEventLength.toString())}
 	</h1>
-
 	<p class="description">
 		{expertOpinions.description}
 	</p>
@@ -386,11 +405,9 @@
 					{event}
 					{profiles}
 					{submit}
+					bind:sentimentCount
 					bind:opinionContent
-					{selectPositive}
-					{selectNeutral}
-					{selectNegative}
-					{newOpinion}
+					bind:newOpinion
 					{editLvl}
 					{subject}
 					bind:count
@@ -400,7 +417,7 @@
 			{/if}
 		{/each}
 	</div>
-	<button class="primary-btn" on:click={() => (showNewOpinion = !showNewOpinion)}
+	<button class="primary-btn" on:click={()=>showNewOpinion = !showNewOpinion}
 		>{!isMine ? 'Add' : 'Edit'} your opinion</button
 	>
 	{#if showNewOpinion}
@@ -408,7 +425,7 @@
 			<h3 style="color:black;">{!isMine ? 'Add' : 'Edit'} your opinion</h3>
 			<div class="description">
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-				{@html expertOpinions.newOpinionDescription}
+				{@html DOMPurify.sanitize(expertOpinions.newOpinionDescription)}
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
 				<p style="color:black;">Logged in as {$ndkUser?.npub || '0'}</p>
@@ -434,7 +451,9 @@
 								: profiles[$ndkUser?.pubkey]?.content?.name}
 						</span>
 					</div>
+					<div>
 					<Editor bind:opinionContent />
+					</div>
 					<div id="sentiment-box">
 						<label for="sentiment" style="font-weight: 600;font-family: Arial, sans-serif;"
 							>Choose your overall sentiment</label
@@ -442,32 +461,23 @@
 						<div style="display:flex; gap: 0.4rem;">
 							<button
 								class="btn-standard"
-								class:selected-state={selectPositive}
+								class:selected-state={newOpinion.sentiment === '1'}
 								on:click|preventDefault={() => {
-									newOpinion.sentiment = '1';
-									selectPositive = true;
-									selectNegative = false;
-									selectNeutral = false;
+									newOpinion = { ...newOpinion, sentiment: '1' };
 								}}><Positive /> <span>Positive</span></button
 							>
 							<button
 								class="btn-standard"
-								class:selected-state={selectNeutral}
+								class:selected-state={newOpinion.sentiment === '0'}
 								on:click|preventDefault={() => {
-									newOpinion.sentiment = '0';
-									selectPositive = false;
-									selectNegative = false;
-									selectNeutral = true;
+									newOpinion = { ...newOpinion, sentiment: '0' };
 								}}><Neutral /> <span>Neutral</span></button
 							>
 							<button
 								class="btn-standard"
-								class:selected-state={selectNegative}
+								class:selected-state={newOpinion.sentiment === '-1'}
 								on:click|preventDefault={() => {
-									newOpinion.sentiment = '-1';
-									selectPositive = false;
-									selectNegative = true;
-									selectNeutral = false;
+									newOpinion = { ...newOpinion, sentiment: '-1' };
 								}}><Negative /> <span>Negative</span></button
 							>
 						</div>
@@ -493,7 +503,7 @@
 						>Register</button
 					>
 					{#if showLoginOrRegister === 'login'}
-						<Login bind:profiles bind:opinionContent bind:showNewOpinion {subject} />
+						<Login bind:profiles bind:opinionContent bind:showNewOpinion  {subject}/>
 					{:else if showLoginOrRegister === 'register'}
 						<Register bind:profiles bind:showNewOpinion />
 					{/if}

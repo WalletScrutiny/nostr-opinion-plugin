@@ -29,7 +29,9 @@
 		kindNotes,
 		kindOpinion,
 		kindReaction,
-		profileImageUrl
+		profileImageUrl,
+		opinionHeaderRegex,
+		opinionFooterRegex
 	} from '../utils/constants';
 
 	import FilePreview from './FilePreview.svelte';
@@ -37,27 +39,23 @@
 	import DeleteEventData from '../utils/deleteEventData.svelte';
 	import TextArea from './TextArea.svelte';
 	import { nip19 } from 'nostr-tools';
+	import DOMPurify from 'dompurify';
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
-	export let submit: (published_at: string) => void;
+	export let submit: (published_at: string) => void = ()=>{};
 	export let opinionContent: string;
-	export let selectPositive: boolean;
-	export let selectNeutral: boolean;
-	export let selectNegative: boolean;
 	export let newOpinion: {
 		content: string;
 		sentiment: string;
 	};
+	export let sentimentCount: { [key: string]: number };
 	export let editLvl: number; // TODO: create an enum for this type
 	export let subject: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
 	export let isMine = false;
-	opinionContent =
-		opinionContent.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] ||
-		opinionContent;
-
+    opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
 	let expertOpinions: typeof import('../main').expertOpinions;
@@ -99,10 +97,7 @@
 
 	// TODO: create enum for sentiment
 	function selectSentiment(sentiment: '0' | '1' | '-1') {
-		newOpinion.sentiment = sentiment;
-		selectPositive = sentiment === '1';
-		selectNeutral = sentiment === '0';
-		selectNegative = sentiment === '-1';
+		newOpinion = {...newOpinion,sentiment};
 	}
 
 	async function reactPost(content: string) {
@@ -151,8 +146,7 @@
 	}
 	const initialization = async () => {
 		event.content =
-			event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] ||
-			event.content;
+			event.content.replace(opinionHeaderRegex,'').replace(opinionFooterRegex,'');
 		const renderer = new marked.Renderer();
 
 		const imageStyles = 'max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;';
@@ -305,6 +299,17 @@
 	$: if (isDeleted) {
 		if(editLvl == 1 ) {
 			isMine = false;
+			let sentiment = newOpinion.sentiment;
+			let value = sentimentCount[sentiment]-1;
+			if(sentiment === "1") {
+				sentimentCount = {...sentimentCount,"1":value};
+			} else if(sentiment === "0") {
+				sentimentCount = {...sentimentCount,"0":value};
+			} else {
+				sentimentCount = {...sentimentCount,"-1":value};
+			}
+			newOpinion = {content:"",sentiment:"0"};
+			opinionContent = "";
 		}
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
@@ -381,25 +386,26 @@
 				<p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html showFullText
-						? editLvl > 1
-							? event.content
-							: marked(event.content)
-						: editLvl > 1
-							? truncateText(event.content, maxLength)
-							: marked(truncateText(event.content, maxLength))}
-						? ( editLvl > 1 ? ( event.content)  : marked(
-							event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] || event.content
-							))
-						:( editLvl > 1 ? truncateText(
-									 event.content,
-									maxLength
-								):  marked(
+						? (editLvl > 1
+							? (DOMPurify.sanitize(event.content))
+							: (marked(
+								DOMPurify.sanitize(
+								  event.content
+									.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"")
+								)
+							  ))
+						)
+						: (editLvl > 1
+							? (truncateText(DOMPurify.sanitize(event.content), maxLength))
+							: (marked(
 								truncateText(
-									event.content.split('<!--HEADER END-->\n')?.[1]?.split('\n<!--FOOTER START-->')?.[0] || event.content,
+									DOMPurify.sanitize(event.content.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"")),
 									maxLength
 								)
-							))
-					}
+							  ))
+						)
+					  }
+					  
 					{#if event.content.length > maxLength}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -424,7 +430,7 @@
 							<div style="display:flex; gap: 0.4rem;">
 								<button
 									on:click|preventDefault={() => selectSentiment('1')}
-									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {selectPositive
+									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {newOpinion.sentiment === "1"
 										? 'background-color: #4DA84D; color: white;'
 										: ''}"
 								>
@@ -432,7 +438,7 @@
 								</button>
 								<button
 									on:click|preventDefault={() => selectSentiment('0')}
-									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {selectNeutral
+									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {newOpinion.sentiment === "0"
 										? 'background-color: #4DA84D; color: white;'
 										: ''}"
 								>
@@ -440,7 +446,7 @@
 								</button>
 								<button
 									on:click|preventDefault={() => selectSentiment('-1')}
-									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {selectNegative
+									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {newOpinion.sentiment === "-1"
 										? 'background-color: #4DA84D; color: white;'
 										: ''}"
 								>
@@ -515,7 +521,12 @@
 						<button
 							on:click={() => {
 								edit = !edit;
-								opinionContent = event.content;
+								opinionContent = event.content.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
+
+								newOpinion = {
+									content: opinionContent,
+									sentiment: event.tagValue("sentiment") || "0"
+								};
 								reply = false;
 								replyContent = false;
 							}}
@@ -555,12 +566,9 @@
 					<svelte:self
 						{event}
 						{profiles}
-						{submit}
+						bind:sentimentCount
 						bind:opinionContent
-						{selectPositive}
-						{selectNeutral}
-						{selectNegative}
-						{newOpinion}
+						bind:newOpinion
 						{editLvl}
 						{subject}
 						bind:count={replyEvents.length}

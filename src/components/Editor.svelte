@@ -2,10 +2,13 @@
 	import { onMount } from 'svelte';
 	import Editor from '@toast-ui/editor';
 	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
+	import { opinionFooterRegex, opinionHeaderRegex } from '../utils/constants';
+
+
+	export let opinionContent: string;
 
 	let container: HTMLElement;
 	let editor: Editor;
-	export let opinionContent: string;
 	let isInternalUpdate = false;
 
 	const convertImageUrlsToMarkdown = (content: string) => {
@@ -37,7 +40,7 @@
 	};
 
 	onMount(() => {
-		opinionContent = opinionContent.split("<!--HEADER END-->\n")?.[1]?.split("\n<!--FOOTER START-->")?.[0] || opinionContent;
+		opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
 		editor = new Editor({
 			el: container,
 			height: '200px',
@@ -48,15 +51,14 @@
 			events: {
 				change: function () {
 					getData();
-				}
-			}
+				},
+			},
+			extendedAutolinks: true,
 		});
 
 		editor.getMarkdown();
 	});
 </script>
-
-<!-- TODO: Fix this later. Using @html can enable XSS attacks -->
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
 <svelte:element this="style">{@html css}</svelte:element>
 <div bind:this={container} />
