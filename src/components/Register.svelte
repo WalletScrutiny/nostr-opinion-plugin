@@ -6,8 +6,10 @@
 	import { ndkUser } from '../stores/stores';
 	import { privkeyLogin } from '../utils/helper';
 	import { slide } from 'svelte/transition';
+	import { nip19 } from 'nostr-tools';
 
-	let privkey = '';
+	let nsec = '';
+	let hexPrivKey = '';
 	let pubkey = '';
 	let showProfileSetup = false;
 	let name = '';
@@ -20,11 +22,12 @@
 
 	onMount(() => {
 		pk = NDKPrivateKeySigner.generate();
-		privkey = pk.privateKey as string; // todo: fix this error if "as string" is not done: Type 'string | undefined' is not assignable to type 'string'.
+		hexPrivKey = pk.privateKey as string; // todo: fix this error if "as string" is not done: Type 'string | undefined' is not assignable to type 'string'.
+		nsec = nip19.nsecEncode(hexPrivKey) as string;
 	});
 
 	const saveProfile = async () => {
-		if (!privkey) return;
+		if (!nsec) return;
 
 		if (imageUrl == '' || !imageUrl) {
 			imageUrl = profileImageUrl + pubkey;
@@ -44,11 +47,11 @@
 		profiles[$ndkUser.pubkey] = { content };
 		showNewOpinion = false;
 		await $ndkUser.publish();
-		await privkeyLogin(privkey);
+		await privkeyLogin(hexPrivKey);
 	};
 
 	const copyToClipboard = () => {
-		navigator.clipboard.writeText(privkey).then(
+		navigator.clipboard.writeText(nsec).then(
 			() => {
 				alert('Private Key copied');
 			},
@@ -111,7 +114,7 @@
 			<input
 				id="privkey"
 				type="text"
-				bind:value={privkey}
+				bind:value={nsec}
 				readonly
 				style="width: 100%; font-family: 'Lato', sans-serif; padding: 1em; 
                 color: #333; background-color: #fff; border: 1px solid #888; 
