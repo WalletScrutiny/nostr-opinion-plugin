@@ -7,9 +7,10 @@
 	import { type NDKFilter, type NDKUserProfile } from '@nostr-dev-kit/ndk';
 	import {kindOpinion, profileImageUrl } from '../utils/constants';
 	import { slide } from 'svelte/transition';
+	import { nip19 } from 'nostr-tools';
 
 	let showPrivateKeyInput = false;
-	let privkey = '';
+	let nsec = '';
 
 	export let profiles: { [key: string]: { content: NDKUserProfile } } = {};
 	export let opinionContent: string;
@@ -21,7 +22,7 @@
 		let login;
 		switch (nostrKeyMethod) {
 			case 'pk':
-				login = await privkeyLogin(privkey);
+				login = await privkeyLogin(nip19.decode(nsec).data as string);
 				break;
 			case 'nip07':
 				login = await NDKlogin();
@@ -72,7 +73,7 @@
 			<input
 				id="privkey"
 				type="text"
-				bind:value={privkey}
+				bind:value={nsec}
 				placeholder="Your private key..."
 				style="padding: 10px; margin-bottom: 16px; border: 2px solid #ccc; border-radius: 4px; width: 100%; display: block; font-family: 'Lato', sans-serif;"
 			/>

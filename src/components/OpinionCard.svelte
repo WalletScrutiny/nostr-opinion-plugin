@@ -13,7 +13,6 @@
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
 	import { marked } from 'marked';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
-	import { expertOpinions as expertOpinionsExported } from '../main';
 	import { localStore, ndkUser } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
@@ -21,7 +20,8 @@
 		NDKRelaySet,
 		type NDKFilter,
 		NDKKind,
-		type NDKUserProfile
+		type NDKUserProfile,
+		type Hexpubkey
 	} from '@nostr-dev-kit/ndk';
 	import { NDKlogin, calculateRelativeTime, fetchUserProfile, privkeyLogin } from '../utils/helper';
 	import {
@@ -45,8 +45,8 @@
 	export let submit: (published_at: string) => void = ()=>{};
 	export let opinionContent: string;
 	export let newOpinion: {
-		content: string,
-		sentiment: string
+		content: string;
+		sentiment: string;
 	};
 	export let sentimentCount: { [key: string]: number };
 	export let editLvl: number; // TODO: create an enum for this type
@@ -57,7 +57,8 @@
     opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
-	let expertOpinions: typeof expertOpinionsExported;
+	let expertOpinions: typeof import('../main').expertOpinions;
+	export let trustedAuthors: Hexpubkey[] = [];
 	let likeCount = 0;
 	let dislikeCount = 0;
 	let edit = false;
@@ -358,7 +359,7 @@
 							>
 						</div>
 					{/if}
-					{#if expertOpinions.trustedAuthors.includes(event.pubkey)}
+					{#if trustedAuthors.includes(event.pubkey)}
 						<ApprovedBadge />
 					{/if}
 				</div>

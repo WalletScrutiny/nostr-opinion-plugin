@@ -12,7 +12,13 @@
 	import OpinionCard from './components/OpinionCard.svelte';
 	import ndk from './stores/provider';
 	import { NDKlogin, fetchUserProfile, logout, privkeyLogin } from './utils/helper';
-	import { NDKEvent, NDKRelaySet, type NDKFilter, type NDKUserProfile } from '@nostr-dev-kit/ndk';
+	import {
+		NDKEvent,
+		NDKRelaySet,
+		type NDKFilter,
+		type NDKUserProfile,
+		type Hexpubkey,
+	} from '@nostr-dev-kit/ndk';
 	import {
 		DEFAULT_RELAY_URLS,
 		opinionHeaderRegex,
@@ -28,6 +34,7 @@
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 	import DOMPurify from 'dompurify';
+	import { initializeApprovedAuthors } from './utils/approvedAuthors';
 
 	export let subject: string;
 	export let opinionHeader: string = '';
@@ -37,6 +44,8 @@
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 
 	let expertOpinions: typeof import('./main').expertOpinions;
+	let trustedAuthors: Hexpubkey[]=[];
+
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let filteredEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let profiles: { [key: string]: { content: NDKUserProfile } | undefined } = {};
@@ -61,6 +70,9 @@
 	let isMine: boolean | undefined = false;
 	let allEventLength = 0;
 	let filteredEventLength = 0;
+	$: if(trustedAuthors) {
+		sortEvents();
+	}
 	$: showNewOpinion,checkIfOpinionExists();
 	$: {
 		allEventLength = allEvents.filter((e) => !deletedEventsArray.includes(e)).length;
@@ -154,7 +166,7 @@
 		};
 		filteredEvents = allEvents.filter((e) => {
 			if (filter === 'approved') {
-				const trusted = expertOpinions.trustedAuthors.includes(e.pubkey);
+				const trusted = trustedAuthors.includes(e.pubkey);
 				if (!trusted) return false;
 			}
 			const sentiment = e.tags.find((t) => t[0] === 'sentiment')?.[1];
@@ -163,13 +175,16 @@
 			}
 			return true;
 		});
+
 		filteredEvents = filteredEvents.sort((a, b) => {
-			const aTrusted = expertOpinions.trustedAuthors.includes(a.pubkey);
-			const bTrusted = expertOpinions.trustedAuthors.includes(b.pubkey);
+			const aTrusted = trustedAuthors.includes(a.pubkey);
+			const bTrusted = trustedAuthors.includes(b.pubkey);
 			if (aTrusted && !bTrusted) return -1;
 			if (!aTrusted && bTrusted) return 1;
-			if (a.created_at > b.created_at) return -1;
-			if (a.created_at < b.created_at) return 1;
+			let aCreatedAt = a?.created_at || 0;
+			let bCreatedAt = b?.created_at || 0;
+			if (aCreatedAt > bCreatedAt) return -1;
+			if (aCreatedAt < bCreatedAt) return 1;
 			return 0;
 		});
 	};
@@ -193,8 +208,7 @@
 	const initialization = async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
 		try {
-			await $ndk.connect();
-			console.log('NDK connected successfully');
+			trustedAuthors = await initializeApprovedAuthors();
 			const isloggedIn = $localStore.lastUserLogged;
 			loading = false;
 			if (isloggedIn && window) {
@@ -227,8 +241,8 @@
 				if ($ndkUser) {
 					profiles[$ndkUser.pubkey] = await findUserProfileData($ndkUser.pubkey);
 				}
-				allEvents.map((e)=> {
-					if(e.pubkey === $ndkUser?.pubkey) {
+				allEvents.map((e) => {
+					if (e.pubkey === $ndkUser?.pubkey) {
 						isMine = true;
 					}
 				});
@@ -288,8 +302,8 @@
 {:else}
 	<h1 class="expertOpinionsHeadline">
 		{expertOpinions.headline
-			.replace('$$nAll$$', allEventLength || '0')
-			.replace('$$nTrusted$$', filter === 'approved' ? filteredEventLength : allEventLength)}
+			.replace('$$nAll$$', allEventLength.toString() || '0')
+			.replace('$$nTrusted$$', filter === 'approved' ? filteredEventLength.toString() : allEventLength.toString())}
 	</h1>
 	<p class="description">
 		{expertOpinions.description}
@@ -338,6 +352,7 @@
 					bind:count
 					bind:deletedEventsArray
 					bind:isMine
+					bind:trustedAuthors
 				/>
 			{/if}
 		{/each}
