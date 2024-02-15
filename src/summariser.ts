@@ -1,16 +1,17 @@
-import NDK, { NDKEvent, type NDKFilter } from '@nostr-dev-kit/ndk';
+import NDK, { NDKEvent, type Hexpubkey, type NDKFilter } from '@nostr-dev-kit/ndk';
+import { initializeApprovedAuthors } from './utils/approvedAuthors';
 
 export default class Summariser {
 	opinions: Record<string, NDKEvent[]>;
 	ndk: NDK;
-	trustedAuthors: string[];
+	trustedAuthors: Hexpubkey[];
 
 	constructor({
 		relay,
 		trustedAuthors: trustedAuthors
 	}: {
 		relay: string;
-		trustedAuthors?: string[];
+		trustedAuthors: Hexpubkey[];
 	}) {
 		this.opinions = {};
 		this.ndk = new NDK({ explicitRelayUrls: [relay] });
@@ -21,7 +22,8 @@ export default class Summariser {
 		return new Promise<void>((resolve, reject) => {
 			this.ndk
 				.connect()
-				.then(() => {
+				.then(async () => {
+					this.trustedAuthors = await initializeApprovedAuthors();
 					const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
 
 					return this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
