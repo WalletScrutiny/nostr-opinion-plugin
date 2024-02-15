@@ -1,0 +1,17 @@
+[Unit]
+Description=opinion-plugin-staging
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ubuntu
+WorkingDirectory=/home/ubuntu/www/staging.opinion-plugin.nostr.info/nostr-opinion-plugin/
+ExecStart=/home/ubuntu/www/staging.opinion-plugin.nostr.info/nostr-opinion-plugin/bin/start.sh
+StandardOutput=append:/var/log/nostr-opinion-plugin-staging.log
+StandardError=append:/var/log/nostr-opinion-plugin-staging.error.log
+
+[Install]
+WantedBy=multi-user.target

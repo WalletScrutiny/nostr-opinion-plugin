@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	</head>
+	<body>
+		<h1>Nostr Opinion Plugin</h1>
+		<nostr-opinion
+			subject="location/UnitedStates/Washington/Seattle"
+			opinionHeader="Opinion about the city of Seattle"
+			opinionFooter="[Join the conversation!](https://www.myCloneOfTripadvisor.com/Search?q=seattle)\n\nJust Testing ..."
+			opinionTitle="Seattle"
+			opinionTags="myCloneOfTripadvisor,askNostr,nostrOpinion"
+		></nostr-opinion>
+		<nostr-opinion
+			subject="nip/GitWithNostr"
+			opinionHeader="Opinion about Nostr Implementation Possibility 'Git With Nostr' by nostr:npub..."
+		></nostr-opinion>
+		<nostr-opinion subject="product/iPhone 12"></nostr-opinion>
+		<script type="module">
+			import { expertOpinions } from '/nostr-opinion.js';
+			expertOpinions.trustedAuthors = [
+				'8d57446448a2fea22be1fcf7e526b87e917999ffc83ef5c6823a757fb58527f4',
+				'64c9e18a36a04803111d21abae88d315f44d3235a4997101d8e2dff3dc82dd70'
+			];
+			expertOpinions.headline = 'Community Opinions ($$nTrusted$$/$$nAll$$)';
+			expertOpinions.description =
+				'These comments are contributed by nostr users using the nostr-opinions-plugin.';
+		</script>
+	</body>
+</html>

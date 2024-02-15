@@ -4,16 +4,19 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "rm index.html && ln -s index.staging.html index.html && vite",
 		"build": "vite build",
 		"build:summariser": "esbuild ./src/summariser.ts --bundle --platform=node --target=node12 --outfile=./dist/nostr-opinion-summariser.js --format=cjs",
 		"preview": "vite preview",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"prepare": "husky install",
 		"lint": "eslint src --fix",
-		"format": "prettier src --write"
+		"format": "prettier src --write",
+		"deploy:staging": "rm .env.local && ln -s .env.staging .env.local && rm index.html && ln -s index.staging.html index.html && ./bin/deploy.sh",
+		"deploy:production": "rm .env.local && ln -s .env.production .env.local && rm index.html && ln -s index.production.html index.html && npm run build && cp index.html ./dist && ./bin/deploy.sh"
 	},
 	"devDependencies": {
+		"@esbuild/linux-x64": "^0.20.0",
 		"@sveltejs/vite-plugin-svelte": "^2.0.0",
 		"@tsconfig/svelte": "^4.0.0",
 		"@types/dompurify": "^3.0.5",

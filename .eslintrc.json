@@ -29,5 +29,5 @@
 	"rules": {
 		"@typescript-eslint/no-explicit-any": "error"
 	},
-	"ignorePatterns": ["*.cjs", "*.config.js"]
+	"ignorePatterns": ["*.cjs", "*.config.js", "index.html"]
 }
