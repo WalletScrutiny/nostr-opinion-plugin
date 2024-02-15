@@ -38,7 +38,6 @@
 	import Upload from './Upload.svelte';
 	import DeleteEventData from '../utils/deleteEventData.svelte';
 	import TextArea from './TextArea.svelte';
-	import { nip19 } from 'nostr-tools';
 	import DOMPurify from 'dompurify';
 
 	export let event: NDKEvent;
@@ -59,7 +58,7 @@
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
 	let expertOpinions: typeof import('../main').expertOpinions;
-	let trustedAuthors: Hexpubkey[];
+	export let trustedAuthors: Hexpubkey[] = [];
 	let likeCount = 0;
 	let dislikeCount = 0;
 	let edit = false;
@@ -165,16 +164,6 @@
 		marked.setOptions({ renderer });
 
 		expertOpinions = (await import('../main')).expertOpinions;
-		trustedAuthors = expertOpinions.trustedAuthors
-			.map((author) => {
-				const decoded = nip19.decode(author);
-				if (decoded.type == 'npub') {
-					return decoded.data;
-				} else if (decoded.type == 'nprofile') {
-					return decoded.data.pubkey;
-				}
-			})
-			.filter((hexKey): hexKey is string => hexKey != undefined);
 
 		editLvl += 1;
 		relativeTime = calculateRelativeTime(event.created_at as number); // TODO: created_at can be undefined, "as number" isn't a solution

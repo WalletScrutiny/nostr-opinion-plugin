@@ -352,6 +352,7 @@
 					bind:count
 					bind:deletedEventsArray
 					bind:isMine
+					bind:trustedAuthors
 				/>
 			{/if}
 		{/each}
