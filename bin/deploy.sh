@@ -5,7 +5,7 @@
 . .env.local
 
 args=(-azvP --delete --exclude=node_modules --exclude=.idea --exclude=data --exclude=static/csv --exclude=static/_posts)
-hosts=($HOST_DOMAIN) # tornado lightning thunder tundra jefferson
+hosts=($HOST_DOMAIN)
 dry=() #add --dry-run to enable testing
 user=$HOST_USER
 name=$HOST_PATH
