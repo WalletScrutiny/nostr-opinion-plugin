@@ -309,15 +309,12 @@
 		<div
 			transition:slide
 			class="opinion-container"
-			style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background-color: #fff;"
 		>
 			<div
 				class="opinion-top"
-				style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"
 			>
 				<div
 					class="pubkey"
-					style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 500;"
 				>
 					<div>
 						{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1' && editLvl === 1}
@@ -329,28 +326,28 @@
 						{/if}
 					</div>
 					{#if profiles[event.pubkey]}
-						<div style="display: flex; align-items: center; gap: 0.5rem;">
+						<div class="profile-header">
 							<!-- svelte-ignore a11y-img-redundant-alt -->
 							<img
+							class="profile-image"
 								src={profiles[event.pubkey].content?.image
 									? profiles[event.pubkey].content?.image
 									: profileImageUrl + event.pubkey}
 								alt="Profile Picture"
-								style="border-radius: 50%; width: 40px; height: 40px; object-fit: cover;"
 							/>
-							<span style="color:black;">
+							<span>
 								{profiles[event.pubkey].content?.name ||
-									convertNostrPubKeyToBech32(event.pubkey).slice(0, 8) +
+									convertNostrPubKeyToBech32(event.pubkey).slice(0, 10) +
 										'...' +
-										convertNostrPubKeyToBech32(event.pubkey).slice(-4)}
+										convertNostrPubKeyToBech32(event.pubkey).slice(-5)}
 							</span>
 						</div>
 					{:else}
-						<div style="display: flex; align-items: center; gap: 0.5rem;">
+						<div class="profile-header">
 							<img
+								class="profile-image"
 								src={profileImageUrl + event.pubkey}
-								alt="Miranda"
-								style="display: block; border-radius: 50%; width: 40px; height: 40px; object-fit: cover;"
+								alt="Profile"
 							/>
 							<span
 								>{convertNostrPubKeyToBech32(event.pubkey).slice(0, 8) +
@@ -364,7 +361,7 @@
 					{/if}
 				</div>
 
-				<p class="date" style="color: #757575; font-size: 14px;">
+				<p class="date">
 					{#if published_at && published_at < created_at}
 						Edited.
 					{/if}
@@ -372,7 +369,7 @@
 				</p>
 			</div>
 			{#if !edit}
-				<p class="content" style="color: #333; margin-bottom: 16px; overflow:scroll">
+				<p class="content">
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html showFullText
 						? (editLvl > 1
@@ -401,7 +398,6 @@
 						<span
 							class="read-more"
 							on:click={toggleFullText}
-							style="color: var(--button-background-color); cursor: pointer;"
 						>
 							{showFullText ? ' Read Less' : ' Read More'}
 						</span>
@@ -410,7 +406,7 @@
 			{:else}
 				<div transition:slide style="margin: 2rem 0;">
 					<form on:submit|preventDefault={() => submit(published_at.toString())}>
-						<Editor bind:opinionContent />
+						<Editor bind:fileArray bind:opinionContent />
 						<div
 							id="sentiment-box"
 							style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;"
@@ -419,25 +415,22 @@
 							<div style="display:flex; gap: 0.4rem;">
 								<button
 									on:click|preventDefault={() => selectSentiment('1')}
-									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {newOpinion.sentiment === "1"
-										? 'background-color: #4DA84D; color: white;'
-										: ''}"
+									class="deselected"
+									class:selected = {newOpinion.sentiment === "1"}
 								>
 									<Positive /> <span>Positive</span>
 								</button>
 								<button
 									on:click|preventDefault={() => selectSentiment('0')}
-									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {newOpinion.sentiment === "0"
-										? 'background-color: #4DA84D; color: white;'
-										: ''}"
+									class="deselected"
+									class:selected = {newOpinion.sentiment === "0"}
 								>
 									<Neutral /> <span>Neutral</span>
 								</button>
 								<button
 									on:click|preventDefault={() => selectSentiment('-1')}
-									style="border-radius: 3px; width: 7rem; height: 3rem; cursor: pointer; border: none; display:flex; justify-content:center; align-items:center; {newOpinion.sentiment === "-1"
-										? 'background-color: #4DA84D; color: white;'
-										: ''}"
+									class="deselected"
+									class:selected = {newOpinion.sentiment === "-1"}
 								>
 									<Negative /> <span>Negative</span>
 								</button>
@@ -447,18 +440,18 @@
 						<button
 							type="submit"
 							disabled={!$ndkUser}
-							style="color: var(--button-text-color); background-color: var(--button-background-color); padding: 7px 20px; border-radius: 3px; cursor: pointer; border: none; height: 2.5rem;"
+							class="postButton"
 						>
 							Post
 						</button>
 					</form>
 				</div>
 			{/if}
-			<div style="display: flex; gap: 2rem;">
-				<div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
+			<div class="reactionDiv">
+				<div class="card-button">
 					<button
+						class="reactionButton"
 						on:click={() => reactPost('+')}
-						style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"
 					>
 						{#if liked === true}
 							<LikedButton />
@@ -466,12 +459,12 @@
 							<LikeButton />
 						{/if}
 					</button>
-					<span style="font-size: 14px;color:black;">{likeCount || 0}</span>
+					<span>{likeCount || 0}</span>
 				</div>
-				<div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
+				<div class="card-button">
 					<button
 						on:click={() => reactPost('-')}
-						style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"
+						class="reactionButton"
 					>
 						{#if disliked === true}
 							<DislikedButton />
@@ -479,26 +472,26 @@
 							<DislikeButton />
 						{/if}
 					</button>
-					<span style="font-size: 14px; color:black;">{dislikeCount || 0}</span>
+					<span>{dislikeCount || 0}</span>
 				</div>
-				<div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
+				<div class="card-button">
 					<button
+						id="replyButton"
 						on:click={() => {
 							reply = !reply;
 							edit = false;
 							opinionContent = '';
 							replyContent = false;
 						}}
-						style="background-color: transparent; border: none; cursor: pointer;"
 					>
 						<ReplyButton />
 					</button>
 					<button
+					    id="allReply"
 						on:click={() => {
 							replyContent = !replyContent;
 						}}
-						style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"
-						><span style="font-size: 14px; pointer:cursor;">{replyEvents.length}</span></button
+						><span style="pointer:cursor;">{replyEvents.length}</span></button
 					>
 				</div>
 
@@ -506,7 +499,7 @@
 					<DeleteEventData eventID={event.id} bind:isDeleted bind:count />
 				{/if}
 				{#if $ndkUser?.pubkey === event.pubkey && editLvl == 1}
-					<div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
+					<div class="card-button">
 						<button
 							on:click={() => {
 								edit = !edit;
@@ -519,7 +512,7 @@
 								reply = false;
 								replyContent = false;
 							}}
-							style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;"
+							class="option-button"
 						>
 							<OptionButton />
 						</button>
@@ -527,17 +520,17 @@
 				{/if}
 			</div>
 			{#if reply}
-				<div transition:fade style="padding:1rem;">
+				<div class="reply-section" transition:fade>
 					<TextArea bind:opinionContent />
 					<!-- <Editor bind:opinionContent /> -->
-					<div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
+					<div class="reply-file-preview">
 						{#each fileArray as file (file.url)}
 							<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
 						{/each}
 					</div>
-					<div style="display:flex; align-contents:center;">
+					<div class="reply-footer">
 						<button
-							style="padding: 7px 20px; border-radius: 3px;cursor: pointer;border: none;height: 2.5rem; background-color:#4DA84D;color:white"
+							class="reply-button"
 							disabled={!$ndkUser}
 							on:click={() => {
 								submitReply();
@@ -566,6 +559,153 @@
 			{/if}
 		</div>
 	{:else}
-		<p style="display:flex;justify-content:center;align-items:center;margin:2rem 0;">Loading...</p>
+		<p class="loader">Loading...</p>
 	{/if}
 {/if}
+
+<style>
+	.opinion-container {
+		border: 1px solid #e0e0e0;
+		border-radius: 8px;
+		padding: 16px;
+		margin-bottom: 16px;
+		background-color: #fff;
+		font-family: 'Barlow', sans-serif;
+	}
+
+	.opinion-top {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 12px;
+	}
+	.pubkey {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 16px;
+		font-weight: 500;
+	}
+	.profile-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 18px;
+	}
+	.profile-image {
+		border-radius: 50%;
+		width: 40px;
+		height: 40px;
+		object-fit: cover;
+	}
+	.date {
+		color: #757575;
+		font-size: 14px;
+	}
+	.content {
+		color: #333;
+		margin-bottom: 16px;
+		overflow:scroll
+	}
+	.read-more {
+		color: #4da84d;
+		cursor: pointer;
+	}
+	.loader {
+		display:flex;
+		justify-content:center;
+		align-items:center;
+		margin:2rem 0;
+	}
+	.reply-section{
+		padding:1rem;
+	}
+	.reply-file-preview{
+		display:flex;
+		gap:1rem; 
+		overflow:scroll;
+		margin:1rem 0;
+	}
+	.reply-footer{
+		display:flex; 
+		align-content:center;
+	}
+	.reply-button{
+		padding: 7px 20px; 
+		border-radius: 3px;
+		cursor: pointer;
+		border: none;
+		height: 2.5rem; 
+		background-color:#4DA84D;
+		color:white
+	}
+	.card-button{
+		display: inline-flex; 
+		align-items: center; 
+		gap: 2px;
+	}
+	.option-button{
+		background-color: transparent; 
+		border: none; 
+		cursor: pointer; 
+		display: flex; 
+		align-items: center; 
+		padding: 8px;
+	}
+	#allReply{
+		background-color: transparent; 
+		border: none; 
+		cursor: pointer; 
+		display: flex; 
+		align-items: center; 
+		padding: 8px;
+	}
+	#replyButton{
+		background-color: transparent; 
+		border: none; 
+		cursor: pointer;
+	}
+	.reactionButton {
+		background-color: transparent;
+		border: none;
+		cursor: pointer; 
+		display: flex; 
+		align-items: center; 
+		padding: 8px;
+	}
+	.reactionDiv {
+		display: flex;
+		gap: 2rem;
+	}
+	.selected {
+		border-radius: 3px; 
+		width: 7rem; 
+		height: 3rem; 
+		cursor: pointer; 
+		border: none; 
+		display:flex; 
+		justify-content:center; 
+		align-items:center;
+		background-color: #4DA84D; 
+		color: white;
+	}
+	.deselected {
+		border-radius: 3px; 
+		width: 7rem; 
+		height: 3rem; 
+		cursor: pointer; 
+		border: none; 
+		display:flex; 
+		justify-content:center; 
+		align-items:center;
+	}
+	.postButton {
+		color: #ffffff; 
+		background-color: #4da84d; 
+		padding: 7px 20px; 
+		border-radius: 3px; 
+		cursor: pointer; 
+		border: none; 
+		height: 2.5rem;
+	}
+</style>

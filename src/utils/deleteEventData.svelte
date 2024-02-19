@@ -29,8 +29,27 @@
     
 </script>
 
-<div class="card-button" style="display: inline-flex; align-items: center; gap: 2px;">
-    <button on:click={() => {deleteEventData(eventID)}} style="background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; padding: 8px;">
+
+<div class="card-button">
+    <button on:click={() => deleteEventData(eventID)}>
         <DeleteButton />
     </button>
 </div>
+
+
+<style>
+    .card-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .card-button button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 8px;
+    }
+</style>
