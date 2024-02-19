@@ -15,7 +15,6 @@
 	const voidCatHost = uploadUrl;
 	const voidCatApi = new VoidApi(voidCatHost);
 	const handleChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
-		console.log(opinionContent);
 
 		const inputElement = event.target as HTMLInputElement;
 
@@ -45,21 +44,30 @@
 					`${voidCatHost}/d/${response.file?.id}${ext ? `.${ext[1]}` : ''}`;
 				fileArray = [...fileArray, { files, url: resultUrl }];
 				opinionContent = opinionContent + ' ' + resultUrl;
-				console.log(opinionContent);
-				console.log(fileArray);
 			}
 		}
 	};
 </script>
 
 <input
-	type="file"
-	style="display:none"
-	accept="image/*"
-	bind:this={fileInput}
-	on:change={handleChange}
+    type="file"
+    class="file-input"
+    accept="image/*"
+    bind:this={fileInput}
+    on:change={handleChange}
 />
 <button
-	on:click|preventDefault={() => fileInput.click()}
-	style="border: none;background-color:white;cursor:pointer"><UploadButton /></button
->
+    class="upload-button"
+    on:click|preventDefault={() => fileInput.click()}><UploadButton /></button>
+
+<style>
+    .file-input {
+        display: none;
+    }
+
+    .upload-button {
+        border: none;
+        background-color: white;
+        cursor: pointer;
+    }
+</style>

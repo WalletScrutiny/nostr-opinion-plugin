@@ -54,49 +54,41 @@
 		if (fetchEvent && fetchEvent.content) opinionContent = fetchEvent.content;
 	};
 </script>
-
 <div transition:slide>
 	{#if showPrivateKeyInput}
-		<div
-			transition:slide
-			style="max-width: 600px;text-align: left; font-family: 'Lato', sans-serif;"
-		>
-			<h2
-				style="color: #333; font-size: 24px; margin-bottom: 8px; font-family: 'Lato', sans-serif;"
-			>
+		<div transition:slide class="container">
+			<h2 class="heading">
 				Log in
 			</h2>
-			<p style="color: #666; margin-bottom: 24px; font-family: 'Lato', sans-serif;">
+			<p class="text">
 				Enter your <strong>Nostr</strong> private key below to be able to post an opinion.<br />
-				Don't have a key? <a href="/" style="font-family: 'Lato', sans-serif;">Register</a>.
+				Don't have a key? <a href="/" class="text">Register</a>.
 			</p>
 			<input
 				id="privkey"
 				type="text"
 				bind:value={nsec}
 				placeholder="Your private key..."
-				style="padding: 10px; margin-bottom: 16px; border: 2px solid #ccc; border-radius: 4px; width: 100%; display: block; font-family: 'Lato', sans-serif;"
+				class="input"
 			/>
 			<button
 				on:click={() => {
 					login('pk');
 				}}
-				style="background-color: #4DA84D; color: white; border: none; font-size: 16px; cursor: pointer; padding: 10px; margin-bottom: 16px; font-family: 'Lato', sans-serif;"
+				class="button"
 				>Log in</button
 			>
 		</div>
 	{:else}
-		<div style="max-width: 600px;text-align: left; font-family: 'Lato', sans-serif;">
-			<h2
-				style="color: #333; font-size: 24px; margin-bottom: 8px; font-family: 'Lato', sans-serif;"
-			>
+		<div class="container">
+			<h2 class="heading">
 				Log in
 			</h2>
-			<p style="color: #666; margin-bottom: 24px; font-family: 'Lato', sans-serif;">
+			<p class="text">
 				You have two options to log in. You can connect with an authentication tool like Alby that
 				supports Nostr. Or you can enter your private key (<a
 					href="/"
-					style="font-family: 'Lato', sans-serif;">view associated risks</a
+					class="text">view associated risks</a
 				>).
 			</p>
 			{#if window}
@@ -104,15 +96,52 @@
 					on:click={() => {
 						login('nip07');
 					}}
-					style="background-color: #4DA84D; color: white; border: none; font-size: 16px; cursor: pointer; padding: 10px; margin-bottom: 16px; font-family: 'Lato', sans-serif;"
+					class="button"
 					>Connect using browser extension</button
 				>
 			{/if}
 			<button
 				on:click={() => (showPrivateKeyInput = !showPrivateKeyInput)}
-				style="background-color: #4DA84D; color: white; border: none; font-size: 16px; cursor: pointer; padding: 10px; margin-bottom: 16px; font-family: 'Lato', sans-serif;"
+				class="button"
 				>Connect using private key</button
 			>
 		</div>
 	{/if}
 </div>
+
+
+<style>
+	.container {
+		max-width: 600px;
+		text-align: left;
+		font-family: sans-serif;
+	}
+
+	.heading {
+		font-size: 24px;
+		margin-bottom: 8px;
+	}
+
+	.text {
+		margin-bottom: 24px;
+	}
+
+	.input {
+		padding: 10px;
+		margin-bottom: 16px;
+		border: 2px solid #ccc;
+		border-radius: 4px;
+		width: 100%;
+		display: block;
+	}
+
+	.button {
+		background-color: #4DA84D;
+		color: white;
+		border: none;
+		font-size: 16px;
+		cursor: pointer;
+		padding: 10px;
+		margin-bottom: 16px;
+	}
+</style>

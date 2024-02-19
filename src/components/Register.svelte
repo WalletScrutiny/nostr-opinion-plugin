@@ -62,78 +62,125 @@
 	};
 </script>
 
-<h3 style="font-family: 'Lato', sans-serif; font-size: 1.5em; color: #767676; margin-top: 0;">
-	Register
-</h3>
+<h3>Register</h3>
 {#if showProfileSetup}
-	<!-- Profile Setup Form -->
-	<form transition:slide on:submit|preventDefault={saveProfile} style="padding-right: 1.5rem;">
-		<h2 style="font-family: 'Lato', sans-serif; color: #767676;">Set up your profile</h2>
-		<p style="font-family: 'Lato', sans-serif; color: #767676;">
-			This information will be shown with your comments. To upload images, use a service like Piccy.
-		</p>
-		<input
-			type="text"
-			placeholder="Enter your name..."
-			bind:value={name}
-			style="font-family: 'Lato', sans-serif; color: #333; background-color: #f8f8f8; 
-                  margin-bottom: 1em; width: 100%; height: 50px; display: block; border: 1px solid #888; padding: 0.5em; font-size: 1.1em; border-radius:0.3rem;"
-			required
-		/>
-		<textarea
-			placeholder="Share a bit about yourself..."
-			bind:value={about}
-			style="font-family: 'Lato', sans-serif; color: #333; background-color: #f8f8f8; 
-                     margin-bottom: 1em; width: 100%; height: 120px; display: block; border: 1px solid #888; padding: 0.5em; font-size: 1.1em;border-radius:0.3rem;"
-			required
-		></textarea>
-		<input
-			type="text"
-			placeholder="Link to a profile image..."
-			bind:value={imageUrl}
-			style="font-family: 'Lato', sans-serif; color: #333; background-color: #f8f8f8; 
-                  margin-bottom: 1em; width: 100%; height: 50px; display: block; border: 1px solid #888; padding: 0.5em; font-size: 1.1em;border-radius:0.3rem;"
-		/>
-		<button
-			type="submit"
-			style="background-color: #4DA84D; color: white; border: 2px solid #3C8D3A; padding: 12px 18px; 
-                   font-family: 'Lato', sans-serif; border-radius: 5px; cursor: pointer; font-size: 1.1em;"
-		>
-			Save profile
-		</button>
-	</form>
+    <!-- Profile Setup Form -->
+    <form transition:slide on:submit|preventDefault={saveProfile}>
+        <h2>Set up your profile</h2>
+        <p>This information will be shown with your comments. To upload images, use a service like Piccy.</p>
+        <input
+            type="text"
+            placeholder="Enter your name..."
+            bind:value={name}
+            required
+        />
+        <textarea
+            placeholder="Share a bit about yourself..."
+            bind:value={about}
+            required
+        ></textarea>
+        <input
+            type="text"
+            placeholder="Link to a profile image..."
+            bind:value={imageUrl}
+        />
+        <button type="submit">
+            Save profile
+        </button>
+    </form>
 {:else}
-	<div transition:slide>
-		<p style="font-family: 'Lato', sans-serif; font-size: 1em; color: #767676;">
-			We use <strong style="color: #888888;">Nostr</strong> to store opinions. You can post and access
-			your posts via your unique private key. Copy your key and keep it in a safe place.
-		</p>
-		<div
-			style="background-color: #eaeaea; padding: 1em; border-radius: 4px; border: 1px solid #ccc;"
-		>
-			<input
-				id="privkey"
-				type="text"
-				bind:value={nsec}
-				readonly
-				style="width: 100%; font-family: 'Lato', sans-serif; padding: 1em; 
-                color: #333; background-color: #fff; border: 1px solid #888; 
-                border-radius: 4px; box-sizing: border-box; font-size: 1.1em;"
-			/>
-			<button
-				on:click={copyToClipboard}
-				style="background-color: #4DA84D; color: white; border: none; padding: 12px 18px; 
-                 font-family: 'Lato', sans-serif; border-radius: 4px; cursor: pointer; margin-top: 0.5em; font-size: 1.1em;"
-			>
-				Copy my key
-			</button>
-		</div>
-		<button
-			on:click={() => (showProfileSetup = !showProfileSetup)}
-			style="background-color: #6c757d; color: white; border: 2px solid #565e66; padding: 12px 18px; 
-               font-family: 'Lato', sans-serif; border-radius: 5px; cursor: pointer; margin-top: 1em; font-size: 1.1em;"
-		>
-			Continue
-		</button>
-	</div>
+    <div transition:slide>
+        <p>We use <strong>Nostr</strong> to store opinions. You can post and access your posts via your unique private key. Copy your key and keep it in a safe place.</p>
+        <div class="key-container">
+            <input
+                id="privkey"
+                type="text"
+                bind:value={privkey}
+                readonly
+            />
+            <button class="copy-key-button" on:click={copyToClipboard}>
+                Copy my key
+            </button>
+        </div>
+        <button class="continue-button" on:click={() => (showProfileSetup = !showProfileSetup)}>
+            Continue
+        </button>
+    </div>
 {/if}
+
+
+<style>
+    h3, h2, p, input, textarea, button {
+        font-family: sans-serif;
+    }
+
+    h3 {
+        font-size: 1.5em;
+        color: #767676;
+        margin-top: 0;
+    }
+
+    form {
+        padding-right: 1.5rem;
+    }
+
+    h2, p {
+        color: #767676;
+    }
+
+    input, textarea {
+        color: #333;
+        background-color: #f8f8f8;
+        margin-bottom: 1em;
+        width: 100%;
+        display: block;
+        border: 1px solid #888;
+        padding: 0.5em;
+        font-size: 1.1em;
+        border-radius: 0.3rem;
+    }
+
+    input[type="text"] {
+        height: 50px;
+    }
+
+    textarea {
+        height: 120px;
+    }
+
+    button {
+        background-color: #4DA84D;
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        cursor: pointer;
+        font-size: 1.1em;
+        border-radius: 5px;
+    }
+
+    .copy-key-button, .continue-button {
+        margin-top: 0.5em;
+    }
+
+    .continue-button {
+        background-color: #6c757d;
+        border: 2px solid #565e66;
+    }
+
+    .key-container {
+        background-color: #eaeaea;
+        padding: 1em;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+    }
+
+    .key-container input {
+        background-color: #fff;
+        border: 1px solid #888;
+        border-radius: 4px;
+        padding: 1em;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1.1em;
+    }
+</style>

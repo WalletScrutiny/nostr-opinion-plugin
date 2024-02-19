@@ -1,6 +1,7 @@
-<svelte:options customElement="nostr-opinion"/>
-
-
+<svelte:options customElement={{
+    tag:"nostr-opinion",
+    shadow:"none"
+}} />
 <script lang="ts">
 	import { localStore, ndkUser } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
@@ -262,6 +263,8 @@
 	function deleteFile(fileToDelete: { files: File; url: string }) {
 		const url = fileArray.filter((file) => file === fileToDelete)[0].url;
 		opinionContent = opinionContent.replace(url, '');
+		opinionContent = opinionContent.replace("![]()","");
+		opinionContent = opinionContent.replace("![image]()","");
 		fileArray = fileArray.filter((file) => file !== fileToDelete);
 	}
 
@@ -362,40 +365,40 @@
 	>
 	{#if showNewOpinion}
 		<div class="add-opinion-init" transition:fade>
-			<h3 style="color:black;">{!isMine ? 'Add' : 'Edit'} your opinion</h3>
+			<h3>{!isMine ? 'Add' : 'Edit'} your opinion</h3>
 			<div class="description">
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html DOMPurify.sanitize(expertOpinions.newOpinionDescription)}
 			</div>
 			{#if $ndkUser?.pubkey && profiles[$ndkUser?.pubkey]}
-				<p style="color:black;">Logged in as {$ndkUser?.npub || '0'}</p>
+				<p>Logged in as {$ndkUser?.npub || '0'}</p>
 				<button class="primary-btn" on:click={Logout}>Logout</button>
-				<h3 style="color:black;">Share your opinion</h3>
-				<p class="description" style="margin:0rem 0rem; margin-top:-1rem">
+				<h3>Share your opinion</h3>
+				<p class="description" style="margin-top:-1rem">
 					We use Nostr to store opinions. You can post and access your posts via a unique private
 					key.
 				</p>
+				<div
+					class="placeholder"
+				>
+					<img
+						id="imageContainer"
+						src={profiles[$ndkUser?.pubkey]?.content?.image}
+						alt="Miranda"
+					/>
+					<span style="font-size: 24px;">
+						{!profiles[$ndkUser?.pubkey]?.content?.name ||
+						profiles[$ndkUser?.pubkey]?.content?.name == ''
+							? $ndkUser.npub.slice(0, 4) + '...' + $ndkUser.npub.slice(-4)
+							: profiles[$ndkUser?.pubkey]?.content?.name}
+					</span>
+				</div>
 				<form on:submit|preventDefault={submit} id="review-input-details-container">
-					<div
-						style="display:flex;font-family: Arial, sans-serif; align-items:center; gap:0.5rem; margin-top:1rem; margin-bottom: 1rem;"
-					>
-						<img
-							src={profiles[$ndkUser?.pubkey]?.content?.image}
-							alt="Miranda"
-							style="display: block; border-radius: 50%; width: 50px; height: 50px; object-fit: cover;"
-						/>
-						<span style="color: black; font-size: 24px;">
-							{!profiles[$ndkUser?.pubkey]?.content?.name ||
-							profiles[$ndkUser?.pubkey]?.content?.name == ''
-								? $ndkUser.npub.slice(0, 4) + '...' + $ndkUser.npub.slice(-4)
-								: profiles[$ndkUser?.pubkey]?.content?.name}
-						</span>
-					</div>
-					<div>
-					<Editor bind:opinionContent />
+					<div style="background: #f2f0f0">
+						<Editor bind:fileArray bind:opinionContent />
 					</div>
 					<div id="sentiment-box">
-						<label for="sentiment" style="font-weight: 600;font-family: Arial, sans-serif;"
+						<label for="sentiment" style="font-weight: 600;"
 							>Choose your overall sentiment</label
 						>
 						<div style="display:flex; gap: 0.4rem;">
@@ -422,7 +425,7 @@
 							>
 						</div>
 					</div>
-					<div style="display:flex; gap:1rem; overflow:scroll;margin:1rem 0;">
+					<div id="filePreview">
 						{#each fileArray as file (file.url)}
 							<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
 						{/each}
@@ -457,7 +460,7 @@
 	:host {
 		--border-color: #dedede;
 		--content-text-color: #606060;
-		--pubkey-text-color: #000000;
+		--pubkey-text-color: #7c2323;
 		--date-text-color: #808080;
 		--description-text-color: #808080;
 		--filter-active-color: #000000;
@@ -465,14 +468,14 @@
 		--button-text-color: #ffffff;
 		--button-background-color: #4da84d;
 		--sentiment-button-background-color: #4da84d;
-		font-family: Lato;
 		font-family: Arial, sans-serif;
 		background-color: black;
 	}
-	h1 {
-		margin: 5px 0;
-		color: black;
+
+	.expertOpinionsHeadline {
+		font-family: 'Barlow';
 	}
+
 	.top-nav {
 		display: flex;
 		justify-content: space-between;
@@ -487,10 +490,9 @@
 	.count-container {
 		display: flex;
 		flex-direction: row;
-		color: black;
+
 	}
 	.description {
-		color: #808080;
 		margin: 10px 0;
 	}
 	.blank-btn {
@@ -503,14 +505,14 @@
 		flex-direction: row;
 	}
 	.filter-container > .filter-active {
-		color: var(--filter-active-color);
+		color: #4da84d;
 	}
 	.filter-btn {
-		color: var(--filter-inactive-color);
+		color: #808080;
 	}
 	.primary-btn {
-		color: var(--button-text-color);
-		background-color: var(--button-background-color);
+		color: #ffffff;
+		background-color: #4da84d;
 		padding: 7px 20px;
 		border-radius: 3px;
 		cursor: pointer;
@@ -522,7 +524,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		font-family: 'lato';
+		font-family: Arial, sans-serif;
 	}
 	.btn-standard {
 		border-radius: 3px;
@@ -538,7 +540,7 @@
 	}
 
 	.btn-standard:hover {
-		background-color: var(--sentiment-button-background-color);
+		background-color: #4da84d;
 	}
 
 	.btn-standard:hover {
@@ -551,7 +553,28 @@
 		gap: 0.3rem;
 	}
 	.selected-state {
-		background-color: var(--sentiment-button-background-color);
+		background-color: #4da84d;
 		color: #ffffff;
+	}
+	.placeholder{
+		display:flex;
+		font-family: Arial, sans-serif; 
+		align-items:center; 
+		gap:0.5rem; 
+		margin-top:1rem; 
+		margin-bottom: 1rem;
+	}
+	#imageContainer {
+		display: block; 
+		border-radius: 50%; 
+		width: 50px; 
+		height: 50px; 
+		object-fit: cover;
+	}
+	#filePreview {
+		display:flex; 
+		gap:1rem; 
+		overflow:scroll;
+		margin:1rem 0;
 	}
 </style>
