@@ -95,7 +95,7 @@
             <input
                 id="privkey"
                 type="text"
-                bind:value={privkey}
+                bind:value={hexPrivKey}
                 readonly
             />
             <button class="copy-key-button" on:click={copyToClipboard}>
