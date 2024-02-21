@@ -1,6 +1,6 @@
 <svelte:options customElement={{
-    tag:"nostr-opinion",
-    shadow:"none"
+		tag:"nostr-opinion",
+		shadow:"none"
 }} />
 <script lang="ts">
 	import { localStore, ndkUser } from './stores/stores';
@@ -36,15 +36,17 @@
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 	import DOMPurify from 'dompurify';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
+	import type { ExpertOpinions } from './main';
 
 	export let subject: string;
-	export let opinionHeader: string = '';
-	export let opinionFooter: string = '';
-	export let opinionTitle: string = opinionHeader;
+	export let opinionTitle: string;
+	export let opinionHeader: string = opinionTitle;
+	export let opinionFooter: string | undefined = undefined;
+	export let opinionImage: string | undefined = undefined;
 	export let opinionTags: string = 'NostrOpinion';
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 
-	let expertOpinions: typeof import('./main').expertOpinions;
+	let expertOpinions: ExpertOpinions;
 	let trustedAuthors: Hexpubkey[]=[];
 
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
@@ -74,7 +76,7 @@
 	$: if(trustedAuthors) {
 		sortEvents();
 	}
-	$: showNewOpinion,checkIfOpinionExists();
+	$: showNewOpinion, checkIfOpinionExists();
 	$: {
 		allEventLength = allEvents.filter((e) => !deletedEventsArray.includes(e)).length;
 
@@ -110,8 +112,8 @@
 			!$ndk.signer && (await NDKlogin());
 		}
 		if (!opinionContent || !$ndk.signer) return;
-		newOpinion.content =
-			opinionHeader + opinionHeaderSeparator + opinionContent + opinionFooterSeparator;
+		newOpinion.content = opinionHeader ? opinionHeader + opinionHeaderSeparator : ''
+		newOpinion.content += opinionContent + opinionFooterSeparator;
 		const alreadyPresent = (
 			await $ndk.fetchEvent({ kinds: [kindOpinion], authors: [$ndkUser!.pubkey] })
 		)?.tags;
@@ -126,22 +128,23 @@
 		ndkEvent.tags = [
 			['d', subject],
 			['sentiment', newOpinion.sentiment],
-			['opinionTitle', opinionTitle],
+			['title', opinionTitle],
 			['summary', summary],
 			['published_at', published_at],
-			[
-				'alt',
-				`An opinion made using the nostr-opinion-plugin on ${subject} titled ${opinionTitle}.`
-			]
 		];
+    if (opinionImage) {
+      ndkEvent.tags.push (['image', opinionImage])
+    }
 		opinionTags.split(',').map((tag) => {
 			if (tag == '' || !tag) {
 				return;
 			}
 			ndkEvent.tags.push(['t', tag]);
-			newOpinion.content = newOpinion.content + `#${tag} `;
+			newOpinion.content += `#${tag} `;
 		});
-		newOpinion.content = newOpinion.content + '\n\n' + opinionFooter;
+		if (opinionFooter) {
+			newOpinion.content += '\n\n' + opinionFooter;
+		}
 		ndkEvent.content = newOpinion.content;
 		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write, $ndk)).then(() => {
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
