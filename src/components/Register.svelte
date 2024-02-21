@@ -4,6 +4,7 @@
 	import { NDKPrivateKeySigner, type NDKUserProfile } from '@nostr-dev-kit/ndk';
 	import ndk from '../stores/provider';
 	import { ndkUser } from '../stores/stores';
+	import { hexToBytes } from '../utils/covertBech';
 	import { privkeyLogin } from '../utils/helper';
 	import { slide } from 'svelte/transition';
 	import { nip19 } from 'nostr-tools';
@@ -23,7 +24,7 @@
 	onMount(() => {
 		pk = NDKPrivateKeySigner.generate();
 		hexPrivKey = pk.privateKey as string; // todo: fix this error if "as string" is not done: Type 'string | undefined' is not assignable to type 'string'.
-		nsec = nip19.nsecEncode(hexPrivKey) as string;
+		nsec = nip19.nsecEncode(hexToBytes(hexPrivKey)) as string;
 	});
 
 	const saveProfile = async () => {
@@ -95,7 +96,7 @@
             <input
                 id="privkey"
                 type="text"
-                bind:value={hexPrivKey}
+                bind:value={nsec}
                 readonly
             />
             <button class="copy-key-button" on:click={copyToClipboard}>
@@ -107,7 +108,6 @@
         </button>
     </div>
 {/if}
-
 
 <style>
     h3, h2, p, input, textarea, button {
