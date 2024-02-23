@@ -397,7 +397,7 @@
 					</span>
 				</div>
 				<form on:submit|preventDefault={submit} id="review-input-details-container">
-					<div style="background: #f2f0f0">
+					<div style="background: #f2f0f0;">
 						<Editor bind:fileArray bind:opinionContent />
 					</div>
 					<div id="sentiment-box">
