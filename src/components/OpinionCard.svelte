@@ -42,7 +42,7 @@
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
-	export let submit: (published_at: string) => void = ()=>{};
+	export let submit: (published_at: string) => void = () => {};
 	export let opinionContent: string;
 	export let newOpinion: {
 		content: string;
@@ -54,7 +54,7 @@
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
 	export let isMine = false;
-    opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
+	opinionContent = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
 	let expertOpinions: typeof import('../main').expertOpinions;
@@ -96,7 +96,7 @@
 
 	// TODO: create enum for sentiment
 	function selectSentiment(sentiment: '0' | '1' | '-1') {
-		newOpinion = {...newOpinion,sentiment};
+		newOpinion = { ...newOpinion, sentiment };
 	}
 
 	async function reactPost(content: string) {
@@ -144,8 +144,7 @@
 		}
 	}
 	const initialization = async () => {
-		event.content =
-			event.content.replace(opinionHeaderRegex,'').replace(opinionFooterRegex,'');
+		event.content = event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 		const renderer = new marked.Renderer();
 
 		const imageStyles = 'max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;';
@@ -286,19 +285,19 @@
 	}
 
 	$: if (isDeleted) {
-		if(editLvl == 1 ) {
+		if (editLvl == 1) {
 			isMine = false;
 			let sentiment = newOpinion.sentiment;
-			let value = sentimentCount[sentiment]-1;
-			if(sentiment === "1") {
-				sentimentCount = {...sentimentCount,"1":value};
-			} else if(sentiment === "0") {
-				sentimentCount = {...sentimentCount,"0":value};
+			let value = sentimentCount[sentiment] - 1;
+			if (sentiment === '1') {
+				sentimentCount = { ...sentimentCount, '1': value };
+			} else if (sentiment === '0') {
+				sentimentCount = { ...sentimentCount, '0': value };
 			} else {
-				sentimentCount = {...sentimentCount,"-1":value};
+				sentimentCount = { ...sentimentCount, '-1': value };
 			}
-			newOpinion = {content:"",sentiment:"0"};
-			opinionContent = "";
+			newOpinion = { content: '', sentiment: '0' };
+			opinionContent = '';
 		}
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
@@ -306,16 +305,9 @@
 
 {#if !isDeleted}
 	{#if !loading && expertOpinions}
-		<div
-			transition:slide
-			class="opinion-container"
-		>
-			<div
-				class="opinion-top"
-			>
-				<div
-					class="pubkey"
-				>
+		<div transition:slide class="opinion-container">
+			<div class="opinion-top">
+				<div class="pubkey">
 					<div>
 						{#if event.tags.find((tag) => tag[0] === 'sentiment')?.[1] === '-1' && editLvl === 1}
 							<Negative />
@@ -329,7 +321,7 @@
 						<div class="profile-header">
 							<!-- svelte-ignore a11y-img-redundant-alt -->
 							<img
-							class="profile-image"
+								class="profile-image"
 								src={profiles[event.pubkey].content?.image
 									? profiles[event.pubkey].content?.image
 									: profileImageUrl + event.pubkey}
@@ -344,11 +336,7 @@
 						</div>
 					{:else}
 						<div class="profile-header">
-							<img
-								class="profile-image"
-								src={profileImageUrl + event.pubkey}
-								alt="Profile"
-							/>
+							<img class="profile-image" src={profileImageUrl + event.pubkey} alt="Profile" />
 							<span
 								>{convertNostrPubKeyToBech32(event.pubkey).slice(0, 8) +
 									'...' +
@@ -372,33 +360,28 @@
 				<p class="content">
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html showFullText
-						? (editLvl > 1
-							? (DOMPurify.sanitize(event.content))
-							: (marked(
-								DOMPurify.sanitize(
-								  event.content
-									.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"")
+						? editLvl > 1
+							? DOMPurify.sanitize(event.content)
+							: marked(
+									DOMPurify.sanitize(
+										event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '')
+									)
 								)
-							  ))
-						)
-						: (editLvl > 1
-							? (truncateText(DOMPurify.sanitize(event.content), maxLength))
-							: (marked(
-								truncateText(
-									DOMPurify.sanitize(event.content.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"")),
-									maxLength
-								)
-							  ))
-						)
-					  }
-					  
+						: editLvl > 1
+							? truncateText(DOMPurify.sanitize(event.content), maxLength)
+							: marked(
+									truncateText(
+										DOMPurify.sanitize(
+											event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '')
+										),
+										maxLength
+									)
+								)}
+
 					{#if event.content.length > maxLength}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<span
-							class="read-more"
-							on:click={toggleFullText}
-						>
+						<span class="read-more" on:click={toggleFullText}>
 							{showFullText ? ' Read Less' : ' Read More'}
 						</span>
 					{/if}
@@ -406,7 +389,9 @@
 			{:else}
 				<div transition:slide style="margin: 2rem 0;">
 					<form on:submit|preventDefault={() => submit(published_at.toString())}>
-						<Editor bind:fileArray bind:opinionContent />
+						<div style="background: #f2f0f0;">
+							<Editor bind:fileArray bind:opinionContent />
+						</div>
 						<div
 							id="sentiment-box"
 							style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;"
@@ -416,43 +401,34 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('1')}
 									class="deselected"
-									class:selected = {newOpinion.sentiment === "1"}
+									class:selected={newOpinion.sentiment === '1'}
 								>
 									<Positive /> <span>Positive</span>
 								</button>
 								<button
 									on:click|preventDefault={() => selectSentiment('0')}
 									class="deselected"
-									class:selected = {newOpinion.sentiment === "0"}
+									class:selected={newOpinion.sentiment === '0'}
 								>
 									<Neutral /> <span>Neutral</span>
 								</button>
 								<button
 									on:click|preventDefault={() => selectSentiment('-1')}
 									class="deselected"
-									class:selected = {newOpinion.sentiment === "-1"}
+									class:selected={newOpinion.sentiment === '-1'}
 								>
 									<Negative /> <span>Negative</span>
 								</button>
 							</div>
 						</div>
 
-						<button
-							type="submit"
-							disabled={!$ndkUser}
-							class="postButton"
-						>
-							Post
-						</button>
+						<button type="submit" disabled={!$ndkUser} class="postButton"> Post </button>
 					</form>
 				</div>
 			{/if}
 			<div class="reactionDiv">
 				<div class="card-button">
-					<button
-						class="reactionButton"
-						on:click={() => reactPost('+')}
-					>
+					<button class="reactionButton" on:click={() => reactPost('+')}>
 						{#if liked === true}
 							<LikedButton />
 						{:else}
@@ -462,10 +438,7 @@
 					<span>{likeCount || 0}</span>
 				</div>
 				<div class="card-button">
-					<button
-						on:click={() => reactPost('-')}
-						class="reactionButton"
-					>
+					<button on:click={() => reactPost('-')} class="reactionButton">
 						{#if disliked === true}
 							<DislikedButton />
 						{:else}
@@ -487,11 +460,10 @@
 						<ReplyButton />
 					</button>
 					<button
-					    id="allReply"
+						id="allReply"
 						on:click={() => {
 							replyContent = !replyContent;
-						}}
-						><span style="pointer:cursor;">{replyEvents.length}</span></button
+						}}><span style="pointer:cursor;">{replyEvents.length}</span></button
 					>
 				</div>
 
@@ -503,11 +475,13 @@
 						<button
 							on:click={() => {
 								edit = !edit;
-								opinionContent = event.content.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
+								opinionContent = event.content
+									.replace(opinionHeaderRegex, '')
+									.replace(opinionFooterRegex, '');
 
 								newOpinion = {
 									content: opinionContent,
-									sentiment: event.tagValue("sentiment") || "0"
+									sentiment: event.tagValue('sentiment') || '0'
 								};
 								reply = false;
 								replyContent = false;
@@ -522,7 +496,6 @@
 			{#if reply}
 				<div class="reply-section" transition:fade>
 					<TextArea bind:opinionContent />
-					<!-- <Editor bind:opinionContent /> -->
 					<div class="reply-file-preview">
 						{#each fileArray as file (file.url)}
 							<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
@@ -605,72 +578,72 @@
 	.content {
 		color: #333;
 		margin-bottom: 16px;
-		overflow:scroll
+		overflow: scroll;
 	}
 	.read-more {
 		color: #4da84d;
 		cursor: pointer;
 	}
 	.loader {
-		display:flex;
-		justify-content:center;
-		align-items:center;
-		margin:2rem 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin: 2rem 0;
 	}
-	.reply-section{
-		padding:1rem;
+	.reply-section {
+		padding: 1rem;
 	}
-	.reply-file-preview{
-		display:flex;
-		gap:1rem; 
-		overflow:scroll;
-		margin:1rem 0;
+	.reply-file-preview {
+		display: flex;
+		gap: 1rem;
+		overflow: scroll;
+		margin: 1rem 0;
 	}
-	.reply-footer{
-		display:flex; 
-		align-content:center;
+	.reply-footer {
+		display: flex;
+		align-content: center;
 	}
-	.reply-button{
-		padding: 7px 20px; 
+	.reply-button {
+		padding: 7px 20px;
 		border-radius: 3px;
 		cursor: pointer;
 		border: none;
-		height: 2.5rem; 
-		background-color:#4DA84D;
-		color:white
+		height: 2.5rem;
+		background-color: #4da84d;
+		color: white;
 	}
-	.card-button{
-		display: inline-flex; 
-		align-items: center; 
+	.card-button {
+		display: inline-flex;
+		align-items: center;
 		gap: 2px;
 	}
-	.option-button{
-		background-color: transparent; 
-		border: none; 
-		cursor: pointer; 
-		display: flex; 
-		align-items: center; 
+	.option-button {
+		background-color: transparent;
+		border: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
 		padding: 8px;
 	}
-	#allReply{
-		background-color: transparent; 
-		border: none; 
-		cursor: pointer; 
-		display: flex; 
-		align-items: center; 
+	#allReply {
+		background-color: transparent;
+		border: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
 		padding: 8px;
 	}
-	#replyButton{
-		background-color: transparent; 
-		border: none; 
+	#replyButton {
+		background-color: transparent;
+		border: none;
 		cursor: pointer;
 	}
 	.reactionButton {
 		background-color: transparent;
 		border: none;
-		cursor: pointer; 
-		display: flex; 
-		align-items: center; 
+		cursor: pointer;
+		display: flex;
+		align-items: center;
 		padding: 8px;
 	}
 	.reactionDiv {
@@ -678,34 +651,34 @@
 		gap: 2rem;
 	}
 	.selected {
-		border-radius: 3px; 
-		width: 7rem; 
-		height: 3rem; 
-		cursor: pointer; 
-		border: none; 
-		display:flex; 
-		justify-content:center; 
-		align-items:center;
-		background-color: #4DA84D; 
+		border-radius: 3px;
+		width: 7rem;
+		height: 3rem;
+		cursor: pointer;
+		border: none;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background-color: #4da84d;
 		color: white;
 	}
 	.deselected {
-		border-radius: 3px; 
-		width: 7rem; 
-		height: 3rem; 
-		cursor: pointer; 
-		border: none; 
-		display:flex; 
-		justify-content:center; 
-		align-items:center;
+		border-radius: 3px;
+		width: 7rem;
+		height: 3rem;
+		cursor: pointer;
+		border: none;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 	.postButton {
-		color: #ffffff; 
-		background-color: #4da84d; 
-		padding: 7px 20px; 
-		border-radius: 3px; 
-		cursor: pointer; 
-		border: none; 
+		color: #ffffff;
+		background-color: #4da84d;
+		padding: 7px 20px;
+		border-radius: 3px;
+		cursor: pointer;
+		border: none;
 		height: 2.5rem;
 	}
 </style>

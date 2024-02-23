@@ -80,7 +80,7 @@
 		opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
 		editor = new Editor({
 			el: container,
-			height: '200px',
+			height: 'auto',
 			initialEditType: 'markdown',
 			previewStyle: 'tab',
 			initialValue: opinionContent,
