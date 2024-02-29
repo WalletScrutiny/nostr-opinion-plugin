@@ -33,6 +33,7 @@
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 	import DOMPurify from 'dompurify';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
@@ -48,7 +49,6 @@
 
 	let expertOpinions: ExpertOpinions;
 	let trustedAuthors: Hexpubkey[]=[];
-
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let filteredEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
 	let profiles: { [key: string]: { content: NDKUserProfile } | undefined } = {};
@@ -73,6 +73,7 @@
 	let isMine: boolean | undefined = false;
 	let allEventLength = 0;
 	let filteredEventLength = 0;
+	let showModal = false;
 	$: if(trustedAuthors) {
 		sortEvents();
 	}
@@ -84,6 +85,9 @@
 	}
 	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject] };
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
+	function isUserOpinion(eventPubKey: string): boolean {
+    	return $ndkUser && eventPubKey === $ndkUser.pubkey;
+  	}
 	$: {
 		$sub.forEach(async (event) => {
 			const value = allEvents.filter((e) => {
@@ -263,6 +267,13 @@
 		opinionContent = '';
 	};
 
+	function agreeToShowAll() {
+		filter = 'all';
+		sortEvents();
+		showNewOpinion = false;
+		showModal = false; // Close the modal
+	}
+
 	function deleteFile(fileToDelete: { files: File; url: string }) {
 		const url = fileArray.filter((file) => file === fileToDelete)[0].url;
 		opinionContent = opinionContent.replace(url, '');
@@ -314,6 +325,17 @@
 	<p class="description">
 		{expertOpinions.description}
 	</p>
+	{#if filteredEventLength < 1 && allEventLength >= 1 && filter === 'approved' }
+		<div class="unfilterWarning">
+			<button
+				class:filter-active={filter === 'all'}
+				aria-label="filter by all"
+				on:click={() => showModal = true}
+			>
+				Show {allEventLength} opinion{allEventLength === 1 ? ' of an unknown author' : 's of unknown authors'}.
+			</button>⚠️ Viewer discretion advised.
+		</div>
+	{/if}
 	<nav class="top-nav" transition:fade>
 		<div class="count-container">
 			<span class="nav-count"><Positive /> {sentimentCount['1']} positive</span>
@@ -335,11 +357,7 @@
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'all'}
 				aria-label="filter by all"
-				on:click={() => {
-					filter = 'all';
-					sortEvents();
-					showNewOpinion = false;
-				}}>All opinions</button
+				on:click={() => showModal = true}>All opinions</button
 			>
 		</div>
 	</nav>
@@ -348,6 +366,7 @@
 			{#if deletedEventsArray.includes(event) === false}
 				<OpinionCard
 					{event}
+					isMine={isUserOpinion(event.pubkey)}
 					{profiles}
 					{submit}
 					bind:sentimentCount
@@ -357,7 +376,6 @@
 					{subject}
 					bind:count
 					bind:deletedEventsArray
-					bind:isMine
 					bind:trustedAuthors
 				/>
 			{/if}
@@ -457,6 +475,16 @@
 			{/if}
 		</div>
 	{/if}
+{/if}
+{#if showModal}
+<div class="modal-overlay" transition:fade={{ duration: 300 }}>
+    <div class="modal" transition:fly={{ y: 30, duration: 300 }}>
+        <p>Are you sure you want to display all opinions?</p>
+		<p><center>⚠️ Viewer discretion advised.</center></p>
+        <button class="primary-btn" on:click={agreeToShowAll}>Agree</button>
+        <button class="primary-btn" on:click={() => showModal = false}>Cancel</button>
+    </div>
+</div>
 {/if}
 
 <style>
@@ -580,4 +608,45 @@
 		overflow:scroll;
 		margin:1rem 0;
 	}
+	.unfilterWarning {
+		padding: 7px;
+		font-family: "Barlow", Arial, Helvetica, sans-serif;
+		color: #808080;
+		font-size:1em;
+	}
+
+	.unfilterWarning button {
+		background-color: transparent;
+		border: none;
+		cursor: pointer;
+		margin: none;
+		color: #808080;
+		font-family: "Barlow", Arial, Helvetica, sans-serif;
+		font-size:1em;
+		text-decoration: underline;
+		text-decoration-thickness: 0.5px;
+	}
+
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		z-index: 2;
+	}
+
+	.modal {
+		background-color: white;
+		padding: 20px;
+		border-radius: 5px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
 </style>
