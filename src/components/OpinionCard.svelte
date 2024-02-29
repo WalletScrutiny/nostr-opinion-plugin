@@ -305,7 +305,7 @@
 
 {#if !isDeleted}
 	{#if !loading && expertOpinions}
-		<div transition:slide class="opinion-container">
+		<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
 			<div class="opinion-top">
 				<div class="pubkey">
 					<div>
@@ -387,7 +387,7 @@
 					{/if}
 				</p>
 			{:else}
-				<div transition:slide style="margin: 2rem 0;">
+				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
 					<form on:submit|preventDefault={() => submit(published_at.toString())}>
 						<div style="background: #f2f0f0;">
 							<Editor bind:fileArray bind:opinionContent />
@@ -681,4 +681,7 @@
 		border: none;
 		height: 2.5rem;
 	}
+	.opinion-container.mine {
+    	background-color: #faefd9; /* Example color, adjust as needed */
+  	}
 </style>
