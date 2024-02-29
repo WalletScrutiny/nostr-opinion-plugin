@@ -11,7 +11,7 @@
 
 
 	export let opinionContent: string;
-	export let fileArray;{ File; String }[];
+	export let fileArray: { files: File; url: string }[];
 
 	let container: HTMLElement;
 	let editor: Editor;
@@ -32,7 +32,7 @@
 		});
 	};
 
-	 const uploadImage = async (files:File | Blob) => {
+	 const uploadImage = async (files:File) => {
 		console.log(files);
 		const privkey = $localStore.pk;
 		if (privkey) {
@@ -50,11 +50,11 @@
 			console.log(ext);
 			if (response.file?.metadata?.mimeType === 'image/webp') {
 				ext = ['', 'webp'];
-			}
+			} 
 			const resultUrl =
 				response.file?.metadata?.url ??
 				`${voidCatHost}/d/${response.file?.id}${ext ? `.${ext[1]}` : ''}`;
-			fileArray = [...fileArray, { files, url: resultUrl }];
+			fileArray = [...fileArray, { files :files, url: resultUrl }];
 			return resultUrl;
 		}
 		return '';
@@ -85,14 +85,26 @@
 			previewStyle: 'tab',
 			initialValue: opinionContent,
 			theme:'dark',
+            autofocus: true,
 			events: {
 				change: function () {
 					getData();
 				},
+                keyup: function (e,ev) {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        editor.insertText(" ");
+                        const content = editor.getMarkdown();
+                    if (content.endsWith(' ')) {
+                        const newContent = content.slice(0, -1);
+                        editor.setMarkdown(newContent);
+                    }
+                    }
+                },
 			},
 			hooks: {
 				addImageBlobHook: async (blob, callback) => {
-				const uploadedImageUrl = await uploadImage(blob);
+				const uploadedImageUrl = await uploadImage(blob as File);
 				if (uploadedImageUrl) {
 					callback(uploadedImageUrl, 'image');
 				}
