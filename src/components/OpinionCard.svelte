@@ -39,6 +39,7 @@
 	import DeleteEventData from '../utils/deleteEventData.svelte';
 	import TextArea from './TextArea.svelte';
 	import DOMPurify from 'dompurify';
+	import Tooltip from './Tooltip.svelte';
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
@@ -448,23 +449,19 @@
 					<span>{dislikeCount || 0}</span>
 				</div>
 				<div class="card-button">
-					<button
-						id="replyButton"
-						on:click={() => {
-							reply = !reply;
-							edit = false;
-							opinionContent = '';
-							replyContent = false;
-						}}
-					>
+					<Tooltip>
+					<button id="replyButton" on:click={() => {reply = !reply; edit = false; opinionContent = ''; replyContent = false;}}>
 						<ReplyButton />
 					</button>
-					<button
-						id="allReply"
-						on:click={() => {
-							replyContent = !replyContent;
-						}}><span style="pointer:cursor;">{replyEvents.length}</span></button
-					>
+					<span slot="tooltip1Text">Add Reply</span>
+					</Tooltip>
+
+					<Tooltip>
+					<button id="allReply" on:click={() => {replyContent = !replyContent;}}>
+						<span style="pointer: cursor;">{replyEvents.length}</span>
+					</button>
+					<span slot="tooltip1Text">Replies</span>
+					</Tooltip>
 				</div>
 
 				{#if $ndkUser?.pubkey === event.pubkey}
@@ -626,6 +623,7 @@
 		padding: 8px;
 	}
 	#allReply {
+		background: none;
 		background-color: transparent;
 		border: none;
 		cursor: pointer;
@@ -634,6 +632,7 @@
 		padding: 8px;
 	}
 	#replyButton {
+		background: none;
 		background-color: transparent;
 		border: none;
 		cursor: pointer;

@@ -66,8 +66,9 @@
     }
 
     .upload-button {
+		background: none;
         border: none;
-        background-color: white;
+        background-color: transparent;
         cursor: pointer;
     }
 </style>
