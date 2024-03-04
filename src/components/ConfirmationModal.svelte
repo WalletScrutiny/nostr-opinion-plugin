@@ -29,7 +29,9 @@
     }
 
     .modal {
-        background-color: white;
+        background-color: var(--neutral-6, white);
+        color: var(--neutral-0, black);
+        border: 1px solid var(--neutral-7);
         padding: 20px;
         border-radius: 5px;
         display: flex;
