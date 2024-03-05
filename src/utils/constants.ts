@@ -25,8 +25,22 @@ export const errorPublishToast: ToastSettings = {
 	background: 'variant-filled-error'
 };
 export const DEFAULT_RELAY_URLS = {
-	read: ['wss://nos.lol'],
-	write: ['wss://nos.lol']
+	read: [
+		'wss://purplepag.es',
+		'wss://relay.nostr.band',
+		'wss://nos.lol',
+		'wss://offchain.pub/',
+		'wss://nostr-pub.wellorder.net',
+		'wss://nostr.mutinywallet.com'
+	],
+	write: [
+		'wss://purplepag.es',
+		'wss://relay.nostr.band',
+		'wss://nos.lol',
+		'wss://offchain.pub/',
+		'wss://nostr-pub.wellorder.net',
+		'wss://nostr.mutinywallet.com '
+	]
 };
 export const opinionHeaderSeparator = '\n<!--HEADER END-->\n';
 export const opinionFooterSeparator = '\n<!--FOOTER START-->\n\n\n\n';

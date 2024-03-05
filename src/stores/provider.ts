@@ -6,12 +6,12 @@ import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie';
 let cacheAdapter: NDKCacheAdapter | undefined;
 
 export const defaulRelaysUrls: string[] = [
-	// 'wss://purplepag.es',
-	// 'wss://relay.nostr.band',
-	'wss://nos.lol'
-	// 'wss://offchain.pub/',
-	// 'wss://nostr-pub.wellorder.net',
-	// 'wss://nostr.mutinywallet.com '
+	'wss://purplepag.es',
+	'wss://relay.nostr.band',
+	'wss://nos.lol',
+	'wss://offchain.pub/',
+	'wss://nostr-pub.wellorder.net',
+	'wss://nostr.mutinywallet.com '
 ];
 
 if (window) {
