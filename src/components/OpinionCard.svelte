@@ -593,7 +593,8 @@
 	.reply-file-preview {
 		display: flex;
 		gap: 1rem;
-		overflow: scroll;
+		flex-direction: row;
+		flex-wrap: wrap;
 		margin: 1rem 0;
 	}
 	.reply-footer {
