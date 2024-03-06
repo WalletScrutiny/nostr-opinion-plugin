@@ -267,7 +267,10 @@
 	initialization();
 
 	const Logout = () => {
+		console.log(DEFAULT_RELAY_URLS);
+		console.log(relay_urls);
 		relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
+		console.log(relay_urls);
 		isMine = false;
 		logout();
 		opinionContent = '';
