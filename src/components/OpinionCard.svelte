@@ -73,10 +73,7 @@
 	let relativeTime = '';
 	let published_at: number | undefined = undefined;
 	let created_at: number | undefined = undefined;
-	let relay = {
-		read: DEFAULT_RELAY_URLS.read,
-		write: DEFAULT_RELAY_URLS.write
-	};
+	let relay = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
 	let isDeleted = false;
 
 	let fileArray: { files: File; url: string }[] = [];
@@ -389,7 +386,7 @@
 				</p>
 			{:else}
 				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
-					<form on:submit|preventDefault={() => submit(published_at.toString())}>
+					<form on:submit|preventDefault={() => submit((published_at||new Date()).toString())}>
 						<div style="background: #f2f0f0;">
 							<Editor bind:fileArray bind:opinionContent />
 						</div>
@@ -539,7 +536,8 @@
 		border-radius: 8px;
 		padding: 16px;
 		margin-bottom: 16px;
-		background-color: #fff;
+		background-color: var(--neutral-6, white);
+        color: var(--neutral-0, black);
 		font-family: 'Barlow', sans-serif;
 	}
 
@@ -560,7 +558,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: #333;
+		color: var(--neutral-0, black);
 		font-size: 18px;
 	}
 	.profile-image {
@@ -570,13 +568,14 @@
 		object-fit: cover;
 	}
 	.date {
-		color: #757575;
+		color: var(--neutral-0, black);
 		font-size: 14px;
 	}
 	.content {
-		color: #333;
+		
+		padding: 1rem;
+		color: var(--neutral-0, black);
 		margin-bottom: 16px;
-		overflow: scroll;
 	}
 	.read-more {
 		color: #4da84d;
@@ -594,7 +593,8 @@
 	.reply-file-preview {
 		display: flex;
 		gap: 1rem;
-		overflow: scroll;
+		flex-direction: row;
+		flex-wrap: wrap;
 		margin: 1rem 0;
 	}
 	.reply-footer {
@@ -625,12 +625,13 @@
 	}
 	#allReply {
 		background: none;
-		background-color: transparent;
 		border: none;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
+		font-size: large;
 		padding: 8px;
+		color: var(--neutral-0, black);
 	}
 	#replyButton {
 		background: none;
@@ -639,6 +640,7 @@
 		cursor: pointer;
 	}
 	.reactionButton {
+		background: none;
 		background-color: transparent;
 		border: none;
 		cursor: pointer;
@@ -682,6 +684,6 @@
 		height: 2.5rem;
 	}
 	.opinion-container.mine {
-    	background-color: #faefd9; /* Example color, adjust as needed */
+		background-color: var(--neutral-6,#faefd9);
   	}
 </style>
