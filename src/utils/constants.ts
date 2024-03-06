@@ -1,5 +1,6 @@
 import type { NDKKind } from '@nostr-dev-kit/ndk';
 import type { ToastSettings } from '@skeletonlabs/skeleton';
+import { defaulRelaysUrls } from '../stores/provider';
 export const profileImageUrl = 'https://api.dicebear.com/5.x/identicon/svg?seed=';
 export const kindNotes = 1;
 export const kindOpinion = 30023 as NDKKind;
@@ -25,8 +26,8 @@ export const errorPublishToast: ToastSettings = {
 	background: 'variant-filled-error'
 };
 export const DEFAULT_RELAY_URLS = {
-	read: ['wss://nos.lol'],
-	write: ['wss://nos.lol']
+	read: defaulRelaysUrls,
+	write: defaulRelaysUrls
 };
 export const opinionHeaderSeparator = '\n<!--HEADER END-->\n';
 export const opinionFooterSeparator = '\n<!--FOOTER START-->\n\n\n\n';

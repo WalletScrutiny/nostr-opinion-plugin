@@ -1,6 +1,6 @@
-<script>
-  let showtooltip1 = false;
-  console.log(showtooltip1);
+<script lang="ts">
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let showtooltip1: boolean = false;
 </script>
 
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->

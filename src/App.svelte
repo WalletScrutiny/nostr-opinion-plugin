@@ -47,6 +47,8 @@
 	export let opinionTags: string = 'NostrOpinion';
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 
+	
+	let relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
 	let expertOpinions: ExpertOpinions;
 	let trustedAuthors: Hexpubkey[]=[];
 
@@ -74,7 +76,7 @@
 	let isMine: boolean | undefined = false;
 	let allEventLength = 0;
 	let filteredEventLength = 0;
-	let showModal = false;
+	let showModal: boolean = false;
 	$: if(trustedAuthors) {
 		sortEvents();
 	}
@@ -87,6 +89,8 @@
 	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject] };
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
 	function isUserOpinion(eventPubKey: string): boolean {
+		if(!$ndkUser)
+			return false;
     	return $ndkUser && eventPubKey === $ndkUser.pubkey;
   	}
 	$: {
@@ -151,7 +155,7 @@
 			newOpinion.content += '\n\n' + opinionFooter;
 		}
 		ndkEvent.content = newOpinion.content;
-		ndkEvent.publish(NDKRelaySet.fromRelayUrls(DEFAULT_RELAY_URLS.write, $ndk)).then(() => {
+		ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay_urls.write, $ndk)).then(() => {
 			const index = allEvents.findIndex((e) => e.pubkey === ndkEvent.pubkey);
 			if (index !== -1) {
 				allEvents[index] = { ...ndkEvent } as NDKEvent;
@@ -228,19 +232,19 @@
 				let fetchRelays = await $ndk.fetchEvent({ kinds: [10002], authors: [user.pubkey] });
 				if (fetchRelays) {
 					fetchRelays.getMatchingTags('r').map((tags) => {
-						if (!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
+						if (!relay_urls.read.includes(tags[1])) {
 							if (tags.length === 3) {
-								if (tags[2] === 'write' && !DEFAULT_RELAY_URLS.write.includes(tags[1])) {
-									DEFAULT_RELAY_URLS.write.push(tags[1]);
-								} else if (tags[2] === 'read' && !DEFAULT_RELAY_URLS.read.includes(tags[1])) {
-									DEFAULT_RELAY_URLS.read.push(tags[1]);
+								if (tags[2] === 'write' && !relay_urls.write.includes(tags[1])) {
+									relay_urls.write.push(tags[1]);
+								} else if (tags[2] === 'read' && !relay_urls.read.includes(tags[1])) {
+									relay_urls.read.push(tags[1]);
 								}
 							} else if (tags.length === 2) {
-								if (!DEFAULT_RELAY_URLS.write.includes(tags[1])) {
-									DEFAULT_RELAY_URLS.write.push(tags[1]);
+								if (!relay_urls.write.includes(tags[1])) {
+									relay_urls.write.push(tags[1]);
 								}
-								if (!DEFAULT_RELAY_URLS.read.includes(tags[1])) {
-									DEFAULT_RELAY_URLS.read.push(tags[1]);
+								if (!relay_urls.read.includes(tags[1])) {
+									relay_urls.read.push(tags[1]);
 								}
 							}
 						}
@@ -263,6 +267,10 @@
 	initialization();
 
 	const Logout = () => {
+		console.log(DEFAULT_RELAY_URLS);
+		console.log(relay_urls);
+		relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
+		console.log(relay_urls);
 		isMine = false;
 		logout();
 		opinionContent = '';
@@ -332,7 +340,7 @@
 	{#if filteredEventLength < 1 && allEventLength >= 1 && filter === 'approved' }
 		<div class="unfilterWarning">
 			<button
-				class:filter-active={filter === 'all'}
+				class:filter-active={filter === 'approved'}
 				aria-label="filter by all"
 				on:click={() => showModal = true}
 			>
@@ -481,7 +489,7 @@
 	{/if}
 {/if}
 {#if showModal}
-    <ConfirmationModal {showModal} onAgree={agreeToShowAll} onCancel={onCancel} />
+    <ConfirmationModal onAgree={agreeToShowAll} onCancel={onCancel} />
 {/if}
 
 <style>
@@ -498,6 +506,15 @@
 		--sentiment-button-background-color: #4da84d;
 		font-family: Arial, sans-serif;
 		background-color: black;
+	}
+
+	::-webkit-scrollbar {
+		display: none;
+	}
+	
+	* {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
 	}
 
 	.expertOpinionsHeadline {
@@ -602,7 +619,8 @@
 	#filePreview {
 		display:flex; 
 		gap:1rem; 
-		overflow:scroll;
+		flex-direction: row;
+		flex-wrap: wrap;
 		margin:1rem 0;
 	}
 	.unfilterWarning {
