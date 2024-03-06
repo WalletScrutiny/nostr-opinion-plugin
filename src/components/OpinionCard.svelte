@@ -351,7 +351,7 @@
 					{#if published_at && published_at < created_at}
 						Edited.
 					{/if}
-					{relativeTime}
+					<a href="https://njump.me/{event.id}" target="_blank">{relativeTime}</a>
 				</p>
 			</div>
 			{#if !edit}
