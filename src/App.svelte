@@ -1,9 +1,6 @@
-<svelte:options customElement={{
-		tag:"nostr-opinion",
-		shadow:"none"
-}} />
+<svelte:options customElement="nostr-opinion"/>
 <script lang="ts">
-	import { localStore, ndkUser } from './stores/stores';
+	import { localStore, ndkUser, themeModeLocalStorageObject } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
@@ -46,6 +43,7 @@
 	export let opinionImage: string | undefined = undefined;
 	export let opinionTags: string = 'NostrOpinion';
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
+	export let themeModeLocalStorageHandle: string = "colour-scheme";
 
 	
 	let relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
@@ -115,6 +113,8 @@
 	}
 	const submit = async (published_at: string) => {
 		const privkey = $localStore.pk;
+		console.log("Published_at ");
+		console.log(published_at);
 		if (privkey) {
 			!$ndk.signer && (await privkeyLogin(privkey));
 		} else {
@@ -131,16 +131,18 @@
 		}
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
-		if (!published_at || !published_at.length) {
+		if (!published_at || !published_at.length || published_at.length === 1) {
 			published_at = (Date.now() + 5000).toString();
 		}
 		ndkEvent.tags = [
 			['d', subject],
 			['sentiment', newOpinion.sentiment],
-			['title', opinionTitle],
 			['summary', summary],
 			['published_at', published_at],
 		];
+		if(opinionTitle) {
+			ndkEvent.tags.push(['title', opinionTitle])
+		}
     if (opinionImage) {
       ndkEvent.tags.push (['image', opinionImage])
     }
@@ -220,6 +222,7 @@
 
 	const initialization = async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
+		themeModeLocalStorageObject.set(themeModeLocalStorageHandle);
 		try {
 			trustedAuthors = await initializeApprovedAuthors();
 			const isloggedIn = $localStore.lastUserLogged;
@@ -426,10 +429,8 @@
 							: profiles[$ndkUser?.pubkey]?.content?.name}
 					</span>
 				</div>
-				<form on:submit|preventDefault={submit} id="review-input-details-container">
-					<div style="background: #f2f0f0;">
-						<Editor bind:fileArray bind:opinionContent />
-					</div>
+				<form on:submit|preventDefault={()=>{submit(" ")}} id="review-input-details-container">
+					<Editor bind:fileArray bind:opinionContent />
 					<div id="sentiment-box">
 						<label for="sentiment" style="font-weight: 600;"
 							>Choose your overall sentiment</label
@@ -437,6 +438,7 @@
 						<div style="display:flex; gap: 0.4rem;">
 							<button
 								class="btn-standard"
+								class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
 								class:selected-state={newOpinion.sentiment === '1'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '1' };
@@ -444,6 +446,7 @@
 							>
 							<button
 								class="btn-standard"
+								class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
 								class:selected-state={newOpinion.sentiment === '0'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '0' };
@@ -451,6 +454,7 @@
 							>
 							<button
 								class="btn-standard"
+								class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
 								class:selected-state={newOpinion.sentiment === '-1'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '-1' };
@@ -500,12 +504,11 @@
 		--date-text-color: #808080;
 		--description-text-color: #808080;
 		--filter-active-color: #000000;
-		--filter-inactive-color: #808080;
+		--filter-inactive-color: #e2e1e1;
 		--button-text-color: #ffffff;
 		--button-background-color: #4da84d;
 		--sentiment-button-background-color: #4da84d;
 		font-family: Arial, sans-serif;
-		background-color: black;
 	}
 
 	::-webkit-scrollbar {
@@ -582,6 +585,11 @@
 		justify-content: center;
 		align-items: center;
 		color: #808080;
+	}
+
+	.dark {
+		background-color: #434343;
+		color: white;
 	}
 
 	.btn-standard:hover {

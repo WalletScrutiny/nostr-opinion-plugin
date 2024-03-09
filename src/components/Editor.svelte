@@ -2,13 +2,13 @@
 	import { onMount } from 'svelte';
 	import Editor from '@toast-ui/editor';
 	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
+	import dark from "@toast-ui/editor/dist/theme/toastui-editor-dark.css?inline";
 	import { opinionFooterRegex, opinionHeaderRegex } from '../utils/constants';
 	import { NDKlogin, privkeyLogin } from '../utils/helper';
 	import ndk from '../stores/provider';
 	import { VoidApi } from '@void-cat/api';
 	import { uploadUrl } from '../utils/constants';
-	import { localStore } from '../stores/stores';
-
+	import { localStore, themeModeLocalStorageObject } from '../stores/stores';
 
 	export let opinionContent: string;
 	export let fileArray: { files: File; url: string }[];
@@ -16,6 +16,7 @@
 	let container: HTMLElement;
 	let editor: Editor;
 	let isInternalUpdate = false;
+	let theme: string = localStorage.getItem($themeModeLocalStorageObject) || 'string';
 
 	const FILE_EXT_REGEX = /\.([\w]{1,7})$/i;
 
@@ -71,36 +72,21 @@
 		isInternalUpdate = false;
 	}
 
-	const getData = () => {
-		isInternalUpdate = true;
-		opinionContent = editor.getMarkdown();
-	};
+	function initializeEditor() {
 
-	onMount(() => {
-		opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
+		theme = localStorage.getItem($themeModeLocalStorageObject) || 'light';
 		editor = new Editor({
 			el: container,
 			height: 'auto',
 			initialEditType: 'markdown',
 			previewStyle: 'tab',
+			theme,
 			initialValue: opinionContent,
-			theme:'dark',
             autofocus: true,
 			events: {
 				change: function () {
 					getData();
 				},
-                keyup: function (e,ev) {
-                    if (ev.key === 'Enter') {
-                        ev.preventDefault();
-                        editor.insertText(" ");
-                        const content = editor.getMarkdown();
-                    if (content.endsWith(' ')) {
-                        const newContent = content.slice(0, -1);
-                        editor.setMarkdown(newContent);
-                    }
-                    }
-                },
 			},
 			hooks: {
 				addImageBlobHook: async (blob, callback) => {
@@ -112,10 +98,26 @@
 			},
 			extendedAutolinks: true,
 		});
+	}
 
+	$: if(editor!=null) {
+		editor.destroy();
+		initializeEditor();	
+	}
+
+	const getData = () => {
+		isInternalUpdate = true;
+		opinionContent = editor.getMarkdown();
+	};
+
+	onMount(() => {
+		opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
+		initializeEditor();
 		editor.getMarkdown();
 	});
 </script>
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
 <svelte:element this="style">{@html css}</svelte:element>
-<div bind:this={container} />
+<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+<svelte:element this="style">{@html dark}</svelte:element>
+<div bind:this={container}/>

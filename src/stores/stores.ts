@@ -31,3 +31,5 @@ export const localStore: Writable<UserLocalStore> = localStorageStore('localStor
 	lastUserLogged: undefined,
 	pk: undefined
 });
+
+export const themeModeLocalStorageObject = writable('colour-scheme');

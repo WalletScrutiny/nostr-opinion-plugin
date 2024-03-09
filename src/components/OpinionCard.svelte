@@ -13,7 +13,7 @@
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
 	import { marked } from 'marked';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
-	import { localStore, ndkUser } from '../stores/stores';
+	import { localStore, ndkUser, themeModeLocalStorageObject } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
 		NDKEvent,
@@ -387,9 +387,7 @@
 			{:else}
 				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
 					<form on:submit|preventDefault={() => submit((published_at||new Date()).toString())}>
-						<div style="background: #f2f0f0;">
-							<Editor bind:fileArray bind:opinionContent />
-						</div>
+						<Editor bind:fileArray bind:opinionContent />
 						<div
 							id="sentiment-box"
 							style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;"
@@ -399,6 +397,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('1')}
 									class="deselected"
+									class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
 									class:selected={newOpinion.sentiment === '1'}
 								>
 									<Positive /> <span>Positive</span>
@@ -406,6 +405,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('0')}
 									class="deselected"
+									class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
 									class:selected={newOpinion.sentiment === '0'}
 								>
 									<Neutral /> <span>Neutral</span>
@@ -413,14 +413,22 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('-1')}
 									class="deselected"
+									class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
 									class:selected={newOpinion.sentiment === '-1'}
 								>
 									<Negative /> <span>Negative</span>
 								</button>
 							</div>
 						</div>
-
+						<div id="filePreview">
+							{#each fileArray as file (file.url)}
+								<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
+							{/each}
+						</div>
+						<div style="display:flex; align-contents:center;">
 						<button type="submit" disabled={!$ndkUser} class="postButton"> Post </button>
+						<Upload bind:fileArray bind:opinionContent />
+						</div>
 					</form>
 				</div>
 			{/if}
@@ -652,6 +660,10 @@
 		display: flex;
 		gap: 2rem;
 	}
+	.dark {
+		background-color: #434343;
+		color: white;
+	}
 	.selected {
 		border-radius: 3px;
 		width: 7rem;
@@ -686,4 +698,11 @@
 	.opinion-container.mine {
 		background-color: var(--neutral-6,#faefd9);
   	}
+	#filePreview {
+		display:flex; 
+		gap:1rem; 
+		flex-direction: row;
+		flex-wrap: wrap;
+		margin:1rem 0;
+	}
 </style>
