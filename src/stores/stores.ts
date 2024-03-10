@@ -33,3 +33,4 @@ export const localStore: Writable<UserLocalStore> = localStorageStore('localStor
 });
 
 export const themeModeLocalStorageObject = writable('colour-scheme');
+export const theme = writable('light');

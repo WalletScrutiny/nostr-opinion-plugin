@@ -8,7 +8,7 @@
 	import ndk from '../stores/provider';
 	import { VoidApi } from '@void-cat/api';
 	import { uploadUrl } from '../utils/constants';
-	import { localStore, themeModeLocalStorageObject } from '../stores/stores';
+	import { localStore, theme } from '../stores/stores';
 
 	export let opinionContent: string;
 	export let fileArray: { files: File; url: string }[];
@@ -16,7 +16,6 @@
 	let container: HTMLElement;
 	let editor: Editor;
 	let isInternalUpdate = false;
-	let theme: string = localStorage.getItem($themeModeLocalStorageObject) || 'string';
 
 	const FILE_EXT_REGEX = /\.([\w]{1,7})$/i;
 
@@ -74,13 +73,12 @@
 
 	function initializeEditor() {
 
-		theme = localStorage.getItem($themeModeLocalStorageObject) || 'light';
 		editor = new Editor({
 			el: container,
 			height: 'auto',
 			initialEditType: 'markdown',
 			previewStyle: 'tab',
-			theme,
+			theme: $theme,
 			initialValue: opinionContent,
             autofocus: true,
 			events: {
@@ -100,7 +98,7 @@
 		});
 	}
 
-	$: if(editor!=null) {
+	$: if($theme && editor!=null) {
 		editor.destroy();
 		initializeEditor();	
 	}

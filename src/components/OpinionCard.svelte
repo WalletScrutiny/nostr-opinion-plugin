@@ -13,7 +13,7 @@
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
 	import { marked } from 'marked';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
-	import { localStore, ndkUser, themeModeLocalStorageObject } from '../stores/stores';
+	import { localStore, ndkUser, theme } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
 		NDKEvent,
@@ -397,7 +397,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('1')}
 									class="deselected"
-									class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
+									class:dark = {$theme === 'dark'}
 									class:selected={newOpinion.sentiment === '1'}
 								>
 									<Positive /> <span>Positive</span>
@@ -405,7 +405,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('0')}
 									class="deselected"
-									class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
+									class:dark = {$theme === 'dark'}
 									class:selected={newOpinion.sentiment === '0'}
 								>
 									<Neutral /> <span>Neutral</span>
@@ -413,7 +413,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('-1')}
 									class="deselected"
-									class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
+									class:dark = {$theme === 'dark'}
 									class:selected={newOpinion.sentiment === '-1'}
 								>
 									<Negative /> <span>Negative</span>

@@ -1,6 +1,6 @@
 <svelte:options customElement="nostr-opinion"/>
 <script lang="ts">
-	import { localStore, ndkUser, themeModeLocalStorageObject } from './stores/stores';
+	import { localStore, ndkUser, theme, themeModeLocalStorageObject } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
@@ -35,6 +35,7 @@
 	import DOMPurify from 'dompurify';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
 	import type { ExpertOpinions } from './main';
+	import { onDestroy } from 'svelte';
 
 	export let subject: string;
 	export let opinionTitle: string;
@@ -111,6 +112,15 @@
 			sortEvents();
 		});
 	}
+
+	const id = setInterval(()=>{
+		theme.set(localStorage.getItem(themeModeLocalStorageHandle) || 'light');
+	},1000);
+
+	onDestroy(()=>{
+		clearInterval(id);
+	});
+
 	const submit = async (published_at: string) => {
 		const privkey = $localStore.pk;
 		console.log("Published_at ");
@@ -438,7 +448,7 @@
 						<div style="display:flex; gap: 0.4rem;">
 							<button
 								class="btn-standard"
-								class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
+								class:dark = {$theme=== 'dark'}
 								class:selected-state={newOpinion.sentiment === '1'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '1' };
@@ -446,7 +456,7 @@
 							>
 							<button
 								class="btn-standard"
-								class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
+								class:dark = {$theme=== 'dark'}
 								class:selected-state={newOpinion.sentiment === '0'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '0' };
@@ -454,7 +464,7 @@
 							>
 							<button
 								class="btn-standard"
-								class:dark = {localStorage.getItem($themeModeLocalStorageObject) === 'dark'}
+								class:dark = {$theme=== 'dark'}
 								class:selected-state={newOpinion.sentiment === '-1'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '-1' };

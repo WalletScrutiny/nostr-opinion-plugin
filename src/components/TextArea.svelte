@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { themeModeLocalStorageObject } from '../stores/stores';
+	import { theme } from '../stores/stores';
 
 	let textarea: HTMLTextAreaElement;
 	export let opinionContent: string;
@@ -19,7 +19,7 @@
 	}
 </script>
 
-<textarea transition:slide bind:this={textarea} on:input={updateContent} class="textarea-style" class:dark={localStorage.getItem($themeModeLocalStorageObject) === 'dark'}>
+<textarea transition:slide bind:this={textarea} on:input={updateContent} class="textarea-style" class:dark={$theme === 'dark'}>
 </textarea>
 
 <style>
