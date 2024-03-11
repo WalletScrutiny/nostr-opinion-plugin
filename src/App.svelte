@@ -180,7 +180,7 @@
 		deletedEventsArray = [...value];
 		isMine = true;
 		showNewOpinion = false;
-		filter = 'all';
+		// filter = 'all';
 	};
 
 	const sortEvents = () => {
@@ -279,6 +279,16 @@
 	};
 	initialization();
 
+	let userHasAgreed = false;
+
+	$: if ($ndkUser?.pubkey && profiles[$ndkUser?.pubkey]) {
+		const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
+		userHasAgreed = localStorage.getItem(userAgreementKey) === 'true';
+	} else {
+		userHasAgreed = false;
+	}
+
+
 	const Logout = () => {
 		console.log(DEFAULT_RELAY_URLS);
 		console.log(relay_urls);
@@ -289,11 +299,31 @@
 		opinionContent = '';
 	};
 
+	if (localStorage.getItem('userHasAgreed') === null) {
+		localStorage.setItem('userHasAgreed', 'false');
+	}
+
+	function handleAgree() {
+		if (!userHasAgreed) {
+			showModal = true;
+		}
+		else {
+			filter = 'all';
+			sortEvents();
+			showNewOpinion = false;
+		}
+	}
+
 	function agreeToShowAll() {
 		filter = 'all';
 		sortEvents();
 		showNewOpinion = false;
-		showModal = false; // Close the modal
+		showModal = false;
+		userHasAgreed = true;
+		if ($ndkUser?.pubkey) {
+			const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
+			localStorage.setItem(userAgreementKey, userHasAgreed.toString());
+		}
 	}
 	function onCancel() {
     	showModal = false;
@@ -355,7 +385,7 @@
 			<button
 				class:filter-active={filter === 'approved'}
 				aria-label="filter by all"
-				on:click={() => showModal = true}
+				on:click={handleAgree}
 			>
 				Show {allEventLength} opinion{allEventLength === 1 ? ' of an unknown author' : 's of unknown authors'}.
 			</button>⚠️ Viewer discretion advised.
@@ -382,7 +412,7 @@
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'all'}
 				aria-label="filter by all"
-				on:click={() => showModal = true}>All opinions</button
+				on:click={handleAgree}>All opinions</button
 			>
 		</div>
 	</nav>
