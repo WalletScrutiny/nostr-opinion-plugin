@@ -659,4 +659,8 @@
 		text-decoration: underline;
 		text-decoration-thickness: 0.5px;
 	}
+	.opinion-container {
+		max-height: 100rem;
+		overflow-y: scroll;
+	}
 </style>

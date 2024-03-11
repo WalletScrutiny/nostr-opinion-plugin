@@ -40,6 +40,7 @@
 	import TextArea from './TextArea.svelte';
 	import DOMPurify from 'dompurify';
 	import Tooltip from './Tooltip.svelte';
+	import ContentView from './ContentView.svelte';
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
@@ -55,11 +56,11 @@
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
 	export let isMine = false;
+	export let trustedAuthors: Hexpubkey[] = [];
 	opinionContent = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
 	let expertOpinions: typeof import('../main').expertOpinions;
-	export let trustedAuthors: Hexpubkey[] = [];
 	let likeCount = 0;
 	let dislikeCount = 0;
 	let edit = false;
@@ -75,10 +76,20 @@
 	let created_at: number | undefined = undefined;
 	let relay = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
 	let isDeleted = false;
+	const maxLength = 500;
+	let displayContent = event.content;
+	let processedContent = truncateText(displayContent,maxLength);
+	 $: displayContent = editLvl > 1 
+        ? event.content 
+        : DOMPurify.sanitize(event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, ''));
+
+    $: processedContent = showFullText
+        ? displayContent 
+        : truncateText(displayContent, maxLength);
 
 	let fileArray: { files: File; url: string }[] = [];
 
-	const maxLength = 500;
+	
 
 	if (editLvl === 0) {
 		ATag = kindOpinion + ':' + event.pubkey + ':' + subject;
@@ -142,6 +153,7 @@
 		}
 	}
 	const initialization = async () => {
+		
 		event.content = event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 		const renderer = new marked.Renderer();
 
@@ -300,7 +312,6 @@
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
 </script>
-
 {#if !isDeleted}
 	{#if !loading && expertOpinions}
 		<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
@@ -356,33 +367,26 @@
 			</div>
 			{#if !edit}
 				<p class="content">
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-					{@html showFullText
-						? editLvl > 1
-							? DOMPurify.sanitize(event.content)
-							: marked(
-									DOMPurify.sanitize(
-										event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '')
-									)
-								)
-						: editLvl > 1
-							? truncateText(DOMPurify.sanitize(event.content), maxLength)
-							: marked(
-									truncateText(
-										DOMPurify.sanitize(
-											event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '')
-										),
-										maxLength
-									)
-								)}
-
-					{#if event.content.length > maxLength}
+				{#if editLvl == 1}
+					<ContentView content={processedContent} />
+					{#if event.content.length > maxLength && editLvl == 1}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
 						<span class="read-more" on:click={toggleFullText}>
-							{showFullText ? ' Read Less' : ' Read More'}
+							{showFullText ? 'Read Less' : 'Read More'}
 						</span>
 					{/if}
+				{:else}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					{@html processedContent}
+					{#if event.content.length > maxLength && editLvl > 1}
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
+						<!-- svelte-ignore a11y-no-static-element-interactions -->
+						<span class="read-more" on:click={toggleFullText}>
+							{showFullText ? 'Read Less' : 'Read More'}
+						</span>
+					{/if}
+				{/if}
 				</p>
 			{:else}
 				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
@@ -588,6 +592,7 @@
 	.read-more {
 		color: #4da84d;
 		cursor: pointer;
+		display: block;
 	}
 	.loader {
 		display: flex;
