@@ -690,7 +690,8 @@
 		text-decoration-thickness: 0.5px;
 	}
 	.opinion-container {
-		max-height: 100rem;
+		max-height: 200rem;
 		overflow-y: scroll;
+		margin: 1rem 0;
 	}
 </style>
