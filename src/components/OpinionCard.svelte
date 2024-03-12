@@ -265,7 +265,7 @@
 
 	const submitReply = async () => {
 		if (!$ndkUser) {
-			console.log("Can't submit reply. $ndkUser is undefined");
+			console.error("Can't submit reply. $ndkUser is undefined");
 			return;
 		}
 

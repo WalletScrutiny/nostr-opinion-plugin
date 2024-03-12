@@ -33,7 +33,6 @@
 	};
 
 	 const uploadImage = async (files:File) => {
-		console.log(files);
 		const privkey = $localStore.pk;
 		if (privkey) {
 			!$ndk.signer && (await privkeyLogin(privkey));
@@ -47,7 +46,6 @@
 		});
 		if (response.ok) {
 			let ext = files.name.match(FILE_EXT_REGEX);
-			console.log(ext);
 			if (response.file?.metadata?.mimeType === 'image/webp') {
 				ext = ['', 'webp'];
 			} 

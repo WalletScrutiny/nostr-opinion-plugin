@@ -123,8 +123,6 @@
 
 	const submit = async (published_at: string) => {
 		const privkey = $localStore.pk;
-		console.log("Published_at ");
-		console.log(published_at);
 		if (privkey) {
 			!$ndk.signer && (await privkeyLogin(privkey));
 		} else {
@@ -216,7 +214,7 @@
 
 	async function findUserProfileData(pubkey: string) {
 		if (!$ndkUser) {
-			console.log("Can't find user profile. $ndkUser is undefined");
+			console.info("Can't find user profile. $ndkUser is undefined");
 			return;
 		}
 		let content = await fetchUserProfile(pubkey);
@@ -274,7 +272,7 @@
 				});
 			}
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	};
 	initialization();
@@ -290,10 +288,7 @@
 
 
 	const Logout = () => {
-		console.log(DEFAULT_RELAY_URLS);
-		console.log(relay_urls);
 		relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
-		console.log(relay_urls);
 		isMine = false;
 		logout();
 		opinionContent = '';

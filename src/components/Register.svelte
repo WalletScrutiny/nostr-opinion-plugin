@@ -7,6 +7,7 @@
 	import { privkeyLogin } from '../utils/helper';
 	import { slide } from 'svelte/transition';
 	import { nip19 } from 'nostr-tools';
+	import { hexToBytes } from '../utils/covertBech';
 
 	let nsec = '';
 	let hexPrivKey = '';
@@ -23,7 +24,7 @@
 	onMount(() => {
 		pk = NDKPrivateKeySigner.generate();
 		hexPrivKey = pk.privateKey as string;
-		nsec = nip19.nsecEncode(hexPrivKey);
+		nsec = nip19.nsecEncode(hexToBytes(hexPrivKey));
 	});
 
 	const saveProfile = async () => {

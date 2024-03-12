@@ -20,10 +20,15 @@
 	const login = async (nostrKeyMethod: string | undefined) => {
 		if (!nostrKeyMethod) return;
 		let login;
-		const hexPrivkey = nsec.startsWith('nsec') ? nip19.decode(nsec).data as string : nsec; // todo: this works, but the naming is confusing, fix later
+
+
 		switch (nostrKeyMethod) {
 			case 'pk':
-				login = await privkeyLogin(hexPrivkey);
+			if (!nsec.startsWith('nsec')){
+				alert('Please use your nsec to login');
+				return;
+			}
+				login = await privkeyLogin(nip19.decode(nsec).data as string);
 				break;
 			case 'nip07':
 				login = await NDKlogin();
@@ -31,12 +36,12 @@
 		}
 
 		if (!login) {
-			console.log('Something went wrong while login!!');
+			console.error('Something went wrong while login!!');
 			return;
 		}
 		
 		if (!$ndkUser) {
-			console.log("Can't proceed. $ndkUser is null");
+			console.error("Can't proceed. $ndkUser is null");
 			return;
 		}
 
