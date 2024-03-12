@@ -20,9 +20,10 @@
 	const login = async (nostrKeyMethod: string | undefined) => {
 		if (!nostrKeyMethod) return;
 		let login;
+		const hexPrivkey = nsec.startsWith('nsec') ? nip19.decode(nsec).data as string : nsec; // todo: this works, but the naming is confusing, fix later
 		switch (nostrKeyMethod) {
 			case 'pk':
-				login = await privkeyLogin(nip19.decode(nsec).data as string);
+				login = await privkeyLogin(hexPrivkey);
 				break;
 			case 'nip07':
 				login = await NDKlogin();
