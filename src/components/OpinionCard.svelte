@@ -13,7 +13,7 @@
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
 	import { marked } from 'marked';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
-	import { localStore, ndkUser } from '../stores/stores';
+	import { localStore, ndkUser, theme } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
 		NDKEvent,
@@ -40,6 +40,7 @@
 	import TextArea from './TextArea.svelte';
 	import DOMPurify from 'dompurify';
 	import Tooltip from './Tooltip.svelte';
+	import ContentView from './ContentView.svelte';
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
@@ -55,11 +56,11 @@
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
 	export let isMine = false;
+	export let trustedAuthors: Hexpubkey[] = [];
 	opinionContent = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
 	let expertOpinions: typeof import('../main').expertOpinions;
-	export let trustedAuthors: Hexpubkey[] = [];
 	let likeCount = 0;
 	let dislikeCount = 0;
 	let edit = false;
@@ -75,10 +76,20 @@
 	let created_at: number | undefined = undefined;
 	let relay = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
 	let isDeleted = false;
+	const maxLength = 500;
+	let displayContent = event.content;
+	let processedContent = truncateText(displayContent,maxLength);
+	 $: displayContent = editLvl > 1 
+        ? event.content 
+        : DOMPurify.sanitize(event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, ''));
+
+    $: processedContent = showFullText
+        ? displayContent 
+        : truncateText(displayContent, maxLength);
 
 	let fileArray: { files: File; url: string }[] = [];
 
-	const maxLength = 500;
+	
 
 	if (editLvl === 0) {
 		ATag = kindOpinion + ':' + event.pubkey + ':' + subject;
@@ -142,6 +153,7 @@
 		}
 	}
 	const initialization = async () => {
+		
 		event.content = event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 		const renderer = new marked.Renderer();
 
@@ -253,7 +265,7 @@
 
 	const submitReply = async () => {
 		if (!$ndkUser) {
-			console.log("Can't submit reply. $ndkUser is undefined");
+			console.error("Can't submit reply. $ndkUser is undefined");
 			return;
 		}
 
@@ -300,7 +312,6 @@
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
 </script>
-
 {#if !isDeleted}
 	{#if !loading && expertOpinions}
 		<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
@@ -356,40 +367,31 @@
 			</div>
 			{#if !edit}
 				<p class="content">
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-					{@html showFullText
-						? editLvl > 1
-							? DOMPurify.sanitize(event.content)
-							: marked(
-									DOMPurify.sanitize(
-										event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '')
-									)
-								)
-						: editLvl > 1
-							? truncateText(DOMPurify.sanitize(event.content), maxLength)
-							: marked(
-									truncateText(
-										DOMPurify.sanitize(
-											event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '')
-										),
-										maxLength
-									)
-								)}
-
-					{#if event.content.length > maxLength}
+				{#if editLvl == 1}
+					<ContentView content={processedContent} />
+					{#if event.content.length > maxLength && editLvl == 1}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
 						<span class="read-more" on:click={toggleFullText}>
-							{showFullText ? ' Read Less' : ' Read More'}
+							{showFullText ? 'Read Less' : 'Read More'}
 						</span>
 					{/if}
+				{:else}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					{@html processedContent}
+					{#if event.content.length > maxLength && editLvl > 1}
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
+						<!-- svelte-ignore a11y-no-static-element-interactions -->
+						<span class="read-more" on:click={toggleFullText}>
+							{showFullText ? 'Read Less' : 'Read More'}
+						</span>
+					{/if}
+				{/if}
 				</p>
 			{:else}
 				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
 					<form on:submit|preventDefault={() => submit((published_at||new Date()).toString())}>
-						<div style="background: #f2f0f0;">
-							<Editor bind:fileArray bind:opinionContent />
-						</div>
+						<Editor bind:fileArray bind:opinionContent />
 						<div
 							id="sentiment-box"
 							style="display:flex; flex-direction:column; gap:0.3rem; margin-bottom: 1rem;"
@@ -399,6 +401,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('1')}
 									class="deselected"
+									class:dark = {$theme === 'dark'}
 									class:selected={newOpinion.sentiment === '1'}
 								>
 									<Positive /> <span>Positive</span>
@@ -406,6 +409,7 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('0')}
 									class="deselected"
+									class:dark = {$theme === 'dark'}
 									class:selected={newOpinion.sentiment === '0'}
 								>
 									<Neutral /> <span>Neutral</span>
@@ -413,14 +417,22 @@
 								<button
 									on:click|preventDefault={() => selectSentiment('-1')}
 									class="deselected"
+									class:dark = {$theme === 'dark'}
 									class:selected={newOpinion.sentiment === '-1'}
 								>
 									<Negative /> <span>Negative</span>
 								</button>
 							</div>
 						</div>
-
+						<div id="filePreview">
+							{#each fileArray as file (file.url)}
+								<FilePreview file={file.files} onDelete={() => deleteFile(file)} />
+							{/each}
+						</div>
+						<div style="display:flex; align-contents:center;">
 						<button type="submit" disabled={!$ndkUser} class="postButton"> Post </button>
+						<Upload bind:fileArray bind:opinionContent />
+						</div>
 					</form>
 				</div>
 			{/if}
@@ -580,6 +592,7 @@
 	.read-more {
 		color: #4da84d;
 		cursor: pointer;
+		display: block;
 	}
 	.loader {
 		display: flex;
@@ -652,6 +665,10 @@
 		display: flex;
 		gap: 2rem;
 	}
+	.dark {
+		background-color: #434343;
+		color: white;
+	}
 	.selected {
 		border-radius: 3px;
 		width: 7rem;
@@ -686,4 +703,11 @@
 	.opinion-container.mine {
 		background-color: var(--neutral-6,#faefd9);
   	}
+	#filePreview {
+		display:flex; 
+		gap:1rem; 
+		flex-direction: row;
+		flex-wrap: wrap;
+		margin:1rem 0;
+	}
 </style>

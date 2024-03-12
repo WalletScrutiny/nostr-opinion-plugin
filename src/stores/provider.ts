@@ -23,8 +23,7 @@ if (window) {
 
 const ndk = new NDKSvelte({
 	explicitRelayUrls: defaulRelaysUrls,
-	cacheAdapter,
-	enableOutboxModel: false
+	cacheAdapter
 });
 
 const ndkStore = writable(ndk);

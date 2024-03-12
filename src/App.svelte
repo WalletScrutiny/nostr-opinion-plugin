@@ -1,9 +1,6 @@
-<svelte:options customElement={{
-		tag:"nostr-opinion",
-		shadow:"none"
-}} />
+<svelte:options customElement="nostr-opinion"/>
 <script lang="ts">
-	import { localStore, ndkUser } from './stores/stores';
+	import { localStore, ndkUser, theme, themeModeLocalStorageObject } from './stores/stores';
 	import Positive from './components/icons/Positive.svelte';
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
@@ -38,6 +35,7 @@
 	import DOMPurify from 'dompurify';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
 	import type { ExpertOpinions } from './main';
+	import { onDestroy } from 'svelte';
 
 	export let subject: string;
 	export let opinionTitle: string;
@@ -46,6 +44,7 @@
 	export let opinionImage: string | undefined = undefined;
 	export let opinionTags: string = 'NostrOpinion';
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
+	export let themeModeLocalStorageHandle: string = "colour-scheme";
 
 	
 	let relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
@@ -113,6 +112,15 @@
 			sortEvents();
 		});
 	}
+
+	const id = setInterval(()=>{
+		theme.set(localStorage.getItem(themeModeLocalStorageHandle) || 'light');
+	},1000);
+
+	onDestroy(()=>{
+		clearInterval(id);
+	});
+
 	const submit = async (published_at: string) => {
 		const privkey = $localStore.pk;
 		if (privkey) {
@@ -131,16 +139,18 @@
 		}
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
-		if (!published_at || !published_at.length) {
+		if (!published_at || !published_at.length || published_at.length === 1) {
 			published_at = (Date.now() + 5000).toString();
 		}
 		ndkEvent.tags = [
 			['d', subject],
 			['sentiment', newOpinion.sentiment],
-			['title', opinionTitle],
 			['summary', summary],
 			['published_at', published_at],
 		];
+		if(opinionTitle) {
+			ndkEvent.tags.push(['title', opinionTitle])
+		}
     if (opinionImage) {
       ndkEvent.tags.push (['image', opinionImage])
     }
@@ -168,7 +178,7 @@
 		deletedEventsArray = [...value];
 		isMine = true;
 		showNewOpinion = false;
-		filter = 'all';
+		// filter = 'all';
 	};
 
 	const sortEvents = () => {
@@ -204,7 +214,7 @@
 
 	async function findUserProfileData(pubkey: string) {
 		if (!$ndkUser) {
-			console.log("Can't find user profile. $ndkUser is undefined");
+			console.info("Can't find user profile. $ndkUser is undefined");
 			return;
 		}
 		let content = await fetchUserProfile(pubkey);
@@ -220,6 +230,7 @@
 
 	const initialization = async () => {
 		expertOpinions = (await import('./main')).expertOpinions;
+		themeModeLocalStorageObject.set(themeModeLocalStorageHandle);
 		try {
 			trustedAuthors = await initializeApprovedAuthors();
 			const isloggedIn = $localStore.lastUserLogged;
@@ -261,26 +272,53 @@
 				});
 			}
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	};
 	initialization();
 
+	let userHasAgreed = false;
+
+	$: if ($ndkUser?.pubkey && profiles[$ndkUser?.pubkey]) {
+		const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
+		userHasAgreed = localStorage.getItem(userAgreementKey) === 'true';
+	} else {
+		userHasAgreed = false;
+	}
+
+
 	const Logout = () => {
-		console.log(DEFAULT_RELAY_URLS);
-		console.log(relay_urls);
 		relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
-		console.log(relay_urls);
 		isMine = false;
 		logout();
 		opinionContent = '';
 	};
 
+	if (localStorage.getItem('userHasAgreed') === null) {
+		localStorage.setItem('userHasAgreed', 'false');
+	}
+
+	function handleAgree() {
+		if (!userHasAgreed) {
+			showModal = true;
+		}
+		else {
+			filter = 'all';
+			sortEvents();
+			showNewOpinion = false;
+		}
+	}
+
 	function agreeToShowAll() {
 		filter = 'all';
 		sortEvents();
 		showNewOpinion = false;
-		showModal = false; // Close the modal
+		showModal = false;
+		userHasAgreed = true;
+		if ($ndkUser?.pubkey) {
+			const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
+			localStorage.setItem(userAgreementKey, userHasAgreed.toString());
+		}
 	}
 	function onCancel() {
     	showModal = false;
@@ -342,7 +380,7 @@
 			<button
 				class:filter-active={filter === 'approved'}
 				aria-label="filter by all"
-				on:click={() => showModal = true}
+				on:click={handleAgree}
 			>
 				Show {allEventLength} opinion{allEventLength === 1 ? ' of an unknown author' : 's of unknown authors'}.
 			</button>⚠️ Viewer discretion advised.
@@ -369,7 +407,7 @@
 				class="blank-btn filter-btn"
 				class:filter-active={filter === 'all'}
 				aria-label="filter by all"
-				on:click={() => showModal = true}>All opinions</button
+				on:click={handleAgree}>All opinions</button
 			>
 		</div>
 	</nav>
@@ -426,10 +464,8 @@
 							: profiles[$ndkUser?.pubkey]?.content?.name}
 					</span>
 				</div>
-				<form on:submit|preventDefault={submit} id="review-input-details-container">
-					<div style="background: #f2f0f0;">
-						<Editor bind:fileArray bind:opinionContent />
-					</div>
+				<form on:submit|preventDefault={()=>{submit(" ")}} id="review-input-details-container">
+					<Editor bind:fileArray bind:opinionContent />
 					<div id="sentiment-box">
 						<label for="sentiment" style="font-weight: 600;"
 							>Choose your overall sentiment</label
@@ -437,6 +473,7 @@
 						<div style="display:flex; gap: 0.4rem;">
 							<button
 								class="btn-standard"
+								class:dark = {$theme=== 'dark'}
 								class:selected-state={newOpinion.sentiment === '1'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '1' };
@@ -444,6 +481,7 @@
 							>
 							<button
 								class="btn-standard"
+								class:dark = {$theme=== 'dark'}
 								class:selected-state={newOpinion.sentiment === '0'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '0' };
@@ -451,6 +489,7 @@
 							>
 							<button
 								class="btn-standard"
+								class:dark = {$theme=== 'dark'}
 								class:selected-state={newOpinion.sentiment === '-1'}
 								on:click|preventDefault={() => {
 									newOpinion = { ...newOpinion, sentiment: '-1' };
@@ -500,12 +539,20 @@
 		--date-text-color: #808080;
 		--description-text-color: #808080;
 		--filter-active-color: #000000;
-		--filter-inactive-color: #808080;
+		--filter-inactive-color: #e2e1e1;
 		--button-text-color: #ffffff;
 		--button-background-color: #4da84d;
 		--sentiment-button-background-color: #4da84d;
 		font-family: Arial, sans-serif;
-		background-color: black;
+	}
+
+	::-webkit-scrollbar {
+		display: none;
+	}
+	
+	* {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
 	}
 
 	::-webkit-scrollbar {
@@ -584,6 +631,11 @@
 		color: #808080;
 	}
 
+	.dark {
+		background-color: #434343;
+		color: white;
+	}
+
 	.btn-standard:hover {
 		background-color: #4da84d;
 	}
@@ -640,5 +692,10 @@
 		font-size:1em;
 		text-decoration: underline;
 		text-decoration-thickness: 0.5px;
+	}
+	.opinion-container {
+		max-height: 200rem;
+		overflow-y: scroll;
+		margin: 1rem 0;
 	}
 </style>

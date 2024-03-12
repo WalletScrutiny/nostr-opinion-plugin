@@ -4,10 +4,10 @@
 	import { NDKPrivateKeySigner, type NDKUserProfile } from '@nostr-dev-kit/ndk';
 	import ndk from '../stores/provider';
 	import { ndkUser } from '../stores/stores';
-	import { hexToBytes } from '../utils/covertBech';
 	import { privkeyLogin } from '../utils/helper';
 	import { slide } from 'svelte/transition';
 	import { nip19 } from 'nostr-tools';
+	import { hexToBytes } from '../utils/covertBech';
 
 	let nsec = '';
 	let hexPrivKey = '';
@@ -23,8 +23,8 @@
 
 	onMount(() => {
 		pk = NDKPrivateKeySigner.generate();
-		hexPrivKey = pk.privateKey as string; // todo: fix this error if "as string" is not done: Type 'string | undefined' is not assignable to type 'string'.
-		nsec = nip19.nsecEncode(hexToBytes(hexPrivKey)) as string;
+		hexPrivKey = pk.privateKey as string;
+		nsec = nip19.nsecEncode(hexToBytes(hexPrivKey));
 	});
 
 	const saveProfile = async () => {

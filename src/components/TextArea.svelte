@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
+	import { theme } from '../stores/stores';
 
 	let textarea: HTMLTextAreaElement;
 	export let opinionContent: string;
@@ -18,7 +19,7 @@
 	}
 </script>
 
-<textarea transition:slide bind:this={textarea} on:input={updateContent} class="textarea-style">
+<textarea transition:slide bind:this={textarea} on:input={updateContent} class="textarea-style" class:dark={$theme === 'dark'}>
 </textarea>
 
 <style>
@@ -26,7 +27,7 @@
 		width: 100%;
 		min-height: 200px;
 		background-color: #f8f8f8;
-		color: #333;
+		color:#333;
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		padding: 10px;
@@ -38,5 +39,9 @@
 		transition:
 			border-color 0.3s,
 			box-shadow 0.3s;
+	}
+	.dark {
+		background-color: black;
+		color: white;
 	}
 </style>

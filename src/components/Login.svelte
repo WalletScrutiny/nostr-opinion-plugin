@@ -20,8 +20,14 @@
 	const login = async (nostrKeyMethod: string | undefined) => {
 		if (!nostrKeyMethod) return;
 		let login;
+
+
 		switch (nostrKeyMethod) {
 			case 'pk':
+			if (!nsec.startsWith('nsec')){
+				alert('Please use your nsec to login');
+				return;
+			}
 				login = await privkeyLogin(nip19.decode(nsec).data as string);
 				break;
 			case 'nip07':
@@ -30,12 +36,12 @@
 		}
 
 		if (!login) {
-			console.log('Something went wrong while login!!');
+			console.error('Something went wrong while login!!');
 			return;
 		}
 		
 		if (!$ndkUser) {
-			console.log("Can't proceed. $ndkUser is null");
+			console.error("Can't proceed. $ndkUser is null");
 			return;
 		}
 

@@ -19,7 +19,7 @@
 		const inputElement = event.target as HTMLInputElement;
 
 		if (!inputElement.files) {
-			console.log('Files array is empty');
+			console.info('Files array is empty');
 			return;
 		}
 		for (files of inputElement.files) {
