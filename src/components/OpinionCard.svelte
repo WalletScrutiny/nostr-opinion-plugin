@@ -459,7 +459,11 @@
 				</div>
 				<div class="card-button">
 					<Tooltip>
-					<button id="replyButton" on:click={() => {reply = !reply; edit = false; opinionContent = ''; replyContent = false;}}>
+					<button id="replyButton" on:click={() => {
+						if($localStore.lastUserLogged) {
+							reply = !reply; edit = false; opinionContent = ''; replyContent = false;
+						}
+						}}>
 						<ReplyButton />
 					</button>
 					<span slot="tooltip1Text">Add Reply</span>
@@ -590,7 +594,7 @@
 		margin-bottom: 16px;
 	}
 	.read-more {
-		color: #4da84d;
+		color: #3e8b0a;
 		cursor: pointer;
 		display: block;
 	}
@@ -620,7 +624,7 @@
 		cursor: pointer;
 		border: none;
 		height: 2.5rem;
-		background-color: #4da84d;
+		background-color: #3e8b0a;
 		color: white;
 	}
 	.card-button {
@@ -642,7 +646,7 @@
 		cursor: pointer;
 		display: flex;
 		align-items: center;
-		font-size: large;
+		font-size: medium;
 		padding: 8px;
 		color: var(--neutral-0, black);
 	}
@@ -678,7 +682,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		background-color: #4da84d;
+		background-color: #3e8b0a;
 		color: white;
 	}
 	.deselected {
@@ -693,7 +697,7 @@
 	}
 	.postButton {
 		color: #ffffff;
-		background-color: #4da84d;
+		background-color: #3e8b0a;
 		padding: 7px 20px;
 		border-radius: 3px;
 		cursor: pointer;

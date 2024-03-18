@@ -541,8 +541,8 @@
 		--filter-active-color: #000000;
 		--filter-inactive-color: #e2e1e1;
 		--button-text-color: #ffffff;
-		--button-background-color: #4da84d;
-		--sentiment-button-background-color: #4da84d;
+		--button-background-color: #3e8b0a;
+		--sentiment-button-background-color: #3e8b0a;
 		font-family: Arial, sans-serif;
 	}
 
@@ -597,14 +597,14 @@
 		flex-direction: row;
 	}
 	.filter-container > .filter-active {
-		color: #4da84d;
+		color: #3e8b0a;
 	}
 	.filter-btn {
 		color: #808080;
 	}
 	.primary-btn {
 		color: #ffffff;
-		background-color: #4da84d;
+		background-color: #3e8b0a;
 		padding: 7px 20px;
 		border-radius: 3px;
 		cursor: pointer;
@@ -637,7 +637,7 @@
 	}
 
 	.btn-standard:hover {
-		background-color: #4da84d;
+		background-color: #3e8b0a;
 	}
 
 	.btn-standard:hover {
@@ -650,7 +650,7 @@
 		gap: 0.3rem;
 	}
 	.selected-state {
-		background-color: #4da84d;
+		background-color: #3e8b0a;
 		color: #ffffff;
 	}
 	.placeholder{
