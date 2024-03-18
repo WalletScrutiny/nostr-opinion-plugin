@@ -41,6 +41,7 @@
 	import DOMPurify from 'dompurify';
 	import Tooltip from './Tooltip.svelte';
 	import ContentView from './ContentView.svelte';
+	import { afterUpdate } from 'svelte';
 
 	export let event: NDKEvent;
 	export let profiles: { [key: string]: { content: NDKUserProfile } };
@@ -76,18 +77,16 @@
 	let created_at: number | undefined = undefined;
 	let relay = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
 	let isDeleted = false;
-	const maxLength = 500;
-	let displayContent = event.content;
-	let processedContent = truncateText(displayContent,maxLength);
+	let displayContent = event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
+	let processedContent = displayContent;
 	 $: displayContent = editLvl > 1 
         ? event.content 
         : DOMPurify.sanitize(event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, ''));
 
-    $: processedContent = showFullText
-        ? displayContent 
-        : truncateText(displayContent, maxLength);
-
 	let fileArray: { files: File; url: string }[] = [];
+	let contentElement: HTMLParagraphElement;
+	let contentHeight = 300;
+	let showReadMore = false;
 
 	
 
@@ -97,10 +96,7 @@
 
 	function toggleFullText() {
 		showFullText = !showFullText;
-	}
-
-	function truncateText(text: string, length: number) {
-		return text.length > length ? text.slice(0, length) + '...' : text;
+		showReadMore = !showReadMore;
 	}
 
 	// TODO: create enum for sentiment
@@ -311,6 +307,13 @@
 		}
 		deletedEventsArray = [...deletedEventsArray, event];
 	}
+
+	afterUpdate(() => {
+        if (contentElement) {
+            const actualHeight = contentElement.offsetHeight;
+            showReadMore = actualHeight > contentHeight;
+        }
+    });
 </script>
 {#if !isDeleted}
 	{#if !loading && expertOpinions}
@@ -366,28 +369,22 @@
 				</p>
 			</div>
 			{#if !edit}
-				<p class="content">
+				<p class="content" bind:this={contentElement} class:show-full={showFullText}>
 				{#if editLvl == 1}
 					<ContentView content={processedContent} />
-					{#if event.content.length > maxLength && editLvl == 1}
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<span class="read-more" on:click={toggleFullText}>
-							{showFullText ? 'Read Less' : 'Read More'}
-						</span>
-					{/if}
 				{:else}
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html processedContent}
-					{#if event.content.length > maxLength && editLvl > 1}
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<span class="read-more" on:click={toggleFullText}>
-							{showFullText ? 'Read Less' : 'Read More'}
-						</span>
-					{/if}
 				{/if}
 				</p>
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
+				{#if showReadMore}
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<span class="read-more" on:click={toggleFullText}>
+						{showFullText ? 'Read Less' : 'Read More'}
+					</span>
+				{/if}
 			{:else}
 				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
 					<form on:submit|preventDefault={() => submit((published_at||new Date()).toString())}>
@@ -588,7 +585,14 @@
 		padding: 1rem;
 		color: var(--neutral-0, black);
 		margin-bottom: 16px;
+		overflow-y: auto;
+		max-height: 300px;
 	}
+	
+    .content.show-full {
+		max-height: max-content;
+        overflow: visible;
+    }
 	.read-more {
 		color: #4da84d;
 		cursor: pointer;
