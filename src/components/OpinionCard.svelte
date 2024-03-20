@@ -11,7 +11,6 @@
 	import ReplyButton from './icons/ReplyButton.svelte';
 	import OptionButton from './icons/OptionButton.svelte';
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
-	import { marked } from 'marked';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
 	import { localStore, ndkUser, theme } from '../stores/stores';
 	import ndk from '../stores/provider';
@@ -155,22 +154,6 @@
 	const initialization = async () => {
 		
 		event.content = event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
-		const renderer = new marked.Renderer();
-
-		const imageStyles = 'max-width: 100px; height: 100px; border-radius:10px; object-fit: cover;';
-
-		renderer.image = (href, title, text) => {
-			return `<img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" />`;
-		};
-
-		renderer.link = (href, title, text) => {
-			if (href.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) != null) {
-				return `<a href="${href}" target="_blank"><img src="${href}" alt="${text}" title="${title}" style="${imageStyles}" /></a>`;
-			}
-			return `<a href="${href}" title="${title}" target="_blank">${text}</a>`;
-		};
-
-		marked.setOptions({ renderer });
 
 		expertOpinions = (await import('../main')).expertOpinions;
 
@@ -185,6 +168,7 @@
 			if (!content.image) content.image = profileImageUrl + event1.pubkey;
 			if (!content.pubkey) content.pubkey = event1.pubkey;
 			profiles[event1.pubkey] = { content };
+			profiles = {...profiles};
 		});
 
 		let latestTime = 0;
