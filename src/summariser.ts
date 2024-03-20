@@ -1,33 +1,43 @@
-import NDK, { NDKEvent, type NDKFilter } from '@nostr-dev-kit/ndk';
+import NDK, { NDKEvent, type Hexpubkey, type NDKFilter } from '@nostr-dev-kit/ndk';
+import { initializeApprovedAuthors } from './utils/approvedAuthors';
 
 export default class Summariser {
 	opinions: Record<string, NDKEvent[]>;
-	ndk;
-	trustedAuthors: string[];
+	ndk: NDK;
+	trustedAuthors: Hexpubkey[];
 
 	constructor({
 		relay,
 		trustedAuthors: trustedAuthors
 	}: {
 		relay: string;
-		trustedAuthors?: string[];
+		trustedAuthors: Hexpubkey[];
 	}) {
 		this.opinions = {};
 		this.ndk = new NDK({ explicitRelayUrls: [relay] });
 		this.trustedAuthors = trustedAuthors;
 	}
 
-	onReady = () =>
-		new Promise<void>(async (resolve) => {
-			await this.ndk.connect();
-			const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
+	onReady = () => {
+		return new Promise<void>((resolve, reject) => {
+			this.ndk
+				.connect()
+				.then(async () => {
+					this.trustedAuthors = await initializeApprovedAuthors();
+					const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
 
-			const fetchEvents = await this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
-			fetchEvents.forEach((event) => {
-				const d = event.tags.find((tag) => tag[0] === 'd')[1];
-				this.opinions[d] = [...(this.opinions?.[d] || []), event];
-			});
+					return this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
+				})
+				.then((fetchEvents) => {
+					fetchEvents.forEach((event) => {
+						const d = event.tags.find((tag) => tag[0] === 'd')[1];
+						this.opinions[d] = [...(this.opinions?.[d] || []), event];
+					});
+					resolve();
+				})
+				.catch((err) => reject(err));
 		});
+	};
 
 	get(key: string) {
 		const ops = this.opinions[key];
