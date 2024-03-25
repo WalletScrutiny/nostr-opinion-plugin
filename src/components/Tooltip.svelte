@@ -30,7 +30,7 @@
   .tooltip1 .tooltip1text {
     visibility: hidden;
     width: max-content;
-    background-color: #4da84d;
+    background-color: #3e8b0a;
     color: #fff;
     text-align: center;
     border-radius: 4px;

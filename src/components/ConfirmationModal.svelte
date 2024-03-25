@@ -41,7 +41,7 @@
 
     .primary-btn {
         color: #ffffff;
-        background-color: #4da84d;
+        background-color: #3e8b0a;
         padding: 7px 20px;
         border-radius: 3px;
         cursor: pointer;
