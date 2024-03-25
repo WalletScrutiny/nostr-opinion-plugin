@@ -107,7 +107,11 @@
 				});
 			} else {
 				allEvents = [...allEvents, { ...event } as NDKEvent];
-				profiles[event.pubkey] = await findUserProfileData(event.pubkey);
+				const content = await fetchUserProfile(event.pubkey);
+				if (!content.image) content.image = profileImageUrl + event.pubkey;
+				if (!content.pubkey) content.pubkey = event.pubkey;
+				profiles[event.pubkey] = { content };
+				profiles = {...profiles};
 			}
 			sortEvents();
 		});
