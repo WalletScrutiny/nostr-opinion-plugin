@@ -144,7 +144,7 @@
 		const ndkEvent = new NDKEvent($ndk);
 		ndkEvent.kind = kindOpinion;
 		if (!published_at || !published_at.length || published_at.length === 1) {
-			published_at = (Date.now() + 5000).toString();
+			published_at = (Math.floor(Date.now()/1000) + 5).toString();
 		}
 		ndkEvent.tags = [
 			['d', subject],
