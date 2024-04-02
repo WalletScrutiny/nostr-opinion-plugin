@@ -234,8 +234,7 @@
 			});
 		}
 		const published_at_metadata = event.tags
-			.filter((value) => value[0] === 'published_at')[0]?.[1]
-			?.slice(0, 10);
+			.filter((value) => value[0] === 'published_at')[0]?.[1];
 		if (published_at_metadata) {
 			published_at = parseInt(published_at_metadata);
 		}
@@ -371,7 +370,7 @@
 				{/if}
 			{:else}
 				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
-					<form on:submit|preventDefault={() => submit((published_at||new Date()).toString())}>
+					<form on:submit|preventDefault={() => submit((published_at||Math.floor(new Date().getTime() / 1000)).toString())}>
 						<Editor bind:fileArray bind:opinionContent />
 						<div
 							id="sentiment-box"
