@@ -1,4 +1,7 @@
 import { expertOpinions } from '/src/main.ts';
+
+// See README.md for how to use it
+
 expertOpinions.trustedAuthors = [
 	// John and Jane will be considered trusted users
 	'npub1f70prcng8zwcdjfh5pr7g4txasn40a4pdwyj5vz7x6kwfx4kcrxqn62uvh', // John Nostrich
