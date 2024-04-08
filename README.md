@@ -18,7 +18,7 @@ The build command outputs a single JS file that can be used in any other JS proj
 
 1. You can pass the pubkey or profile info of the users (starts with `npub` or `nprofile`) that you trust to write meaningful reviews or comments on your site.
 2. You can [create and award badges](https://badges.page) to users that you trust instead of hardcoding their npubs, and then pass the identifier (starts with `naddr`) of that badge to the plugin.
-3. You can create a dedicated nostr profile to award badges to users that you trust. The awardees of any badge created by these profile 
+3. You can create a dedicated nostr profile to award badges to users that you trust. The awardees of any badge created by these profile will be considered as approved authors.
 
 Here's an example
 
@@ -28,8 +28,8 @@ Here's an example
 	
 	// Case 1: John and Jane are trusted authors
 	expertOpinions.trustedAuthors = [
-		'npub1f70....2uvh', // John's hex pubkey
-		'npub14we....jch3' // Jane's hex pubkey
+		'npub1f70....2uvh', // John's npub
+		'npub14we....jch3' // Jane's npub
 	];
 
 	// Case 2: A badge awarded to Alice, it makes Alice a trusted author
@@ -37,7 +37,7 @@ Here's an example
 		'naddr1qqx4....2qnm'
 	];
 
-	// Case 3: Bob's npub, all badges by Bob and the awardees who have accepted those badges will be considered trusted authors
+	// Case 3: Bob's profile info, the awardees of any badge created by Bob and will be considered trusted authors, provided they have accepted that badge
 	expertOpinions.trustedBadgeAuthors = [
 		'nprofile1qqsd....l0vf'
 	];
