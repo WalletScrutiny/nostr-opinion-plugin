@@ -2,30 +2,58 @@
 
 ## Client side components
 
-This plugin uses native web components
+This plugin uses native web components.
 
-to start dev server: `npm run dev`
+### Dev Server
 
-to build: `npm run build`
+To start a dev server, run: `npm run dev`. You can configure the plugin by modifying the [index.js](index.js) file as [described below](#configuration)
 
-to use on another site:
+### Building
+
+To build the project, run `npm run build`.
+
+### Configuration
+
+The build command outputs a single JS file that can be used in any other JS project. You have three ways of configuring the plugin:
+
+1. You can pass the pubkey or profile info of the users (starts with `npub` or `nprofile`) that you trust to write meaningful reviews or comments on your site.
+2. You can [create and award badges](https://badges.page) to users that you trust instead of hardcoding their npubs, and then pass the identifier (starts with `naddr`) of that badge to the plugin.
+3. You can create a dedicated nostr profile to award badges to users that you trust. The awardees of any badge created by these profile will be considered as approved authors.
+
+Here's an example
 
 ```html
 <script type="module">
 	import { expertOpinions } from '/src/nostr-opinion.js';
-	expertOpinions.setRelay(); // pass in optional relay url
+	
+	// Case 1: John and Jane are trusted authors
 	expertOpinions.trustedAuthors = [
-		'8d57446448a2fea22be1fcf7e526b87e917999ffc83ef5c6823a757fb58527f4',
-		'64c9e18a36a04803111d21abae88d315f44d3235a4997101d8e2dff3dc82dd70'
-	]; // optional
-	expertOpinions.setReady(); // required
+		'npub1f70....2uvh', // John's npub
+		'npub14we....jch3' // Jane's npub
+	];
+
+	// Case 2: A badge awarded to Alice, it makes Alice a trusted author
+	expertOpinions.trustedBadges = [
+		'naddr1qqx4....2qnm'
+	];
+
+	// Case 3: Bob's profile info, the awardees of any badge created by Bob and will be considered trusted authors, provided they have accepted that badge
+	expertOpinions.trustedBadgeAuthors = [
+		'nprofile1qqsd....l0vf'
+	];
+	
+	expertOpinions.headline = 'Community Opinions ($$nTrusted$$/$$nAll$$)';
+	expertOpinions.description = 'These comments are contributed by nostr users using the nostr-opinions-plugin.';
+
 </script>
 ```
 
-login component:
+### Using as web component
+
+Login:  
 `<nostr-opinion-login></nostr-opinion-login>`
 
-opinion component:
+Nostr Opinion:  
 `<nostr-opinion name="/android/com.mycelium.wallet/"></nostr-opinion>`
 
 ## Server side opinion summariser
