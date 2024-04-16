@@ -1,7 +1,6 @@
 {
 	"name": "nostr-opinion",
-	"private": true,
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
 		"dev": "rm -f index.html && ln -s index.staging.html index.html && vite",
