@@ -26,7 +26,7 @@
 		opinionHeaderSeparator,
 		kindDelete,
 		kindOpinion,
-		profileImageUrl
+		profileImageUrl,
 	} from './utils/constants';
 	import Upload from './components/Upload.svelte';
 	import FilePreview from './components/FilePreview.svelte';
@@ -522,7 +522,7 @@
 						>Register</button
 					>
 					{#if showLoginOrRegister === 'login'}
-						<Login bind:profiles bind:opinionContent bind:showNewOpinion  {subject}/>
+						<Login bind:profiles bind:opinionContent bind:showNewOpinion  {subject} />
 					{:else if showLoginOrRegister === 'register'}
 						<Register bind:profiles bind:showNewOpinion />
 					{/if}

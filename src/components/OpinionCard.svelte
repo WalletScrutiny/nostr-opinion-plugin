@@ -57,6 +57,8 @@
 	export let deletedEventsArray: NDKEvent[] = [];
 	export let isMine = false;
 	export let trustedAuthors: Hexpubkey[] = [];
+	export let aTag = "";
+
 	opinionContent = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 	let replyEvents: NDKEvent[] = [];
 	let reactions: (Partial<NDKEvent> & { timestamp: number })[] = [];
@@ -70,7 +72,6 @@
 	let liked = false;
 	let disliked = false;
 	let showFullText = false;
-	let ATag = event.id;
 	let relativeTime = '';
 	let published_at: number | undefined = undefined;
 	let created_at: number | undefined = undefined;
@@ -90,7 +91,7 @@
 	
 
 	if (editLvl === 0) {
-		ATag = kindOpinion + ':' + event.pubkey + ':' + subject;
+		aTag = kindOpinion + ':' + event.pubkey + ':' + subject;
 	}
 
 	function toggleFullText() {
@@ -124,8 +125,9 @@
 		ndkEvent.kind = NDKKind.Reaction;
 		ndkEvent.content = content;
 		ndkEvent.tags = [
-			['a', ATag],
-			['p', $ndkUser.pubkey]
+			["a",aTag],
+			["p",event.pubkey],
+			["e",event.id,"",editLvl == 1 ? "root" : "reply"]
 		];
 		await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write, $ndk));
 		idx = reactions.findIndex((e) => e.pubkey === $ndkUser!.pubkey);
@@ -147,6 +149,7 @@
 			disliked = false;
 		}
 	}
+	
 	const initialization = async () => {
 		
 		event.content = event.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
@@ -156,9 +159,21 @@
 		editLvl += 1;
 		relativeTime = calculateRelativeTime(event.created_at as number); // TODO: created_at can be undefined, "as number" isn't a solution
 		loading = false;
-		let ndkFilter: NDKFilter = { kinds: [kindNotes], '#a': [ATag] };
+		let ndkFilter: NDKFilter = {kinds: [kindNotes], "#e":[event.id]};
+		if(editLvl === 1) {
+			ndkFilter = {kinds: [kindNotes], "#a": [aTag]};
+		}
 		let fetchedEvents = await $ndk.fetchEvents(ndkFilter, { closeOnEose: false });
 		fetchedEvents.forEach(async (event1) => {
+			/**
+			 * When editLvl is set to 1, we filter based on 'a' tag, retrieving all replies.
+			 * However, for UI purposes, our focus lies solely on immediately displaying or retrieving
+			 * replies following the initial query, rather than all replies. We will remove this condition later
+			 * to monitor replies to modified opinion events
+			 */
+			if(editLvl === 1 && event1.tags.flat().filter(e => e[0] === "e").length > 1) {
+				return;
+			}
 			replyEvents = [...replyEvents, { ...event1 } as NDKEvent];
 			const content = await fetchUserProfile(event1.pubkey);
 			if (!content.image) content.image = profileImageUrl + event1.pubkey;
@@ -169,8 +184,8 @@
 
 		let latestTime = 0;
 
-		ndkFilter = { kinds: [kindReaction], '#a': [ATag] };
-		let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter, { closeOnEose: false });
+		ndkFilter = { kinds: [kindReaction], "#e": [event.id]};
+		let fetchedReactionEvents = await $ndk.fetchEvents(ndkFilter);
 		fetchedReactionEvents.forEach((event2) => {
 			let idx = reactions.findIndex((e) => e.pubkey === event2.pubkey);
 
@@ -260,9 +275,21 @@
 		ndkEvent.kind = NDKKind.Text;
 		ndkEvent.content = opinionContent;
 		ndkEvent.tags = [
-			['a', ATag],
-			['p', $ndkUser.pubkey]
-		];
+			['a',aTag],
+			['p',event.pubkey],
+			['e',event.id,"",editLvl == 1 ? "root" : "reply"]
+		]
+		if(editLvl > 1) {
+			event.tags.map((e)=>{
+				if(e[0] === 'p') {
+					if(!ndkEvent.tags.toString().includes(e.toString())) {
+						ndkEvent.tags.push(e);
+					}
+				} else if(e[0] === 'e' && e[3] === 'root') {
+					ndkEvent.tags.push(e);
+				} 
+			})
+		}
 		await ndkEvent.publish(NDKRelaySet.fromRelayUrls(relay.write, $ndk));
 		replyEvents = [...replyEvents, { ...ndkEvent } as NDKEvent];
 		opinionContent = '';
@@ -517,6 +544,7 @@
 						{editLvl}
 						{subject}
 						bind:count={replyEvents.length}
+						{aTag}
 					/>
 				{/each}
 			{/if}
