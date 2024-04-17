@@ -2,6 +2,7 @@ import { writable } from 'svelte/store';
 import NDKSvelte from '@nostr-dev-kit/ndk-svelte';
 import type { NDKCacheAdapter } from '@nostr-dev-kit/ndk';
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie';
+import NDK from '@nostr-dev-kit/ndk';
 
 let cacheAdapter: NDKCacheAdapter | undefined;
 
@@ -27,5 +28,15 @@ const ndk = new NDKSvelte({
 });
 
 const ndkStore = writable(ndk);
+
+const _bunkerNDK = new NDK({
+	explicitRelayUrls: [
+		'wss://relay.nsecbunker.com',
+		'wss://nostr.vulpem.com',
+		'wss://relay.nsec.app'
+	]
+});
+
+export const bunkerNDKStore = writable(_bunkerNDK);
 
 export default ndkStore;

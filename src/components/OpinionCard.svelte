@@ -12,7 +12,7 @@
 	import OptionButton from './icons/OptionButton.svelte';
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
 	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
-	import { localStore, ndkUser, theme } from '../stores/stores';
+	import { isMine, localStore, ndkUser, theme } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
 		NDKEvent,
@@ -55,7 +55,6 @@
 	export let subject: string;
 	export let count: number;
 	export let deletedEventsArray: NDKEvent[] = [];
-	export let isMine = false;
 	export let trustedAuthors: Hexpubkey[] = [];
 	export let aTag = "";
 
@@ -302,7 +301,7 @@
 
 	$: if (isDeleted) {
 		if (editLvl == 1) {
-			isMine = false;
+			isMine.set(false);
 			let sentiment = newOpinion.sentiment;
 			let value = sentimentCount[sentiment] - 1;
 			if (sentiment === '1') {
@@ -327,7 +326,7 @@
 </script>
 {#if !isDeleted}
 	{#if !loading && expertOpinions}
-		<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
+		<div transition:slide class="opinion-container">
 			<div class="opinion-top">
 				<div class="pubkey">
 					<div>
@@ -396,7 +395,7 @@
 					</span>
 				{/if}
 			{:else}
-				<div transition:slide class="opinion-container {isMine ? 'mine' : ''}">
+				<div transition:slide class="opinion-container">
 					<form on:submit|preventDefault={() => submit((published_at||Math.floor(new Date().getTime() / 1000)).toString())}>
 						<Editor bind:fileArray bind:opinionContent />
 						<div
@@ -719,9 +718,6 @@
 		border: none;
 		height: 2.5rem;
 	}
-	.opinion-container.mine {
-		background-color: var(--neutral-6,#faefd9);
-  	}
 	#filePreview {
 		display:flex; 
 		gap:1rem; 
