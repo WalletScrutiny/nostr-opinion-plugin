@@ -34,3 +34,31 @@ export const localStore: Writable<UserLocalStore> = localStorageStore('localStor
 
 export const themeModeLocalStorageObject = writable('colour-scheme');
 export const theme = writable('light');
+
+export const profileUser = writable([{}]);
+
+export const isOpinionEditorOpen = writable(false);
+
+export const editorOpinionContent = writable('');
+
+export const showAuthenticationModal = writable(false);
+
+export const showLoginModal = writable(false);
+
+export const showNonInteractiveLoginModal = writable(false);
+
+export const showPrivateKeyLoginModal = writable(false);
+
+export const showRegistrationModal = writable(false);
+
+export const showSetupProfileModal = writable(false);
+
+export const showNsecBunker = writable(false);
+
+export const showMoreNewOpinions = writable(false);
+
+export const isLoggedIn = writable(false);
+
+export const isMine = writable(false);
+
+export const toast = writable({ type: '', message: '' });
