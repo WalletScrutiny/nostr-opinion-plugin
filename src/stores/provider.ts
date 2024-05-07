@@ -15,7 +15,7 @@ export const defaulRelaysUrls: string[] = [
 	'wss://nostr.mutinywallet.com '
 ];
 
-if (window) {
+if (typeof window !== 'undefined') {
 	cacheAdapter = new NDKCacheAdapterDexie({
 		dbName: 'walletScrutiny',
 		expirationTime: 3600 * 24 * 2
