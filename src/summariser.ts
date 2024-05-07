@@ -1,21 +1,29 @@
-import NDK, { NDKEvent, type Hexpubkey, type NDKFilter } from '@nostr-dev-kit/ndk';
-import { initializeApprovedAuthors } from './utils/approvedAuthors';
+import NDK, { NDKEvent, type Hexpubkey, type NDKFilter, type Npub } from '@nostr-dev-kit/ndk';
+import { kindOpinion } from './utils/constants';
+import { nip19 } from 'nostr-tools';
 
 export default class Summariser {
 	opinions: Record<string, NDKEvent[]>;
 	ndk: NDK;
-	trustedAuthors: Hexpubkey[];
+	trustedAuthors: Hexpubkey[] = [];
 
-	constructor({
-		relay,
-		trustedAuthors: trustedAuthors
-	}: {
-		relay: string;
-		trustedAuthors: Hexpubkey[];
-	}) {
+	constructor({ relay, trustedAuthors }: { relay: string; trustedAuthors: Npub[] }) {
 		this.opinions = {};
 		this.ndk = new NDK({ explicitRelayUrls: [relay] });
-		this.trustedAuthors = trustedAuthors;
+		// TODO: remove this and use initializeApprovedAuthors() instead
+		this.trustedAuthors = trustedAuthors
+			.map((author) => {
+				const decoded = nip19.decode(author);
+				if (decoded.type == 'npub') {
+					return decoded.data;
+				}
+				if (decoded.type == 'nprofile') {
+					return decoded.data.pubkey;
+				}
+			})
+			.filter((hexKey): hexKey is string => hexKey != undefined);
+
+		globalThis.WebSocket = require('ws');
 	}
 
 	onReady = () => {
@@ -23,9 +31,7 @@ export default class Summariser {
 			this.ndk
 				.connect()
 				.then(async () => {
-					this.trustedAuthors = await initializeApprovedAuthors();
-					const ndkFilter: NDKFilter = { kinds: [30234 as number], authors: this.trustedAuthors };
-
+					const ndkFilter: NDKFilter = { kinds: [kindOpinion], authors: this.trustedAuthors };
 					return this.ndk.fetchEvents(ndkFilter, { closeOnEose: true });
 				})
 				.then((fetchEvents) => {
@@ -51,7 +57,10 @@ export default class Summariser {
 
 		const counts = ops.reduce(
 			(acc, curr) => {
-				const current = curr.tags.find((tag) => tag[0] === 'sentiment')[1];
+				const current = curr.tags.find((tag) => tag[0] === 'sentiment')?.[1];
+				if (!current) {
+					return acc;
+				}
 				const k = current === '1' ? 'positive' : current === '0' ? 'neutral' : 'negative';
 				acc[k] = (acc[k] || 0) + 1;
 				return acc;
