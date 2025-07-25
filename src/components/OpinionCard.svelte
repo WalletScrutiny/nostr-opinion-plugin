@@ -594,6 +594,9 @@
 		color: var(--neutral-0, black);
 		font-size: 14px;
 	}
+	.date a {
+		color: #9f9f9f;
+	}
 	.content {
 		
 		padding: 1rem;
