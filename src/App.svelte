@@ -41,7 +41,6 @@
 	import FilePreview from './components/FilePreview.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
-	// import DOMPurify from 'dompurify';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
 	import type { ExpertOpinions } from './main';
 	import { onDestroy } from 'svelte';
