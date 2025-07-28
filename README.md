@@ -24,31 +24,35 @@ Here's an example
 
 ```html
 <script type="module">
-	import { expertOpinions } from '/src/nostr-opinion.js';
-	
-	// Case 1: John and Jane are trusted authors
-	expertOpinions.trustedAuthors = [
-		'npub1f70....2uvh', // John's npub
-		'npub14we....jch3' // Jane's npub
-	];
-
-	// Case 2: A badge awarded to Alice, it makes Alice a trusted author
-	expertOpinions.trustedBadges = [
-		'naddr1qqx4....2qnm'
-	];
-
-	// Case 3: Bob's profile info, the awardees of any badge created by Bob and will be considered trusted authors, provided they have accepted that badge
-	expertOpinions.trustedBadgeAuthors = [
-		'nprofile1qqsd....l0vf'
-	];
-	
-	expertOpinions.headline = 'Community Opinions ($$nTrusted$$/$$nAll$$)';
-	expertOpinions.description = 'These comments are contributed by nostr users using the nostr-opinions-plugin.';
-
+    const { expertOpinions } = await import('/assets/js/nostr-opinion.js');
 </script>
+
+<nostr-opinion
+  subject="subject_to_get_opinions_about"
+  opinionHeader="Header of the component"
+  opinionFooter="Footer of the component"
+  opinionTitle="Title of the component"
+  opinionImage="Image to show"
+  opinionTags="WalletScrutiny,nostrOpinion"
+  expertOpinionsConfig='{
+    "headline": "Headline of the component",
+    "description": "Description of the component",
+    "trustedAuthors": [ // optional
+      "npub1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "npub1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+    ],
+		"trustedBadgeAuthors": [  // optional nostr profiles. The awardees of any badge created by this profiles will be considered trusted authors, provided they have accepted that badge
+			"nprofile1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+			"nprofile1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+		],
+		"trustedBadges": [ // optional. a badge awarded to a user makes the user a trusted author
+			"naddr1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+		]
+    }'>
+></nostr-opinion>
 ```
 
-### Using as web component
+### Web components
 
 Login:  
 `<nostr-opinion-login></nostr-opinion-login>`
