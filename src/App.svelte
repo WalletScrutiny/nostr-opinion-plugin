@@ -42,7 +42,7 @@
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
-	import type { ExpertOpinions } from './main';
+	import type { ExpertOpinionsType } from './main';
 	import { onDestroy } from 'svelte';
 	import Toast from './components/toast/Toast.svelte';
 	import Loader from './components/Loader.svelte';
@@ -57,9 +57,21 @@
 	export let opinionTags: string = 'NostrOpinion';
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 	export let themeModeLocalStorageHandle: string = 'colour-scheme';
+	export let expertOpinionsConfig: string;
+
+	let expertOpinions: ExpertOpinionsType = {
+		...{
+		headline: '',
+		description: '',
+		newOpinionDescription: '',
+		trustedAuthors: [],
+		trustedBadgeAuthors: [],
+		trustedBadges: []
+	},
+		...JSON.parse(expertOpinionsConfig)
+	};
 
 	let relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
-	let expertOpinions: ExpertOpinions;
 	let trustedAuthors: Hexpubkey[] = [];
 
 	let allEvents: ExtendedBaseType<ExtendedBaseType<NDKEvent>>[] = [];
@@ -255,10 +267,9 @@
 	}
 
 	const initialization = async () => {
-		expertOpinions = (await import('./main')).expertOpinions;
 		themeModeLocalStorageObject.set(themeModeLocalStorageHandle);
 		try {
-			trustedAuthors = await initializeApprovedAuthors();
+			trustedAuthors = await initializeApprovedAuthors(expertOpinions);
 			const isloggedIn = $localStore.lastUserLogged;
 			loading = false;
 			if (isloggedIn && window) {

@@ -2,10 +2,12 @@ import { NDKKind, type Hexpubkey } from '@nostr-dev-kit/ndk';
 import { get as getStore } from 'svelte/store';
 import ndkStore from '../stores/provider';
 import { nip19 } from 'nostr-tools';
+import type { ExpertOpinionsType } from '../main';
 
-export async function initializeApprovedAuthors(): Promise<Hexpubkey[]> {
+export async function initializeApprovedAuthors(
+	expertOpinions: ExpertOpinionsType
+): Promise<Hexpubkey[]> {
 	try {
-		const expertOpinions = (await import('../main')).expertOpinions;
 		let trustedAuthors: Hexpubkey[] = [];
 		trustedAuthors = expertOpinions.trustedAuthors
 			.map((author) => {

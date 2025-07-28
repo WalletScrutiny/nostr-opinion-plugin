@@ -3,7 +3,17 @@ import App from './App.svelte';
 import { type Nip19Entity } from './utils/nip19-helper';
 import type { Hexpubkey } from '@nostr-dev-kit/ndk';
 
-class ExpertOpinions {
+// Create the type for ExpertOpinions
+export type ExpertOpinionsType = {
+	headline: string;
+	description: string;
+	newOpinionDescription: string;
+	trustedAuthors: Hexpubkey[];
+	trustedBadgeAuthors: Nip19Entity[];
+	trustedBadges: Nip19Entity[];
+};
+
+class ExpertOpinions implements ExpertOpinionsType {
 	public headline: string = 'Community Opinions ($$nTrusted$$/$$nAll$$)';
 	public description: string =
 		'These comments are contributed by nostr users using the nostr-opinions-plugin.';
