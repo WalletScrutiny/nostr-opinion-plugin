@@ -29,7 +29,7 @@
 		"eslint-plugin-prettier": "^5.5.5",
 		"eslint-plugin-svelte": "^3.15.0",
 		"husky": "^9.1.7",
-		"lint-staged": "^15.5.2",
+		"lint-staged": "^16.2.7",
 		"nostr-tools": "^2.15.2",
 		"postcss": "^8.5.6",
 		"prettier": "^3.8.0",
@@ -43,9 +43,9 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"@nostr-dev-kit/ndk": "2.5.0",
+		"@nostr-dev-kit/ndk": "2.6.1",
 		"@nostr-dev-kit/ndk-cache-dexie": "2.2.7",
-		"@nostr-dev-kit/ndk-svelte": "2.2.7",
+		"@nostr-dev-kit/ndk-svelte": "2.2.15",
 		"@skeletonlabs/skeleton": "^2.11.0",
 		"@toast-ui/editor": "^3.2.2",
 		"@void-cat/api": "^1.0.10",
