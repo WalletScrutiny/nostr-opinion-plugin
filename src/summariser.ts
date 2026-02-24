@@ -36,8 +36,11 @@ export default class Summariser {
 				})
 				.then((fetchEvents) => {
 					fetchEvents.forEach((event) => {
-						const d = event.tags.find((tag) => tag[0] === 'd')[1];
-						this.opinions[d] = [...(this.opinions?.[d] || []), event];
+						const tag = event.tags.find((t) => t[0] === 'd');
+						const d = tag?.[1];
+						if (d) {
+							this.opinions[d] = [...(this.opinions?.[d] || []), event];
+						}
 					});
 					resolve();
 				})

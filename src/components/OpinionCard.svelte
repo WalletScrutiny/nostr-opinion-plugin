@@ -43,7 +43,7 @@
 	import { afterUpdate } from 'svelte';
 
 	export let event: NDKEvent;
-	export let profiles: { [key: string]: { content: NDKUserProfile } };
+	export let profiles: { [key: string]: { content: NDKUserProfile } | undefined };
 	export let submit: (published_at: string) => void = () => {};
 	export let opinionContent: string;
 	export let newOpinion: {
@@ -339,17 +339,18 @@
 						{/if}
 					</div>
 					{#if profiles[event.pubkey]}
+						{@const profile = profiles[event.pubkey]}
 						<div class="profile-header">
 							<!-- svelte-ignore a11y-img-redundant-alt -->
 							<img
 								class="profile-image"
-								src={profiles[event.pubkey].content?.image
-									? profiles[event.pubkey].content?.image
+								src={profile?.content?.image
+									? profile?.content?.image
 									: profileImageUrl + event.pubkey}
 								alt="Profile Picture"
 							/>
 							<span>
-								{profiles[event.pubkey].content?.name ||
+								{profile?.content?.name ||
 									convertNostrPubKeyToBech32(event.pubkey).slice(0, 10) +
 										'...' +
 										convertNostrPubKeyToBech32(event.pubkey).slice(-5)}
@@ -371,7 +372,7 @@
 				</div>
 
 				<p class="date">
-					{#if published_at && published_at < created_at}
+					{#if published_at != null && created_at != null && published_at < created_at}
 						Edited.
 					{/if}
 					<a href="https://njump.me/{event.id}" target="_blank">{relativeTime}</a>

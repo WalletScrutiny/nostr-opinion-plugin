@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import Editor from '@toast-ui/editor';
 	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
 	import dark from "@toast-ui/editor/dist/theme/toastui-editor-dark.css?inline";
@@ -13,9 +12,9 @@
 	export let opinionContent: string;
 	export let fileArray: { files: File; url: string }[];
 
-	let container: HTMLElement;
-	let editor: Editor;
+	let editor: InstanceType<typeof Editor> | null = null;
 	let isInternalUpdate = false;
+	const initialValueForEditor = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 
 	const FILE_EXT_REGEX = /\.([\w]{1,7})$/i;
 
@@ -32,7 +31,7 @@
 		});
 	};
 
-	 const uploadImage = async (files:File) => {
+	const uploadImage = async (files: File) => {
 		const privkey = $localStore.pk;
 		if (privkey) {
 			!$ndk.signer && (await privkeyLogin(privkey));
@@ -48,11 +47,11 @@
 			let ext = files.name.match(FILE_EXT_REGEX);
 			if (response.file?.metadata?.mimeType === 'image/webp') {
 				ext = ['', 'webp'];
-			} 
+			}
 			const resultUrl =
 				response.file?.metadata?.url ??
 				`${voidCatHost}/d/${response.file?.id}${ext ? `.${ext[1]}` : ''}`;
-			fileArray = [...fileArray, { files :files, url: resultUrl }];
+			fileArray = [...fileArray, { files: files, url: resultUrl }];
 			return resultUrl;
 		}
 		return '';
@@ -69,51 +68,85 @@
 		isInternalUpdate = false;
 	}
 
-	function initializeEditor() {
+	function getData() {
+		if (!editor) return;
+		isInternalUpdate = true;
+		opinionContent = editor.getMarkdown();
+	}
 
-		editor = new Editor({
-			el: container,
-			height: 'auto',
+	type EditorConfig = {
+		initialValue: string;
+		theme: string;
+		setEditor: (e: InstanceType<typeof Editor> | null) => void;
+		onContentChange: () => void;
+		uploadImageFn: (f: File) => Promise<string>;
+	};
+
+	function createEditorInstance(node: HTMLElement, config: EditorConfig): InstanceType<typeof Editor> {
+		return new Editor({
+			el: node,
+			height: '300px',
 			initialEditType: 'markdown',
 			previewStyle: 'tab',
-			theme: $theme,
-			initialValue: opinionContent,
-            autofocus: true,
+			theme: config.theme,
+			initialValue: config.initialValue,
+			autofocus: true,
 			events: {
-				change: function () {
-					getData();
-				},
+				change: () => config.onContentChange()
 			},
 			hooks: {
-				addImageBlobHook: async (blob, callback) => {
-				const uploadedImageUrl = await uploadImage(blob as File);
-				if (uploadedImageUrl) {
-					callback(uploadedImageUrl, 'image');
+				addImageBlobHook: async (blob: Blob, callback: (url: string, altText: string) => void) => {
+					const url = await config.uploadImageFn(blob as File);
+					if (url) callback(url, 'image');
 				}
-				},
 			},
-			extendedAutolinks: true,
+			extendedAutolinks: true
 		});
 	}
 
-	$: if($theme && editor!=null) {
-		editor.destroy();
-		initializeEditor();	
+	function editorAction(node: HTMLElement, config: EditorConfig) {
+		if (!config) return;
+
+		let styleEl: HTMLStyleElement | null = null;
+		const root = node.getRootNode() as Document | ShadowRoot;
+		if (root instanceof ShadowRoot || root === document) {
+			styleEl = document.createElement('style');
+			styleEl.setAttribute('data-toast-ui-editor-injected', '');
+			styleEl.textContent = css + '\n' + dark;
+			if (root instanceof ShadowRoot) {
+				root.insertBefore(styleEl, root.firstChild);
+			} else {
+				document.head.appendChild(styleEl);
+			}
+		}
+
+		let instance = createEditorInstance(node, config);
+		config.setEditor(instance);
+
+		return {
+			update(newConfig: EditorConfig) {
+				if (newConfig.theme !== config.theme) {
+					instance.destroy();
+					config.setEditor(null);
+					instance = createEditorInstance(node, newConfig);
+					newConfig.setEditor(instance);
+					config = newConfig;
+				}
+			},
+			destroy() {
+				instance.destroy();
+				config.setEditor(null);
+				if (styleEl?.parentNode) styleEl.remove();
+			}
+		};
 	}
 
-	const getData = () => {
-		isInternalUpdate = true;
-		opinionContent = editor.getMarkdown();
+	$: editorConfig = {
+		initialValue: initialValueForEditor,
+		theme: $theme,
+		setEditor: (e: InstanceType<typeof Editor> | null) => (editor = e),
+		onContentChange: getData,
+		uploadImageFn: uploadImage
 	};
-
-	onMount(() => {
-		opinionContent = opinionContent.replace(opinionHeaderRegex,"").replace(opinionFooterRegex,"");
-		initializeEditor();
-		editor.getMarkdown();
-	});
 </script>
-<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<svelte:element this="style">{@html css}</svelte:element>
-<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<svelte:element this="style">{@html dark}</svelte:element>
-<div bind:this={container}/>
+<div id="toast-ui-editor-container" use:editorAction={editorConfig}></div>

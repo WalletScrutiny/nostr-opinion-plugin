@@ -139,17 +139,16 @@
 	}
 
 	$: {
-		let value = {}
-		$profileUser.map((e)=>{		
-			if(Object.keys(e).includes("content")) {
-				let pubkey = e?.content.pubkey;
-				if(!profiles[pubkey]) {
-					value[pubkey] = e;
+		let value: Record<string, { content: NDKUserProfile }> = {};
+		$profileUser.map((e: { content?: { pubkey: string } }) => {
+			if (Object.keys(e).includes('content') && e.content?.pubkey) {
+				const pubkey = e.content.pubkey;
+				if (!profiles[pubkey]) {
+					value[pubkey] = e as { content: NDKUserProfile };
 				}
 			}
-		})
-		if(Object.keys(value).length !=0 )
-			profiles = {...profiles,...value}
+		});
+		if (Object.keys(value).length !== 0) profiles = { ...profiles, ...value };
 	}
 
 	const id = setInterval(() => {
@@ -378,7 +377,7 @@
 				authors: [$ndkUser.pubkey]
 			};
 			const del = await $ndk.fetchEvent(deleteFilter);
-			if (del?.created_at < opinion?.created_at || (!del && opinion)) {
+			if ((del?.created_at ?? 0) < (opinion?.created_at ?? 0) || (!del && opinion)) {
 				isMine.set(true);
 				let content =
 					opinion?.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '') || '';

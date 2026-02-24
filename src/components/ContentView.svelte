@@ -38,12 +38,12 @@
 </script>
 
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<svelte:element this="style">{@html css}</svelte:element>
+<svelte:element this={"style"}>{@html css}</svelte:element>
 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<svelte:element this="style">{@html dark}</svelte:element>
+<svelte:element this={"style"}>{@html dark}</svelte:element>
 
-<div bind:this={view} class:hidden={$theme === 'dark'}/>
-<div bind:this={viewDark} class:hidden = {$theme === 'light'}/>
+<div bind:this={view} class:hidden={$theme === 'dark'}></div>
+<div bind:this={viewDark} class:hidden = {$theme === 'light'}></div>
 
 <style>
     .hidden { display: none; }
