@@ -30,7 +30,7 @@ export function sortEventList(eventList: NDKEvent[]) {
 export async function fetchUserProfile(opts: string): Promise<NDKUserProfile> {
 	try {
 		if (window) {
-			const user = await db.users.where({ pubkey: opts }).first();
+		const user = await db.profiles.where('pubkey').equals(opts).first();
 			if (!user) {
 				const $ndk = getStore(ndkStore);
 				const ndkUser = $ndk.getUser({ pubkey: opts });
@@ -41,7 +41,7 @@ export async function fetchUserProfile(opts: string): Promise<NDKUserProfile> {
 				});
 				return ndkUser.profile as NDKUserProfile;
 			} else {
-				return user.profile as NDKUserProfile;
+				return user as unknown as NDKUserProfile;
 			}
 		} else {
 			return {};
@@ -97,12 +97,7 @@ export async function nsecBunkerLogin(nip46ConnectionString: string): Promise<ND
 	if (nip46ConnectionString.includes('@')) {
 		const user = await $ndk.getUserFromNip05(nip46ConnectionString);
 		if (!user?.pubkey) throw new Error('Cant find user');
-		console.log('Found user', user);
-
 		remoteSigner = new NDKNip46Signer($ndk, nip46ConnectionString, localSigner);
-
-		remoteSigner.remoteUser = user;
-		remoteSigner.remotePubkey = user.pubkey;
 	} else if (nip46ConnectionString.startsWith('bunker://')) {
 		const uri = new URL(nip46ConnectionString);
 

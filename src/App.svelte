@@ -267,10 +267,15 @@
 
 	const initialization = async () => {
 		themeModeLocalStorageObject.set(themeModeLocalStorageHandle);
+		const INIT_TIMEOUT_MS = 5000;
 		try {
-			trustedAuthors = await initializeApprovedAuthors(expertOpinions);
+			trustedAuthors = await Promise.race([
+				initializeApprovedAuthors(expertOpinions),
+				new Promise<Hexpubkey[]>((_, reject) =>
+					setTimeout(() => reject(new Error('Initialization timeout')), INIT_TIMEOUT_MS)
+				)
+			]).catch(() => []);
 			const isloggedIn = $localStore.lastUserLogged;
-			loading = false;
 			if (isloggedIn && window) {
 				let user = $ndk.getUser({
 					npub: isloggedIn
@@ -309,6 +314,8 @@
 			}
 		} catch (error) {
 			console.error(error);
+		} finally {
+			loading = false;
 		}
 	};
 	initialization();
@@ -344,7 +351,28 @@
 		}
 	}
 
-	function agreeToShowAll() {
+	async function agreeToShowAll() {
+		const pubkeysToFetch = [
+			...new Set(
+				allEvents
+					.filter((e) => !deletedEventsArray.includes(e) && !profiles[e.pubkey])
+					.map((e) => e.pubkey)
+			)
+		];
+		for (const pubkey of pubkeysToFetch) {
+			try {
+				const content = await fetchUserProfile(pubkey);
+				const profileContent: NDKUserProfile = { ...content };
+				if (!profileContent.image) profileContent.image = profileImageUrl + pubkey;
+				if (!profileContent.pubkey) profileContent.pubkey = pubkey;
+				profiles[pubkey] = { content: profileContent };
+			} catch (_) {
+				profiles[pubkey] = {
+					content: { image: profileImageUrl + pubkey, pubkey } as NDKUserProfile
+				};
+			}
+		}
+		if (pubkeysToFetch.length > 0) profiles = { ...profiles };
 		filter = 'all';
 		sortEvents();
 		showMoreNewOpinions.set(false);
