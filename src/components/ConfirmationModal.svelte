@@ -1,16 +1,16 @@
 <script lang="ts">
     import { fly } from 'svelte/transition';
     import { fade } from 'svelte/transition';
-    export let onAgree = () => {};
-    export let onCancel = () => {};
+
+    let { onAgreeButton, onCancelButton } = $props();
 </script>
 
-<div class="modal-overlay" transition:fade={{ duration: 1000 }}>
-    <div class="modal" transition:fly={{ y: 300, duration: 500, delay: 0 }}>
+<div class="modal-overlay" transition:fade={{ duration: 400 }}>
+    <div class="modal" transition:fly={{ y: 300, duration: 300, delay: 0 }}>
         <p>Are you sure you want to display all opinions?</p>
-        <p><center>⚠️ Viewer discretion advised.</center></p>
-        <button class="primary-btn" on:click={onAgree}>Agree</button>
-        <button class="primary-btn" on:click={onCancel}>Cancel</button>
+        <p>⚠️ Viewer discretion advised.</p>
+        <button class="primary-btn" onclick={onAgreeButton}>Agree</button>
+        <button class="primary-btn" onclick={onCancelButton}>Cancel</button>
     </div>
 </div>
 

@@ -15,11 +15,24 @@ export const defaulRelaysUrls: string[] = [
 	'wss://nostr.mutinywallet.com '
 ];
 
+const CACHE_DB_NAME = 'nostr-opinion-ndk-v15';
+
+const OLD_CACHE_DB_NAMES = ['walletScrutiny', 'nostr-opinion-cache'];
+
+function initCacheAdapter(): NDKCacheAdapter | undefined {
+	if (typeof window === 'undefined') return undefined;
+	for (const name of OLD_CACHE_DB_NAMES) {
+		try {
+			indexedDB.deleteDatabase(name);
+		} catch (_) {
+			/* ignore */
+		}
+	}
+	return new NDKCacheAdapterDexie({ dbName: CACHE_DB_NAME });
+}
+
 if (typeof window !== 'undefined') {
-	cacheAdapter = new NDKCacheAdapterDexie({
-		dbName: 'walletScrutiny',
-		expirationTime: 3600 * 24 * 2
-	});
+	cacheAdapter = initCacheAdapter();
 }
 
 const ndk = new NDKSvelte({

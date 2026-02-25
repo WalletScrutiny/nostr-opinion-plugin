@@ -139,17 +139,16 @@
 	}
 
 	$: {
-		let value = {}
-		$profileUser.map((e)=>{		
-			if(Object.keys(e).includes("content")) {
-				let pubkey = e?.content.pubkey;
-				if(!profiles[pubkey]) {
-					value[pubkey] = e;
+		let value: Record<string, { content: NDKUserProfile }> = {};
+		$profileUser.map((e: { content?: { pubkey: string } }) => {
+			if (Object.keys(e).includes('content') && e.content?.pubkey) {
+				const pubkey = e.content.pubkey;
+				if (!profiles[pubkey]) {
+					value[pubkey] = e as { content: NDKUserProfile };
 				}
 			}
-		})
-		if(Object.keys(value).length !=0 )
-			profiles = {...profiles,...value}
+		});
+		if (Object.keys(value).length !== 0) profiles = { ...profiles, ...value };
 	}
 
 	const id = setInterval(() => {
@@ -271,7 +270,6 @@
 		try {
 			trustedAuthors = await initializeApprovedAuthors(expertOpinions);
 			const isloggedIn = $localStore.lastUserLogged;
-			loading = false;
 			if (isloggedIn && window) {
 				let user = $ndk.getUser({
 					npub: isloggedIn
@@ -310,6 +308,8 @@
 			}
 		} catch (error) {
 			console.error(error);
+		} finally {
+			loading = false;
 		}
 	};
 	initialization();
@@ -317,8 +317,8 @@
 	let userHasAgreed = false;
 
 	$: if ($ndkUser?.pubkey && profiles[$ndkUser?.pubkey]) {
-		const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
-		userHasAgreed = localStorage.getItem(userAgreementKey) === 'true';
+		// Delete key from localStorage
+		userHasAgreed = localStorage.getItem(`userHasAgreed_${$ndkUser.pubkey}`) === 'true' || false;
 	} else {
 		userHasAgreed = false;
 	}
@@ -331,10 +331,6 @@
 		opinionContent = '';
 	};
 
-	if (localStorage.getItem('userHasAgreed') === null) {
-		localStorage.setItem('userHasAgreed', 'false');
-	}
-
 	function handleAgree() {
 		if (!userHasAgreed) {
 			showModal = true;
@@ -345,19 +341,36 @@
 		}
 	}
 
-	function agreeToShowAll() {
+	async function agreeToShowAll() {
+		const pubkeysToFetch = [
+			...new Set(
+				allEvents
+					.filter((e) => !deletedEventsArray.includes(e) && !profiles[e.pubkey])
+					.map((e) => e.pubkey)
+			)
+		];
+		for (const pubkey of pubkeysToFetch) {
+			try {
+				const content = await fetchUserProfile(pubkey);
+				const profileContent: NDKUserProfile = { ...content };
+				if (!profileContent.image) profileContent.image = profileImageUrl + pubkey;
+				if (!profileContent.pubkey) profileContent.pubkey = pubkey;
+				profiles[pubkey] = { content: profileContent };
+			} catch (_) {
+				profiles[pubkey] = {
+					content: { image: profileImageUrl + pubkey, pubkey } as NDKUserProfile
+				};
+			}
+		}
+		if (pubkeysToFetch.length > 0) profiles = { ...profiles };
 		filter = 'all';
 		sortEvents();
 		showMoreNewOpinions.set(false);
 		showModal = false;
 		userHasAgreed = true;
 		if ($ndkUser?.pubkey) {
-			const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
-			localStorage.setItem(userAgreementKey, userHasAgreed.toString());
+			localStorage.setItem(`userHasAgreed_${$ndkUser.pubkey}`, 'true');
 		}
-	}
-	function onCancel() {
-		showModal = false;
 	}
 
 	function deleteFile(fileToDelete: { files: File; url: string }) {
@@ -378,7 +391,7 @@
 				authors: [$ndkUser.pubkey]
 			};
 			const del = await $ndk.fetchEvent(deleteFilter);
-			if (del?.created_at < opinion?.created_at || (!del && opinion)) {
+			if ((del?.created_at ?? 0) < (opinion?.created_at ?? 0) || (!del && opinion)) {
 				isMine.set(true);
 				let content =
 					opinion?.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '') || '';
@@ -554,7 +567,8 @@
 	{/if}
 {/if}
 {#if showModal}
-	<ConfirmationModal onAgree={agreeToShowAll} {onCancel} />
+	<ConfirmationModal onAgreeButton={agreeToShowAll} onCancelButton={() => {showModal = false}}
+	/>
 {/if}
 
 <Login />
