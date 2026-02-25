@@ -267,14 +267,8 @@
 
 	const initialization = async () => {
 		themeModeLocalStorageObject.set(themeModeLocalStorageHandle);
-		const INIT_TIMEOUT_MS = 5000;
 		try {
-			trustedAuthors = await Promise.race([
-				initializeApprovedAuthors(expertOpinions),
-				new Promise<Hexpubkey[]>((_, reject) =>
-					setTimeout(() => reject(new Error('Initialization timeout')), INIT_TIMEOUT_MS)
-				)
-			]).catch(() => []);
+			trustedAuthors = await initializeApprovedAuthors(expertOpinions);
 			const isloggedIn = $localStore.lastUserLogged;
 			if (isloggedIn && window) {
 				let user = $ndk.getUser({

@@ -45,7 +45,7 @@ export async function initializeApprovedAuthors(
 
 		const $ndk = getStore(ndkStore);
 
-		await $ndk.connect();
+		await $ndk.connect(2000);
 
 		const badgesByTrustedBadgeAuthors = await $ndk.fetchEvents({
 			kinds: [NDKKind.BadgeDefinition],
