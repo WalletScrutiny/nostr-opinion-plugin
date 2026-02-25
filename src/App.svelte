@@ -323,8 +323,8 @@
 	let userHasAgreed = false;
 
 	$: if ($ndkUser?.pubkey && profiles[$ndkUser?.pubkey]) {
-		const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
-		userHasAgreed = localStorage.getItem(userAgreementKey) === 'true';
+		// Delete key from localStorage
+		userHasAgreed = localStorage.getItem(`userHasAgreed_${$ndkUser.pubkey}`) === 'true' || false;
 	} else {
 		userHasAgreed = false;
 	}
@@ -336,10 +336,6 @@
 		logout();
 		opinionContent = '';
 	};
-
-	if (localStorage.getItem('userHasAgreed') === null) {
-		localStorage.setItem('userHasAgreed', 'false');
-	}
 
 	function handleAgree() {
 		if (!userHasAgreed) {
@@ -379,12 +375,8 @@
 		showModal = false;
 		userHasAgreed = true;
 		if ($ndkUser?.pubkey) {
-			const userAgreementKey = `userHasAgreed_${$ndkUser.pubkey}`;
-			localStorage.setItem(userAgreementKey, userHasAgreed.toString());
+			localStorage.setItem(`userHasAgreed_${$ndkUser.pubkey}`, 'true');
 		}
-	}
-	function onCancel() {
-		showModal = false;
 	}
 
 	function deleteFile(fileToDelete: { files: File; url: string }) {
@@ -581,7 +573,8 @@
 	{/if}
 {/if}
 {#if showModal}
-	<ConfirmationModal onAgree={agreeToShowAll} {onCancel} />
+	<ConfirmationModal onAgreeButton={agreeToShowAll} onCancelButton={() => {showModal = false}}
+	/>
 {/if}
 
 <Login />
