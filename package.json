@@ -50,9 +50,12 @@
 		"@toast-ui/editor": "^3.2.2",
 		"@void-cat/api": "^1.0.10",
 		"bech32": "^2.0.0",
-		"dompurify": "^3.3.1",
+		"dompurify": "^3.3.2",
 		"marked": "^11.0.0",
 		"ws": "^8.19.0"
+	},
+	"overrides": {
+		"sjcl": "1.0.9"
 	},
 	"lint-staged": {
 		"*.{js,ts,svelte}": "eslint src --fix",
