@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Editor from '@toast-ui/editor';
-	import css from '@toast-ui/editor/dist/toastui-editor.css?inline';
-	import dark from "@toast-ui/editor/dist/theme/toastui-editor-dark.css?inline";
+	import Editor from '@drenso-toast-ui/editor';
+	import css from '@drenso-toast-ui/editor/dist/toastui-editor.css?inline';
+	import dark from "@drenso-toast-ui/editor/dist/theme/toastui-editor-dark.css?inline";
 	import { opinionFooterRegex, opinionHeaderRegex } from '../utils/constants';
 	import { NDKlogin, privkeyLogin } from '../utils/helper';
 	import ndk from '../stores/provider';
