@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Viewer from "@toast-ui/editor/dist/toastui-editor-viewer";
-    import css from "@toast-ui/editor/dist/toastui-editor-viewer.css?inline";
-    import dark from "@toast-ui/editor/dist/theme/toastui-editor-dark.css?inline";
+	import Viewer from "@drenso-toast-ui/editor/dist/toastui-editor-viewer";
+    import css from "@drenso-toast-ui/editor/dist/toastui-editor-viewer.css?inline";
+    import dark from "@drenso-toast-ui/editor/dist/theme/toastui-editor-dark.css?inline";
 	import { onMount } from "svelte";
 	import { theme } from "../stores/stores";
 

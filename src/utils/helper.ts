@@ -30,7 +30,7 @@ export function sortEventList(eventList: NDKEvent[]) {
 export async function fetchUserProfile(opts: string): Promise<NDKUserProfile> {
 	try {
 		if (window) {
-		const user = await db.profiles.where('pubkey').equals(opts).first();
+			const user = await db.profiles.where('pubkey').equals(opts).first();
 			if (!user) {
 				const $ndk = getStore(ndkStore);
 				const ndkUser = $ndk.getUser({ pubkey: opts });
