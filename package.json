@@ -50,7 +50,7 @@
 		"@skeletonlabs/skeleton": "^2.11.0",
 		"@void-cat/api": "^1.0.10",
 		"bech32": "^2.0.0",
-		"dompurify": "^3.4.10",
+		"dompurify": "^3.4.11",
 		"marked": "^11.0.0",
 		"ws": "^8.21.0"
 	},
