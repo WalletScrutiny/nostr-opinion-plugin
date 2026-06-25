@@ -47,9 +47,7 @@
 		"@nostr-dev-kit/ndk": "2.15.2",
 		"@nostr-dev-kit/ndk-cache-dexie": "2.6.44",
 		"@nostr-dev-kit/ndk-svelte": "2.4.48",
-		"@skeletonlabs/skeleton": "^2.11.0",
 		"@void-cat/api": "^1.0.10",
-		"bech32": "^2.0.0",
 		"dompurify": "^3.4.11",
 		"ws": "^8.21.0"
 	},

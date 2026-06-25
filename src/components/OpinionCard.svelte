@@ -11,7 +11,7 @@
 	import ReplyButton from './icons/ReplyButton.svelte';
 	import OptionButton from './icons/OptionButton.svelte';
 	import ApprovedBadge from './icons/ApprovedBadge.svelte';
-	import { convertNostrPubKeyToBech32 } from '../utils/covertBech';
+	import { npubEncode } from 'nostr-tools/nip19';
 	import { isMine, localStore, ndkUser, theme } from '../stores/stores';
 	import ndk from '../stores/provider';
 	import {
@@ -57,6 +57,8 @@
 	export let deletedEventsArray: NDKEvent[] = [];
 	export let trustedAuthors: Hexpubkey[] = [];
 	export let aTag = "";
+
+	$: authorNpub = npubEncode(event.pubkey);
 
 	opinionContent = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 	let replyEvents: NDKEvent[] = [];
@@ -351,18 +353,18 @@
 							/>
 							<span>
 								{profile?.content?.name ||
-									convertNostrPubKeyToBech32(event.pubkey).slice(0, 10) +
+									authorNpub.slice(0, 10) +
 										'...' +
-										convertNostrPubKeyToBech32(event.pubkey).slice(-5)}
+										authorNpub.slice(-5)}
 							</span>
 						</div>
 					{:else}
 						<div class="profile-header">
 							<img class="profile-image" src={profileImageUrl + event.pubkey} alt="Profile" />
 							<span
-								>{convertNostrPubKeyToBech32(event.pubkey).slice(0, 8) +
+								>{authorNpub.slice(0, 8) +
 									'...' +
-									convertNostrPubKeyToBech32(event.pubkey).slice(-4)}</span
+									authorNpub.slice(-4)}</span
 							>
 						</div>
 					{/if}

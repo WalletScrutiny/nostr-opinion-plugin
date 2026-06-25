@@ -2,7 +2,7 @@ import type { LoginStrategyInterface } from '../interfaces/LoginStrategyInterfac
 import { privkeyLogin } from '../utils/helper';
 import { ndkUser } from '../stores/stores';
 import { UserProfileService } from './userProfileService';
-import { nip19 } from 'nostr-tools';
+import * as nip19 from 'nostr-tools/nip19';
 
 export class PrivateKeyLoginService implements LoginStrategyInterface {
 	userProfileService: UserProfileService = new UserProfileService();
