@@ -1,6 +1,6 @@
 import NDK, { NDKEvent, type Hexpubkey, type NDKFilter, type Npub } from '@nostr-dev-kit/ndk';
 import { kindOpinion } from './utils/constants';
-import { nip19 } from 'nostr-tools';
+import * as nip19 from 'nostr-tools/nip19';
 
 export default class Summariser {
 	opinions: Record<string, NDKEvent[]>;

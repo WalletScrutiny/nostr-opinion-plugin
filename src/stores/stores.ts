@@ -1,6 +1,6 @@
 import { writable, type Writable } from 'svelte/store';
 import type { NDKUser } from '@nostr-dev-kit/ndk';
-import { localStorageStore } from '@skeletonlabs/skeleton';
+import { localStorageStore } from '../utils/localStorageStore';
 
 export const ndkUser = writable<NDKUser | null>(null);
 export const isNip05Valid = writable<{

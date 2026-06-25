@@ -1,7 +1,7 @@
 import { NDKKind, type Hexpubkey } from '@nostr-dev-kit/ndk';
 import { get as getStore } from 'svelte/store';
 import ndkStore from '../stores/provider';
-import { nip19 } from 'nostr-tools';
+import * as nip19 from 'nostr-tools/nip19';
 import type { ExpertOpinionsType } from '../main';
 
 export async function initializeApprovedAuthors(

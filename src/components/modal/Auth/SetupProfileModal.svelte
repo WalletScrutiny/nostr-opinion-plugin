@@ -2,8 +2,6 @@
 	import LoginModal from './LoginModal.svelte';
     import { NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
     import { onMount } from 'svelte';
-    import { nip19 } from 'nostr-tools';
-    import { hexToBytes } from '../../../utils/covertBech';
 	import { showSetupProfileModal,profileUser, showMoreNewOpinions, toast} from '../../../stores/stores';
 	import { profileImageUrl } from '../../../utils/constants';
 	import ndk from '../../../stores/provider';
@@ -24,8 +22,8 @@
 
     onMount(() => {
 		pk = NDKPrivateKeySigner.generate();
-		hexPrivKey = pk.privateKey as string;
-		nsec = nip19.nsecEncode(hexToBytes(hexPrivKey));
+		hexPrivKey = pk.privateKey;
+		nsec = pk.nsec;
 	});
 
     const copyToClipboard = () => {
