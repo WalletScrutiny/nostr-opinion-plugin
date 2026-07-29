@@ -7,12 +7,12 @@ import NDK from '@nostr-dev-kit/ndk';
 let cacheAdapter: NDKCacheAdapter | undefined;
 
 export const defaulRelaysUrls: string[] = [
+	'wss://relay.nostr.info/',
+	'wss://relay.ditto.pub/',
 	'wss://purplepag.es',
-	'wss://relay.nostr.band',
 	'wss://nos.lol',
 	'wss://offchain.pub/',
 	'wss://nostr-pub.wellorder.net',
-	'wss://nostr.mutinywallet.com '
 ];
 
 const CACHE_DB_NAME = 'nostr-opinion-ndk-v15';
