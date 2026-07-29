@@ -50,6 +50,8 @@
 	import DOMPurify from 'dompurify';
 
 	export let subject: string;
+	/** Optional comma-separated legacy d-tags also loaded for this product (read-only aliases). */
+	export let subjects: string = '';
 	export let opinionTitle: string;
 	export let opinionHeader: string = opinionTitle;
 	export let opinionFooter: string | undefined = undefined;
@@ -58,6 +60,20 @@
 	export let summary: string = `An opinion made about ${subject} generated using nostr-opinion-plugin.`;
 	export let themeModeLocalStorageHandle: string = 'colour-scheme';
 	export let expertOpinionsConfig: string;
+
+	function parseSubjectKeys(primary: string, aliases: string): string[] {
+		const keys = [primary];
+		for (const part of (aliases || '').split(',')) {
+			const trimmed = part.trim();
+			if (trimmed && !keys.includes(trimmed)) {
+				keys.push(trimmed);
+			}
+		}
+		return keys;
+	}
+
+	// Canonical `subject` is used when publishing; aliases are only for reading legacy events.
+	const subjectKeys = parseSubjectKeys(subject, subjects);
 
 	let expertOpinions: ExpertOpinionsType = {
 		...{
@@ -108,31 +124,25 @@
 
 		filteredEventLength = filteredEvents.filter((e) => !deletedEventsArray.includes(e)).length;
 	}
-	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': [subject] };
+	let ndkFilter: NDKFilter = { kinds: [kindOpinion], '#d': subjectKeys };
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
 	$: {
 		$sub.forEach(async (event) => {
-			const value = allEvents.filter((e) => {
-				return e.pubkey === event.pubkey;
-			});
-			if (value.length) {
-				allEvents = allEvents.map((e) => {
-					if (e.pubkey === event.pubkey) {
-						return event;
-					} else {
-						return e;
-					}
-				});
+			const existingIdx = allEvents.findIndex((e) => e.pubkey === event.pubkey);
+			if (existingIdx !== -1) {
+				// One opinion per author: keep the newest across canonical + legacy subjects.
+				if ((event.created_at || 0) >= (allEvents[existingIdx].created_at || 0)) {
+					allEvents[existingIdx] = { ...event } as NDKEvent;
+					allEvents = [...allEvents];
+				}
 			} else {
 				allEvents = [...allEvents, { ...event } as NDKEvent];
 				const content = await fetchUserProfile(event.pubkey);
 				if (!content.image) content.image = profileImageUrl + event.pubkey;
 				if (!content.pubkey) content.pubkey = event.pubkey;
-				if(!profiles)
-					profiles = {};
+				if (!profiles) profiles = {};
 				profiles[event.pubkey] = { content };
 				profiles = { ...profiles };
-				
 			}
 			sortEvents();
 		});
@@ -383,19 +393,34 @@
 
 	const checkIfOpinionExists = async () => {
 		if ($ndkUser) {
-			let ndkFilter = { kinds: [kindOpinion], '#d': [subject], authors: [$ndkUser.pubkey] };
-			const opinion = await $ndk.fetchEvent(ndkFilter);
-			let deleteFilter = {
-				kinds: [kindDelete],
-				'#a': [`${kindOpinion}:${$ndkUser.pubkey}:${subject}`],
+			const opinions = await $ndk.fetchEvents({
+				kinds: [kindOpinion],
+				'#d': subjectKeys,
 				authors: [$ndkUser.pubkey]
-			};
-			const del = await $ndk.fetchEvent(deleteFilter);
-			if ((del?.created_at ?? 0) < (opinion?.created_at ?? 0) || (!del && opinion)) {
+			});
+			let bestOpinion: NDKEvent | undefined;
+			for (const opinion of opinions) {
+				const d = opinion.tags.find((t) => t[0] === 'd')?.[1] || subject;
+				const del = await $ndk.fetchEvent({
+					kinds: [kindDelete],
+					'#a': [`${kindOpinion}:${$ndkUser.pubkey}:${d}`],
+					authors: [$ndkUser.pubkey]
+				});
+				const stillPresent =
+					(del?.created_at ?? 0) < (opinion.created_at ?? 0) || (!del && opinion);
+				if (
+					stillPresent &&
+					(!bestOpinion || (opinion.created_at ?? 0) > (bestOpinion.created_at ?? 0))
+				) {
+					bestOpinion = opinion;
+				}
+			}
+			if (bestOpinion) {
 				isMine.set(true);
 				let content =
-					opinion?.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '') || '';
-				const sentiment = opinion?.tagValue('sentiment') || '0';
+					bestOpinion.content.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '') ||
+					'';
+				const sentiment = bestOpinion.tagValue('sentiment') || '0';
 				newOpinion = {
 					content,
 					sentiment

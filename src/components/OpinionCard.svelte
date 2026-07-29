@@ -92,7 +92,9 @@
 	
 
 	if (editLvl === 0) {
-		aTag = kindOpinion + ':' + event.pubkey + ':' + subject;
+		// Prefer the event's own d-tag so replies/reactions target legacy subjects correctly.
+		const eventSubject = event.tags.find((t) => t[0] === 'd')?.[1] || subject;
+		aTag = kindOpinion + ':' + event.pubkey + ':' + eventSubject;
 	}
 
 	function toggleFullText() {

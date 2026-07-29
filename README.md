@@ -29,6 +29,7 @@ Here's an example
 
 <nostr-opinion
   subject="subject_to_get_opinions_about"
+  subjects="optional,comma,separated,legacy,d-tags"
   opinionHeader="Header of the component"
   opinionFooter="Footer of the component"
   opinionTitle="Title of the component"
@@ -51,6 +52,8 @@ Here's an example
     }'>
 ></nostr-opinion>
 ```
+
+`subject` is the canonical d-tag used when publishing new opinions. Optional `subjects` is a comma-separated list of additional d-tags to load (useful for legacy aliases after a subject rename). When the same author has opinions under more than one of those keys, the newest event is shown.
 
 ### Web components
 
