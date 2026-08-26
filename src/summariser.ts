@@ -23,7 +23,10 @@ export default class Summariser {
 			})
 			.filter((hexKey): hexKey is string => hexKey != undefined);
 
-		globalThis.WebSocket = require('ws');
+		if (!globalThis.WebSocket) {
+			// NDK connects to relays through the global WebSocket
+			throw new Error('nostr-opinion-summariser requires Node.js >= 22 (native WebSocket)');
+		}
 	}
 
 	onReady = () => {
