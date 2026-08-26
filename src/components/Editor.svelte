@@ -5,7 +5,7 @@
 	import { opinionFooterRegex, opinionHeaderRegex } from '../utils/constants';
 	import { NDKlogin, privkeyLogin } from '../utils/helper';
 	import ndk from '../stores/provider';
-	import { VoidApi } from '@void-cat/api';
+	import { uploadToVoidCat } from '../utils/voidCatUpload';
 	import { uploadUrl } from '../utils/constants';
 	import { localStore, theme } from '../stores/stores';
 
@@ -17,9 +17,6 @@
 	const initialValueForEditor = opinionContent.replace(opinionHeaderRegex, '').replace(opinionFooterRegex, '');
 
 	const FILE_EXT_REGEX = /\.([\w]{1,7})$/i;
-
-	const voidCatHost = uploadUrl;
-	const voidCatApi = new VoidApi(voidCatHost);
 
 	const convertImageUrlsToMarkdown = (content: string) => {
 		const imageUrlRegex = /(?<!\]\()https?:\/\/\S*\.(jpg|jpeg|png|gif|svg|webp)(?!\))/g;
@@ -38,11 +35,7 @@
 		} else {
 			!$ndk.signer && (await NDKlogin());
 		}
-		const uploader = voidCatApi.getUploader(files);
-
-		const response = await uploader.upload({
-			'V-Strip-Metadata': 'true'
-		});
+		const response = await uploadToVoidCat(files);
 		if (response.ok) {
 			let ext = files.name.match(FILE_EXT_REGEX);
 			if (response.file?.metadata?.mimeType === 'image/webp') {
@@ -50,7 +43,7 @@
 			}
 			const resultUrl =
 				response.file?.metadata?.url ??
-				`${voidCatHost}/d/${response.file?.id}${ext ? `.${ext[1]}` : ''}`;
+				`${uploadUrl}/d/${response.file?.id}${ext ? `.${ext[1]}` : ''}`;
 			fileArray = [...fileArray, { files: files, url: resultUrl }];
 			return resultUrl;
 		}

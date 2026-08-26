@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "rm -f index.html && ln -s index.staging.html index.html && vite",
 		"build": "vite build",
-		"build:summariser": "esbuild ./src/summariser.ts --bundle --platform=node --target=node18 --outfile=./dist/nostr-opinion-summariser.js --format=cjs",
+		"build:summariser": "esbuild ./src/summariser.ts --bundle --platform=node --target=node22 --outfile=./dist/nostr-opinion-summariser.js --format=cjs",
 		"preview": "vite preview",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"prepare": "husky install",
@@ -30,7 +30,6 @@
 		"eslint-plugin-svelte": "^3.23.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.4.0",
-		"nostr-tools": "^2.23.8",
 		"postcss": "^8.5.26",
 		"prettier": "^3.9.6",
 		"prettier-plugin-svelte": "^4.1.1",
@@ -47,12 +46,8 @@
 		"@nostr-dev-kit/ndk": "2.15.2",
 		"@nostr-dev-kit/ndk-cache-dexie": "2.6.44",
 		"@nostr-dev-kit/ndk-svelte": "2.4.48",
-		"@void-cat/api": "^1.0.10",
 		"dompurify": "^3.4.14",
-		"ws": "^8.21.3"
-	},
-	"overrides": {
-		"sjcl": "1.0.9"
+		"nostr-tools": "^2.23.8"
 	},
 	"lint-staged": {
 		"*.{js,ts,svelte}": "eslint src --fix",
