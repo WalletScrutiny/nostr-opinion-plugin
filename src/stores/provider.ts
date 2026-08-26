@@ -12,7 +12,7 @@ export const defaulRelaysUrls: string[] = [
 	'wss://purplepag.es',
 	'wss://nos.lol',
 	'wss://offchain.pub/',
-	'wss://nostr-pub.wellorder.net',
+	'wss://nostr-pub.wellorder.net'
 ];
 
 const CACHE_DB_NAME = 'nostr-opinion-ndk-v15';
