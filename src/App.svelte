@@ -137,7 +137,7 @@
 				}
 			} else {
 				allEvents = [...allEvents, { ...event } as NDKEvent];
-				const content = await fetchUserProfile(event.pubkey);
+				const content = (await fetchUserProfile(event.pubkey)) ?? {};
 				if (!content.image) content.image = profileImageUrl + event.pubkey;
 				if (!content.pubkey) content.pubkey = event.pubkey;
 				if (!profiles) profiles = {};
