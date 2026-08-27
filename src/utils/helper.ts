@@ -39,7 +39,7 @@ export async function fetchUserProfile(opts: string): Promise<NDKUserProfile> {
 					groupable: false,
 					groupableDelay: 200
 				});
-				return ndkUser.profile as NDKUserProfile;
+				return (ndkUser.profile ?? {}) as NDKUserProfile;
 			} else {
 				return user as unknown as NDKUserProfile;
 			}
