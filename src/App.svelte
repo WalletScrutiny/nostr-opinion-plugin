@@ -42,6 +42,7 @@
 	import { fade, slide } from 'svelte/transition';
 	import type { ExtendedBaseType } from '@nostr-dev-kit/ndk-svelte';
 	import { initializeApprovedAuthors } from './utils/approvedAuthors';
+	import { toHexPubkey } from './utils/nip19-helper';
 	import type { ExpertOpinionsType } from './main';
 	import { onDestroy } from 'svelte';
 	import Toast from './components/toast/Toast.svelte';
@@ -82,10 +83,23 @@
 		newOpinionDescription: '',
 		trustedAuthors: [],
 		trustedBadgeAuthors: [],
-		trustedBadges: []
+		trustedBadges: [],
+		blockedEventIds: [],
+		blockedAuthors: []
 	},
 		...JSON.parse(expertOpinionsConfig)
 	};
+
+	// Spam opinions are dropped before they ever reach `allEvents`, so they show up
+	// neither under "All opinions" nor in the headline and sentiment counts.
+	const blockedEventIds = new Set(expertOpinions.blockedEventIds ?? []);
+	// Opinions are addressable events, so a republished spam opinion gets a fresh event
+	// id. Blocking the author as well is what survives that.
+	const blockedAuthors = new Set(
+		(expertOpinions.blockedAuthors ?? [])
+			.map(toHexPubkey)
+			.filter((pubkey): pubkey is string => pubkey !== undefined)
+	);
 
 	let relay_urls = JSON.parse(JSON.stringify(DEFAULT_RELAY_URLS));
 	let trustedAuthors: Hexpubkey[] = [];
@@ -128,6 +142,7 @@
 	const sub = $ndk.storeSubscribe(ndkFilter, { closeOnEose: false });
 	$: {
 		$sub.forEach(async (event) => {
+			if (blockedEventIds.has(event.id) || blockedAuthors.has(event.pubkey)) return;
 			const existingIdx = allEvents.findIndex((e) => e.pubkey === event.pubkey);
 			if (existingIdx !== -1) {
 				// One opinion per author: keep the newest across canonical + legacy subjects.
