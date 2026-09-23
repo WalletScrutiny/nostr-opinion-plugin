@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
-	import Editor from './Editor.svelte';
+	import Editor from './LazyEditor.svelte';
 	import Positive from './icons/Positive.svelte';
 	import Neutral from './icons/Neutral.svelte';
 	import Negative from './icons/Negative.svelte';
