@@ -15,7 +15,7 @@
 	import Neutral from './components/icons/Neutral.svelte';
 	import Negative from './components/icons/Negative.svelte';
 	import Login from './components/Login.svelte';
-	import Editor from './components/Editor.svelte';
+	import Editor from './components/LazyEditor.svelte';
 	import OpinionCard from './components/OpinionCard.svelte';
 	import ConfirmationModal from './components/ConfirmationModal.svelte';
 	import ndk from './stores/provider';
