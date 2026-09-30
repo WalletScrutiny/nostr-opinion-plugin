@@ -11,6 +11,10 @@ export type ExpertOpinionsType = {
 	trustedAuthors: Hexpubkey[];
 	trustedBadgeAuthors: Nip19Entity[];
 	trustedBadges: Nip19Entity[];
+	/** Event ids of opinions that are never rendered (spam). */
+	blockedEventIds: string[];
+	/** Authors whose opinions are never rendered (spam), as `npub` or hex pubkey. */
+	blockedAuthors: string[];
 };
 
 class ExpertOpinions implements ExpertOpinionsType {
@@ -28,6 +32,8 @@ class ExpertOpinions implements ExpertOpinionsType {
 	public trustedAuthors: Hexpubkey[] = [];
 	public trustedBadgeAuthors: Nip19Entity[] = [];
 	public trustedBadges: Nip19Entity[] = [];
+	public blockedEventIds: string[] = [];
+	public blockedAuthors: string[] = [];
 }
 
 export const expertOpinions = new ExpertOpinions();

@@ -12,9 +12,16 @@ To start a dev server, run: `npm run dev`. You can configure the plugin by modif
 
 To build the project, run `npm run build`.
 
+The build writes two files into `dist/`:
+
+- `nostr-opinion.js` — the plugin itself (web components, relay access, opinion viewer).
+- `nostr-opinion-editor.js` — the ToastUI markdown editor. It is fetched by `nostr-opinion.js` on demand, the first time a visitor opens the "Add/Edit your opinion" form, via a relative `import('./nostr-opinion-editor.js')`.
+
+Deploy both files side by side in the same directory. Only `nostr-opinion.js` needs to be referenced from the host page. If the editor file cannot be loaded, the form falls back to a plain textarea.
+
 ### Configuration
 
-The build command outputs a single JS file that can be used in any other JS project. You have three ways of configuring the plugin:
+You have three ways of configuring the plugin:
 
 1. You can pass the pubkey or profile info of the users (starts with `npub` or `nprofile`) that you trust to write meaningful reviews or comments on your site.
 2. You can [create and award badges](https://badges.page) to users that you trust instead of hardcoding their npubs, and then pass the identifier (starts with `naddr`) of that badge to the plugin.
