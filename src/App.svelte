@@ -653,6 +653,8 @@
 
 	.top-nav {
 		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
 		justify-content: space-between;
 		border-top: #dedede 1px solid;
 		border-bottom: #dedede 1px solid;
